@@ -257,13 +257,13 @@ function refreshTasks() {
   const fake = app.priv?.role === 'imp';
   app.tasks = list.filter(id => MISSIONS[id]).map(id => {
     const M = MISSIONS[id], n = M.steps.length, step = fake ? 0 : Math.min(n, +app.done[id] || 0);
-    const spot = M.steps[Math.min(step, n - 1)].spot;
-    return { id, title: M.title, step, n, spot, room: roomName(SPOTS[spot].room), done: step >= n };
+    const S = M.steps[Math.min(step, n - 1)];
+    return { id, title: M.title, step, n, spot: S.spot, spots: S.spots, room: roomName(SPOTS[S.spot].room), done: step >= n };
   });
   app.hud?.setTasks(app.tasks, { fake, dead: app.amDead() });
   app.hud?.setRole(app.priv?.role, app.amDead());
   if (app.scene?.ready) {
-    const on = new Set(app.phase === 'playing' && !fake ? app.tasks.filter(t => !t.done).map(t => t.spot) : []);
+    const on = new Set(app.phase === 'playing' && !fake ? app.tasks.filter(t => !t.done).flatMap(t => t.spots) : []);
     Object.keys(SPOTS).forEach(id => app.scene.setSpotPending(id, on.has(id)));
   }
 }
@@ -394,7 +394,7 @@ app.ventAction = () => {
   const to = VENTS[VENTS[app.near.vent].to];
   sfx('vent'); app.scene.ventTo(to.x, to.y + 50);
 };
-// 사보타주 메뉴 (임포스터, 유령이어도 가능)
+// 사보타주 메뉴 (바이러스, 유령이어도 가능)
 app.sabAction = () => {
   if (blocked() || app.priv?.role !== 'imp') return;
   const g = app.game || {};

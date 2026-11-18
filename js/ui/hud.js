@@ -29,7 +29,7 @@ export class Hud {
   }
   setPhase(ph) { document.body.dataset.phase = ph; }
   setTasks(tasks, { fake = false, dead = false } = {}) {
-    $('.tasks-head').innerHTML = fake ? '<span class="imp-head">임포스터</span><small> 가짜 미션 · 하는 척만</small>' : dead ? '미션 <small>유령도 할 수 있어요</small>' : '미션';
+    $('.tasks-head').innerHTML = fake ? '<span class="imp-head">바이러스</span><small> 가짜 미션 · 하는 척만</small>' : dead ? '미션 <small>유령도 할 수 있어요</small>' : '미션';
     $('#task-list').innerHTML = tasks.map(t =>
       `<li class="${t.done ? 'done' : ''}"><b>${esc(t.room)}</b> ${esc(t.title)}${t.n > 1 && !fake ? ` <small>${t.step}/${t.n}</small>` : ''}</li>`).join('');
   }

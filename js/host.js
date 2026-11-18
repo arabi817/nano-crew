@@ -141,9 +141,9 @@ function showEject(m) {
   const r = m.result; if (!r) return;
   const p = judge.players[r.ejected], box = $('#hm-eject');
   let sub = '';
-  if (r.ejected && r.wasImp !== undefined) sub = r.wasImp ? '임포스터였어요!' : '임포스터가 아니었어요';
+  if (r.ejected && r.wasImp !== undefined) sub = r.wasImp ? '바이러스였어요!' : '바이러스가 아니었어요';
   box.innerHTML = r.ejected
-    ? `<div class="ej-fly">${avatarOf(p, 160)}</div><div class="ej-text">${esc(nickOf(p))}이(가) 추방됐어요</div><div class="ej-sub">${sub}</div>${r.impLeft !== undefined ? `<div class="ej-left">남은 임포스터 ${r.impLeft}명</div>` : ''}`
+    ? `<div class="ej-fly">${avatarOf(p, 160)}</div><div class="ej-text">${esc(nickOf(p))}이(가) 추방됐어요</div><div class="ej-sub">${sub}</div>${r.impLeft !== undefined ? `<div class="ej-left">남은 바이러스 ${r.impLeft}명</div>` : ''}`
     : `<div class="ej-text">아무도 추방되지 않았어요</div><div class="ej-sub">${r.tie ? '표가 같았어요' : '건너뛰기가 가장 많았어요'}</div>`;
   box.classList.add('on'); sfx('eject');
 }
@@ -151,12 +151,12 @@ function showEject(m) {
 function drawEnd() {
   const g = judge.game, w = g.winner; if (!w) return;
   if (!$('#ev-big').dataset.at || $('#ev-big').dataset.at !== String(w.at)) { $('#ev-big').dataset.at = w.at; sfx('win'); }
-  $('#ev-big').textContent = w.team === 'imp' ? '임포스터 승리' : '크루원 승리';
+  $('#ev-big').textContent = w.team === 'imp' ? '바이러스 승리' : '크루원 승리';
   document.querySelector('.end-view').className = 'end-view hv-ended ' + w.team;
   $('#ev-reason').textContent = w.reason;
   const reveal = g.reveal || {}, players = judge.players;
   const ids = Object.keys(reveal).filter(id => players[id]).sort((a, b) => (reveal[a] === 'imp' ? 0 : 1) - (reveal[b] === 'imp' ? 0 : 1));
-  $('#ev-grid').innerHTML = ids.map(id => `<div class="end-p ${reveal[id]}">${avatarOf(players[id], 64)}<span>${esc(nickOf(players[id]))}</span><small>${reveal[id] === 'imp' ? '임포스터' : '크루원'}${g.ejected?.[id] ? ' · 추방' : g.dead?.[id] ? ' · 쓰러짐' : ''}</small></div>`).join('');
+  $('#ev-grid').innerHTML = ids.map(id => `<div class="end-p ${reveal[id]}">${avatarOf(players[id], 64)}<span>${esc(nickOf(players[id]))}</span><small>${reveal[id] === 'imp' ? '바이러스' : '크루원'}${g.ejected?.[id] ? ' · 추방' : g.dead?.[id] ? ' · 쓰러짐' : ''}</small></div>`).join('');
 }
 
 let lastSabAt = 0;

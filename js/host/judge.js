@@ -89,7 +89,7 @@ export class Judge {
     if (!r || this.meta?.state !== 'playing' || this.meta.paused || this.game.meeting) return;
     if (!this.priv[uid]) return;
     if (this.db.now() < (this.game.revealUntil || 0)) return;
-    if (r.t === 'sab') return this.trySabotage(uid, r.target); // 유령 임포스터도 사보타주 가능
+    if (r.t === 'sab') return this.trySabotage(uid, r.target); // 유령 바이러스도 사보타주 가능
     if (!this.alive(uid)) return;
     if (r.t === 'fix') this.tryFix(uid, r.target);
     else if (r.t === 'kill') this.tryKill(uid, r.target);
@@ -266,8 +266,8 @@ export class Judge {
     const crew = ids.filter(id => this.roleOf(id) === 'crew' && this.alive(id)).length;
     const p = this.progress();
     let w = null;
-    if (imp === 0) w = { team: 'crew', reason: '임포스터를 모두 찾아냈어요' };
-    else if (crew <= imp) w = { team: 'imp', reason: '남은 크루원 수가 임포스터 수와 같아졌어요' };
+    if (imp === 0) w = { team: 'crew', reason: '바이러스를 모두 찾아냈어요' };
+    else if (crew <= imp) w = { team: 'imp', reason: '남은 크루원 수가 바이러스 수와 같아졌어요' };
     else if (p.t > 0 && p.d >= p.t) w = { team: 'crew', reason: '미션을 모두 끝냈어요' };
     if (!w) return false;
     this.endGame(w);

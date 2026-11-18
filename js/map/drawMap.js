@@ -234,8 +234,8 @@ const PROPS = {
   },
   lung(scene, r) {
     const g = gfx(scene);
-    const top = pt(r.x + 470, r.y + 200);
-    const ends = [pt(r.x + 180, r.y + 420), pt(r.x + 330, r.y + 500), pt(r.x + 560, r.y + 500), pt(r.x + 640, r.y + 330)];
+    const top = pt(r.x + 400, r.y + 230);
+    const ends = [pt(r.x + 260, r.y + 430), pt(r.x + 400, r.y + 570), pt(r.x + 560, r.y + 460), pt(r.x + 620, r.y + 300)];
     ends.forEach(e => tube(g, [top, pt((top.x + e.x) / 2, (top.y + e.y) / 2 + 30), e], 16, 0xe6eef5));
     tube(g, [pt(top.x, r.y + 40), top], 24, 0xe6eef5);
     ends.forEach((e, k) => {

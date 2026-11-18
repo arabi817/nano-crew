@@ -167,9 +167,11 @@ export class WorldScene extends Phaser.Scene {
       let best = USE_RANGE;
       for (const t of a.tasks) {
         if (t.done) continue;
-        const s = SPOTS[t.spot]; if (!s) continue;
-        const d = Math.hypot(s.x - this.x, s.y - this.y);
-        if (d < best) { best = d; near.task = t.id; }
+        for (const id of t.spots || [t.spot]) {
+          const s = SPOTS[id]; if (!s) continue;
+          const d = Math.hypot(s.x - this.x, s.y - this.y);
+          if (d < best) { best = d; near.task = t.id; }
+        }
       }
       const sab = a.game?.sab;
       if (sab && !ghost) for (const [id, s] of Object.entries(SAB_SPOTS)) {

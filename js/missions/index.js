@@ -15,7 +15,7 @@ const one = (key, spot, fn) => [{ spot, fn }];
 const DEF = {
   power: [
     { spot: 'powerGlucose', fn: Ce.powerPick(0) },
-    { spot: 'powerO2', fn: Ce.powerPick(1) },
+    { spot: 'powerO2', alt: ['powerO2b'], fn: Ce.powerPick(1) }, // 산소 캡슐은 허파실 양쪽 끝 2곳 중 아무 데서나
     { spot: 'powerFinal', fn: Ce.powerFinal },
   ],
   digestWire: [
@@ -51,6 +51,7 @@ export const MISSIONS = Object.fromEntries(Object.entries(DEF).map(([id, steps])
     id, title: c.title, unit: c.unit, type: c.type, visible: !!c.visible,
     steps: steps.map((s, i) => ({
       spot: s.spot,
+      spots: [s.spot, ...(s.alt || [])],
       sub: Array.isArray(c.guide) ? c.guide[i] : c.guide,
       name: c.steps?.[i] || '',
       mount: (el, api) => s.fn(el, api, c),

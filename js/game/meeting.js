@@ -180,8 +180,8 @@ export class MeetingUI {
     const r = this.m?.result; if (!r) return;
     const box = this.$('.meet-eject'), p = this.app.players[r.ejected];
     let line2 = '';
-    if (r.ejected && r.wasImp !== undefined) line2 = r.wasImp ? '임포스터였어요!' : '임포스터가 아니었어요';
-    const left = r.impLeft !== undefined ? `<div class="ej-left">남은 임포스터 ${r.impLeft}명</div>` : '';
+    if (r.ejected && r.wasImp !== undefined) line2 = r.wasImp ? '바이러스였어요!' : '바이러스가 아니었어요';
+    const left = r.impLeft !== undefined ? `<div class="ej-left">남은 바이러스 ${r.impLeft}명</div>` : '';
     box.innerHTML = r.ejected
       ? `<div class="ej-fly">${avatarOf(p, 120)}</div><div class="ej-text">${esc(nickOf(p))}이(가) 추방됐어요</div><div class="ej-sub">${line2}</div>${left}`
       : `<div class="ej-text">아무도 추방되지 않았어요</div><div class="ej-sub">${r.tie ? '표가 같았어요' : '건너뛰기가 가장 많았어요'}</div>`;

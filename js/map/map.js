@@ -10,7 +10,7 @@ export const ROOMS = [
   { id: 'large', name: '큰창자실', x: 2600, y: 200, w: 700, h: 550, floor: 0xd9b48a },
   { id: 'heart', name: '심장실', x: 2650, y: 1050, w: 700, h: 600, floor: 0xf29a9a },
   { id: 'vessel', name: '혈관 관제실', x: 1400, y: 2000, w: 700, h: 450, floor: 0xcf8f9f },
-  { id: 'lung', name: '허파실', x: 150, y: 1050, w: 700, h: 600, floor: 0x9fd6f0 },
+  { id: 'lung', name: '허파실', x: 150, y: 950, w: 800, h: 800, floor: 0x9fd6f0 },
   { id: 'kidney', name: '콩팥실', x: 2500, y: 1950, w: 550, h: 500, floor: 0xd8a48f },
   { id: 'bladder', name: '방광 처리실', x: 3250, y: 2000, w: 450, h: 450, floor: 0xf2e38a },
   { id: 'lobby', name: '탐사정 격납고', x: 4300, y: 300, w: 1300, h: 850, floor: 0x9aa7b8, lobby: true },
@@ -20,11 +20,11 @@ export const HALLS = [
   { a: 'digest', b: 'small', x: 900, y: 400, w: 450, h: 160 },
   { a: 'small', b: 'large', x: 2150, y: 400, w: 450, h: 160 },
   { a: 'small', b: 'meeting', x: 1670, y: 750, w: 160, h: 250 },
-  { a: 'lung', b: 'meeting', x: 850, y: 1270, w: 450, h: 160 },
+  { a: 'lung', b: 'meeting', x: 950, y: 1270, w: 350, h: 160 },
   { a: 'meeting', b: 'heart', x: 2200, y: 1270, w: 450, h: 160 },
   { a: 'meeting', b: 'vessel', x: 1670, y: 1700, w: 160, h: 300 },
-  { a: 'digest', b: 'lung', x: 470, y: 750, w: 160, h: 300 },
-  { a: 'lung', b: 'power', x: 470, y: 1650, w: 160, h: 300 },
+  { a: 'digest', b: 'lung', x: 470, y: 750, w: 160, h: 200 },
+  { a: 'lung', b: 'power', x: 470, y: 1750, w: 160, h: 200 },
   { a: 'power', b: 'vessel', x: 900, y: 2150, w: 500, h: 160 },
   { a: 'vessel', b: 'kidney', x: 2100, y: 2150, w: 400, h: 160 },
   { a: 'kidney', b: 'bladder', x: 3050, y: 2150, w: 200, h: 160 },
@@ -57,12 +57,13 @@ export const SPOTS = {
   vesselCheck: { room: 'vessel', x: 1750, y: 2390 },
   wasteUreaPick: { room: 'vessel', x: 1500, y: 2390, label: '요소 받기' },
   // 허파실
-  alveoliFilter: { room: 'lung', x: 260, y: 1140 },
-  breathModel: { room: 'lung', x: 400, y: 1140 },
-  diaphragm: { room: 'lung', x: 780, y: 1150 },
-  airPath: { room: 'lung', x: 600, y: 1330 },
-  powerO2: { room: 'lung', x: 230, y: 1330, label: '산소 캡슐' },
-  wasteCO2Out: { room: 'lung', x: 230, y: 1590, label: '이산화탄소 배출구' },
+  alveoliFilter: { room: 'lung', x: 250, y: 1060 },
+  breathModel: { room: 'lung', x: 250, y: 1260 },
+  powerO2: { room: 'lung', x: 250, y: 1460, label: '산소 캡슐 (왼쪽)' },
+  wasteCO2Out: { room: 'lung', x: 250, y: 1660, label: '이산화탄소 배출구' },
+  diaphragm: { room: 'lung', x: 850, y: 1060 },
+  airPath: { room: 'lung', x: 720, y: 1080 },
+  powerO2b: { room: 'lung', x: 850, y: 1580, label: '산소 캡슐 (오른쪽)' },
   // 세포 발전소
   powerFinal: { room: 'power', x: 560, y: 2230, label: '발전기' },
   wasteCO2Pick: { room: 'power', x: 230, y: 2230, label: '이산화탄소 받기' },
@@ -78,12 +79,12 @@ export const TASK_SPOTS = SPOTS; // 예전 이름
 
 // 사보타주 해결 장치
 export const SAB_SPOTS = {
-  o2Lung: { room: 'lung', x: 800, y: 1600, kind: 'o2', side: 'lung' },
+  o2Lung: { room: 'lung', x: 690, y: 1680, kind: 'o2', side: 'lung' },
   o2Heart: { room: 'heart', x: 2730, y: 1120, kind: 'o2', side: 'heart' },
   kidneyStop: { room: 'kidney', x: 2970, y: 2420, kind: 'kidney' },
 };
 
-// 혈관 통로(벤트): 임포스터만 써요. 서로 먼 방끼리 4쌍
+// 혈관 통로(벤트): 바이러스만 써요. 서로 먼 방끼리 4쌍
 export const VENTS = {
   vDigest: { room: 'digest', x: 820, y: 680, to: 'vKidney' },
   vKidney: { room: 'kidney', x: 2775, y: 2205, to: 'vDigest' },
@@ -91,7 +92,7 @@ export const VENTS = {
   vPower: { room: 'power', x: 820, y: 2400, to: 'vLarge' },
   vSmall: { room: 'small', x: 2080, y: 600, to: 'vBladder' },
   vBladder: { room: 'bladder', x: 3600, y: 2410, to: 'vSmall' },
-  vLung: { room: 'lung', x: 420, y: 1330, to: 'vHeart' },
+  vLung: { room: 'lung', x: 420, y: 1660, to: 'vHeart' },
   vHeart: { room: 'heart', x: 3270, y: 1370, to: 'vLung' },
 };
 
