@@ -272,7 +272,8 @@ function refreshTasks() {
   app.hud?.setTasks(app.tasks, { fake, dead: app.amDead() });
   app.hud?.setRole(app.priv?.role, app.amDead());
   if (app.scene?.ready) {
-    const on = new Set(app.phase === 'playing' && !fake ? app.tasks.filter(t => !t.done).flatMap(t => t.spots) : []);
+    // 바이러스도 가짜 미션 장치가 빛나요 (그 앞에서 하는 척하며 섞이도록)
+    const on = new Set(app.phase === 'playing' ? app.tasks.filter(t => !t.done).flatMap(t => t.spots) : []);
     Object.keys(SPOTS).forEach(id => app.scene.setSpotPending(id, on.has(id)));
   }
 }

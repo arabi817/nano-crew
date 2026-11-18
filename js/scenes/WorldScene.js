@@ -195,7 +195,36 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     a.setNear(near);
+    this.updateArrows(playing, ghost);
     a.myRoom = roomAt(this.x, this.y)?.id || null;
+  }
+
+  // 화살표: 큰 사보타주 해결 장소(빨강), 여러 단계 미션의 다음 장소(노랑). 화면 밖일 때만 가장자리에 떠요.
+  updateArrows(playing, ghost) {
+    const a = this.app, box = this.arrowBox ||= document.getElementById('arrows');
+    if (!box) return;
+    const targets = [];
+    if (playing && !a.isFrozen()) {
+      const sab = a.game?.sab;
+      if (sab && sab.kind !== 'clot' && !ghost) for (const s of Object.values(SAB_SPOTS)) if (s.kind === sab.kind) targets.push({ x: s.x, y: s.y, red: true });
+      if (a.priv?.role !== 'imp') for (const t of a.tasks) {
+        if (t.done || t.step === 0) continue;
+        for (const id of t.spots || [t.spot]) { const s = SPOTS[id]; if (s) targets.push({ x: s.x, y: s.y }); }
+      }
+    }
+    while (box.children.length < targets.length) box.appendChild(Object.assign(document.createElement('div'), { className: 'nav-arrow' }));
+    const v = this.cameras.main.worldView, W = box.clientWidth, H = box.clientHeight, pad = 46;
+    [...box.children].forEach((el, i) => {
+      const t = targets[i];
+      if (!t) { el.style.display = 'none'; return; }
+      const sx = (t.x - v.x) / v.width * W, sy = (t.y - v.y) / v.height * H;
+      if (sx > pad && sx < W - pad && sy > pad && sy < H - pad) { el.style.display = 'none'; return; } // 화면 안이면 안 보여요
+      const cx = W / 2, cy = H / 2, dx = sx - cx, dy = sy - cy;
+      const k = Math.min((W / 2 - pad) / Math.abs(dx || 1e-6), (H / 2 - pad) / Math.abs(dy || 1e-6));
+      const ang = Math.atan2(dy, dx);
+      el.style.display = ''; el.classList.toggle('red', !!t.red);
+      el.style.transform = `translate(${cx + dx * k - 15}px, ${cy + dy * k - 16}px) rotate(${ang}rad)`;
+    });
   }
 
   // 쓰러진 대원 (어지러운 별이 도는 모습)

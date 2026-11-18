@@ -257,6 +257,13 @@ body:not([data-role="imp"]) .only-imp, body.ghost .only-imp, body.ghost #btn-rep
 .abtn .cd { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--title); font-size: 46px; color: #fff; -webkit-text-stroke: 8px var(--ink); paint-order: stroke fill; pointer-events: none; }
 .abtn-red.ready { background: #ff7a1a; animation: pulse 1s infinite; }
 .imp-head { color: #ff6b6b; }
+.imp-goal { font-family: var(--body); font-size: 14px; font-weight: 700; color: #ffd6d6; line-height: 1.35; margin: 2px 0 4px; }
+.imp-fake { font-family: var(--body); font-size: 13px; color: #ccc; border-top: 2px solid #4a3d48; padding-top: 3px; }
+/* 화살표 (사보타주 해결 장소, 다음 단계 장소) */
+#arrows { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.nav-arrow { position: absolute; left: 0; top: 0; width: 0; height: 0; border-top: 16px solid transparent; border-bottom: 16px solid transparent; border-left: 30px solid var(--yellow); filter: drop-shadow(0 0 0 #1a1018) drop-shadow(2px 0 0 #1a1018) drop-shadow(-2px 0 0 #1a1018) drop-shadow(0 2px 0 #1a1018) drop-shadow(0 -2px 0 #1a1018); }
+.nav-arrow.red { border-left-color: #ff3b3b; animation: arrowblink .5s steps(2) infinite; }
+@keyframes arrowblink { 50% { opacity: .35; } }
 .tasks-head small { font-size: 13px; color: #ddd; font-family: var(--body); }
 .sheet-p { font-size: 20px; font-weight: 700; text-align: center; }
 .sheet-btns { display: flex; gap: 14px; justify-content: center; }
