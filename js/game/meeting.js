@@ -3,7 +3,7 @@ import { CONTENT } from '../../data/content.js';
 import { P } from '../net/room.js';
 import { nickOf, COLORS, byNick } from '../common/colors.js';
 import { MISSIONS } from '../missions/index.js';
-import { PLACES, chatHTML, callerText, avatarOf, PHASE_NAME, missionName } from './shared.js';
+import { PLACES, callerText, avatarOf, PHASE_NAME, missionName, MEGAPHONE, MeetingFeed } from './shared.js';
 import { sfx } from '../common/sfx.js';
 import { esc } from '../common/util.js';
 import { ALARM_MS } from '../common/rules.js';
@@ -51,7 +51,7 @@ export class MeetingUI {
   }
   subscribe(id) {
     this.unsubs.forEach(u => u()); this.unsubs = [];
-    this.my = { ans: null, vote: null, sent: 0, lastSent: 0 }; this.ejectShown = false;
+    this.my = { ans: null, vote: null, sent: 0, lastSent: 0 }; this.ejectShown = false; this.feed = new MeetingFeed();
     const base = P.meet(this.app.code, id);
     for (const k of ['right', 'vote', 'chat']) {
       this.unsubs.push(this.app.db.onValue(`${base}/${k}`, v => { this.data[k] = v || {}; this.render(); }));
@@ -104,7 +104,7 @@ export class MeetingUI {
       const p = players[id], dead = !!g.dead?.[id], voted = !!this.data.vote[id];
       const mine = this.my.vote === id, n = counts[id] || 0;
       return `<button class="mg-card ${dead ? 'dead' : ''} ${mine ? 'mine' : ''} ${id === this.app.uid ? 'me' : ''}" data-id="${esc(id)}" ${voting && this.canVote && !this.my.vote && !dead ? '' : 'disabled'}>
-        ${avatarOf(p, 46)}<span class="mg-name ${mates.includes(id) ? 'mate' : ''}">${esc(nickOf(p))}</span>
+        ${avatarOf(p, 46)}<span class="mg-name ${mates.includes(id) ? 'mate' : ''}">${esc(nickOf(p))}</span>${id === m.caller ? MEGAPHONE : ''}
         ${dead ? '<span class="mg-tag">유령</span>' : ''}${voting && voted ? '<span class="mg-voted">투표함</span>' : ''}
         ${showRes && n ? `<span class="mg-count">${n}표</span>` : ''}</button>`;
     }).join('');
@@ -137,7 +137,8 @@ export class MeetingUI {
   // ── 채팅: 문장 틀 고르기 → 빈칸 고르기 → 보내기 ──
   renderChat() {
     const log = this.$('.chat-log'), atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 20;
-    log.innerHTML = chatHTML(this.data.chat, this.app.players) || '<div class="chat-empty">아직 아무 말도 없어요</div>';
+    const g = this.app.game || {}, eligible = Object.keys(this.app.privIds()).filter(id => !g.dead?.[id] && this.data.right[id]);
+    log.innerHTML = this.feed.html(this.data.chat, this.data.vote, this.app.players, eligible) || '<div class="chat-empty">아직 아무 말도 없어요</div>';
     if (atBottom) log.scrollTop = log.scrollHeight;
     const m = this.m, box = this.$('.chat-compose');
     const open = (m.phase === 'discuss' || m.phase === 'vote') && this.alive;

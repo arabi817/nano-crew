@@ -39,3 +39,21 @@ export function chatHTML(chat, players) {
 }
 
 export const PHASE_NAME = { ox: 'OX 퀴즈', discuss: '토론', vote: '투표', result: '결과' };
+
+// 회의를 연 사람 표시 (확성기)
+export const MEGAPHONE = '<svg class="mega" viewBox="0 0 48 48" aria-label="회의를 연 사람"><path d="M8 20 h8 l18 -10 v28 l-18 -10 h-8 z" fill="#ffcc33" stroke="#1a1018" stroke-width="4" stroke-linejoin="round"/><path d="M14 28 l3 11 h6 l-3 -11" fill="#ffcc33" stroke="#1a1018" stroke-width="4" stroke-linejoin="round"/></svg>';
+
+// 회의 채팅 칸: 학생 문장 + "○○이(가) 투표했어요. N명 남음" 알림을 들어온 순서대로
+export class MeetingFeed {
+  constructor() { this.seen = new Map(); this.n = 0; }
+  stamp(key) { if (!this.seen.has(key)) this.seen.set(key, ++this.n); return this.seen.get(key); }
+  html(chat, vote, players, eligible) {
+    const items = [];
+    for (const [k, m] of Object.entries(chat || {})) items.push({ t: this.stamp('c' + k), m });
+    let voted = 0;
+    const order = Object.keys(vote || {}).filter(id => eligible.includes(id)).map(id => ({ id, t: this.stamp('v' + id) })).sort((a, b) => a.t - b.t);
+    for (const v of order) { voted++; items.push({ t: v.t, sys: `${nickOf(players[v.id]) || '누군가'}이(가) 투표했어요. ${Math.max(0, eligible.length - voted)}명 남음` }); }
+    items.sort((a, b) => a.t - b.t);
+    return items.map(it => it.sys ? `<div class="chat-line sys">${esc(it.sys)}</div>` : chatHTML({ x: it.m }, players)).join('');
+  }
+}

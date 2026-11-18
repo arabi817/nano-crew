@@ -14,7 +14,7 @@ import { CONTENT } from '../data/content.js';
 import { PLACES } from './game/shared.js';
 import { sfx, unlockAudio } from './common/sfx.js';
 import { $, esc } from './common/util.js';
-import { settingsOf } from './common/rules.js';
+import { settingsOf, settingsHTML } from './common/rules.js';
 import { MeetingUI } from './game/meeting.js';
 import { showRoleReveal, showKilled, showEnd, hideEnd, setPaused, fakeTask } from './game/screens.js';
 
@@ -195,6 +195,7 @@ function spawnTeleport() {
 function onMeta(m) {
   if (!m) return ended();
   app.meta = m;
+  $('#lobby-settings').innerHTML = settingsHTML(m);
   setPaused(!!m.paused && m.state === 'playing');
   const prev = app.phase; app.phase = m.state;
   if (prev === m.state) return;
@@ -292,7 +293,7 @@ function onSab(sab) {
   clearInterval(sabTimer);
   const box = $('#sab-banner');
   if (!sab) {
-    box.hidden = true;
+    box.hidden = true; $('#sab-line').hidden = true;
     if (app.sabPanel) { app.panel?.close(); app.sabPanel = false; }
     if (app.lastSabAt && app.phase === 'playing' && !app.game?.meeting && !app.game?.winner) app.hud?.toast('사보타주를 막았어요!');
     return;
@@ -305,6 +306,11 @@ function onSab(sab) {
     box.innerHTML = sab.kind === 'clot'
       ? `<b>혈관 막힘</b> ${esc(roomName(sab.room))} 문이 막혔어요 · ${left}초`
       : `<b>${esc(S.name)}!</b> ${esc(S.guide)} <span class="sab-time">${left}초</span>`;
+    // 미션 목록 아래에도 빨간 항목으로 (어몽어스처럼)
+    const line = $('#sab-line'); line.hidden = false;
+    line.innerHTML = sab.kind === 'o2' ? `<b>허파실·심장실</b> 산소 공급 버튼 동시에 누르기 (${left}초)`
+      : sab.kind === 'kidney' ? `<b>콩팥실</b> 콩팥 정지 고치기 (${left}초)`
+      : `<b>${esc(roomName(sab.room))}</b> 혈관 막힘 · 문 열릴 때까지 ${left}초`;
   };
   tick(); sabTimer = setInterval(tick, 250);
 }

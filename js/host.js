@@ -6,13 +6,13 @@ import { COLORS, nickOf, nickKeyOf, byNick } from './common/colors.js';
 import { avatarSVG } from './player/avatarSvg.js';
 import { findPos } from './net/posSync.js';
 import { Judge } from './host/judge.js';
-import { settingsOf } from './common/rules.js';
-import { chatHTML, callerText, avatarOf, PHASE_NAME } from './game/shared.js';
+import { settingsOf, settingsHTML } from './common/rules.js';
+import { callerText, avatarOf, PHASE_NAME, MEGAPHONE, MeetingFeed } from './game/shared.js';
 import { openSheet } from './ui/panel.js';
 import { sfx, setMuted, muted } from './common/sfx.js';
 import { $, esc } from './common/util.js';
 
-let db, code = null, judge = null, lastMeetPhase = '', lastState = '';
+let db, code = null, judge = null, lastMeetPhase = '', lastState = '', hostFeed = null;
 
 boot();
 async function boot() {
@@ -83,6 +83,7 @@ function draw() {
 
 function drawRoster() {
   const players = judge.players;
+  $('#host-settings').innerHTML = settingsHTML(judge.meta);
   const list = Object.entries(players).sort((a, b) => byNick(a[1], b[1]));
   const real = list.filter(([id]) => !isBot(id)), bots = list.length - real.length;
   $('#roster-count').textContent = `${real.length}명` + (bots ? ` + 봇 ${bots}` : '');
@@ -128,12 +129,14 @@ function drawMeeting(m) {
   const counts = m.result?.counts || {};
   $('#hm-grid').innerHTML = ids.map(id => {
     const dead = !!g.dead?.[id], n = counts[id] || 0;
-    return `<div class="hm-card ${dead ? 'dead' : ''}">${avatarOf(players[id], 48)}<span>${esc(nickOf(players[id]))}</span>
+    return `<div class="hm-card ${dead ? 'dead' : ''}">${avatarOf(players[id], 48)}<span>${esc(nickOf(players[id]))}</span>${id === m.caller ? MEGAPHONE : ''}
       ${dead ? '<i class="tag">유령</i>' : ''}${m.phase === 'vote' && cur.vote[id] ? '<i class="tag ok">투표함</i>' : ''}
       ${m.phase === 'result' && n ? `<i class="tag cnt">${n}표</i>` : ''}</div>`;
   }).join('') + (m.phase === 'result' ? `<div class="hm-card skip">건너뛰기 <b>${counts.skip || 0}표</b></div>` : '');
   const chat = $('#hm-chat');
-  chat.innerHTML = chatHTML(cur.chat, players) || '<div class="chat-empty">패드에서 고른 문장이 여기에 나와요. 말로 토론해도 돼요.</div>';
+  if (!hostFeed || hostFeed.id !== m.id) hostFeed = Object.assign(new MeetingFeed(), { id: m.id });
+  const eligible = voters.filter(id => cur.right[id]);
+  chat.innerHTML = hostFeed.html(cur.chat, cur.vote, players, eligible) || '<div class="chat-empty">패드에서 고른 문장이 여기에 나와요. 말로 토론해도 돼요.</div>';
   chat.scrollTop = chat.scrollHeight;
 }
 

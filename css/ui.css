@@ -257,6 +257,18 @@ body:not([data-role="imp"]) .only-imp, body.ghost .only-imp, body.ghost #btn-rep
 .abtn .cd { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--title); font-size: 46px; color: #fff; -webkit-text-stroke: 8px var(--ink); paint-order: stroke fill; pointer-events: none; }
 .abtn-red.ready { background: #ff7a1a; animation: pulse 1s infinite; }
 .imp-head { color: #ff6b6b; }
+.sab-line { margin-top: 4px; padding-top: 4px; border-top: 2px solid #4a3d48; font-size: 15px; font-weight: 900; color: #ff6b6b; animation: arrowblink .8s steps(2) infinite; }
+.sab-line b { color: #ff9b9b; }
+.set-box { padding: 8px 12px; }
+.set-h { font-family: var(--title); font-size: 18px; color: var(--yellow); margin-bottom: 2px; }
+.set-tb { border-collapse: collapse; font-size: 14px; font-weight: 700; }
+.set-tb td { padding: 1px 0; }
+.set-tb td:first-child { color: #c9d1d8; padding-right: 12px; }
+.chat-line.sys { background: none; color: #9fe3c0; font-size: 13px; padding: 0 8px; }
+.mega { position: absolute; left: -8px; top: -10px; width: 28px; height: 28px; filter: drop-shadow(0 2px 0 #1a1018); }
+.hm-card .mega { width: 34px; height: 34px; }
+.meet-body > *, .hm-body > * { min-width: 0; }
+.chat-line { overflow-wrap: anywhere; }
 .imp-goal { font-family: var(--body); font-size: 14px; font-weight: 700; color: #ffd6d6; line-height: 1.35; margin: 2px 0 4px; }
 .imp-fake { font-family: var(--body); font-size: 13px; color: #ccc; border-top: 2px solid #4a3d48; padding-top: 3px; }
 /* 화살표 (사보타주 해결 장소, 다음 단계 장소) */
