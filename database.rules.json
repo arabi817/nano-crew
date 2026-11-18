@@ -47,7 +47,47 @@
           }
         },
 
+        "game": {
+          ".read": "auth != null"
+        },
+
+        "req": {
+          ".read": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && root.child('rooms/' + $code + '/meta').exists()",
+            ".validate": "newData.hasChildren(['t']) && newData.child('t').isString() && newData.child('t').val().length < 12"
+          }
+        },
+
+        "meet": {
+          "$mid": {
+            "ans": {
+              ".read": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid",
+              "$uid": {
+                ".write": "auth != null && auth.uid === $uid && !data.exists()",
+                ".validate": "newData.val() === 'O' || newData.val() === 'X'"
+              }
+            },
+            "right": { ".read": "auth != null" },
+            "vote": {
+              ".read": "auth != null",
+              "$uid": {
+                ".write": "auth != null && auth.uid === $uid && !data.exists()",
+                ".validate": "newData.isString() && newData.val().length < 40"
+              }
+            },
+            "chat": {
+              ".read": "auth != null",
+              "$k": {
+                ".write": "auth != null && !data.exists() && newData.child('u').val() === auth.uid",
+                ".validate": "newData.hasChildren(['u', 't']) && newData.child('t').isString() && newData.child('t').val().length < 12"
+              }
+            }
+          }
+        },
+
         "private": {
+          ".read": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid",
           "$uid": {
             ".read": "auth != null && (auth.uid === $uid || root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid)",
             ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid"

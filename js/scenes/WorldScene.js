@@ -1,5 +1,6 @@
 // 게임 세계 화면: 맵 그리기, 내 캐릭터 이동, 다른 친구 위치 받기, 시야(안개)
-import { WORLD, walkable, TASK_SPOTS, roomAt, zoneAt } from '../map/map.js';
+import { WORLD, walkable, TASK_SPOTS, TABLE, roomAt, zoneAt } from '../map/map.js';
+import { KILL_RANGE, REPORT_RANGE, EMERGENCY_RANGE } from '../common/rules.js';
 import { drawMap } from '../map/drawMap.js';
 import { Avatar, loadAvatarTextures } from '../player/avatar.js';
 import { PosSender, RemoteMotion, ZoneListener, decodePos } from '../net/posSync.js';
@@ -19,9 +20,11 @@ export class WorldScene extends Phaser.Scene {
     cam.setBackgroundColor('#140c12');
     cam.setBounds(-400, -400, WORLD.w + 800, WORLD.h + 800);
     this.mapInfo = drawMap(this);
-    this.avatars = new Map(); this.motions = new Map();
+    this.avatars = new Map(); this.motions = new Map(); this.bodies = new Map();
     this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT', false);
     this.input.keyboard.on('keydown-E', () => this.app.useAction());
+    this.input.keyboard.on('keydown-Q', () => this.app.killAction());
+    this.input.keyboard.on('keydown-R', () => this.app.reportAction());
     this.makeFog();
     this.scale.on('resize', () => this.fitZoom()); this.fitZoom();
     loadAvatarTextures(this).then(() => this.onReady());
@@ -47,6 +50,7 @@ export class WorldScene extends Phaser.Scene {
     this.sender.tick(performance.now(), this.x, this.y, 1, false, true);
     this.sender.adoptOld();
     this.syncPlayers(a.players);
+    this.setBodies(a.game?.bodies);
     // 내 구역 + 바로 옆 구역의 위치만 받아요
     this.zl = new ZoneListener(a.db, P.pos(a.code), {
       onPos: (k, v) => this.onPos(k, v),
@@ -101,18 +105,23 @@ export class WorldScene extends Phaser.Scene {
     if (len > 1) { vx /= len; vy /= len; }
     const step = SPEED * dt / 1000;
     let moved = false;
+    const ghost = a.amDead();
     if (len > 0.05) {
       const nx = this.x + vx * step, ny = this.y + vy * step;
-      if (walkable(nx, this.y, RADIUS)) { this.x = nx; moved = true; }
-      if (walkable(this.x, ny, RADIUS)) { this.y = ny; moved = true; }
+      // 유령은 벽을 통과해요 (맵 바깥으로만 못 나감)
+      const ok = (x, y) => ghost ? (x > 60 && y > 60 && x < 3850 && y < 2600) : walkable(x, y, RADIUS);
+      if (ok(nx, this.y)) { this.x = nx; moved = true; }
+      if (ok(this.x, ny)) { this.y = ny; moved = true; }
       if (vx < -0.1) this.face = -1; else if (vx > 0.1) this.face = 1;
     }
     this.me.setPos(this.x, this.y);
     this.me.update(dt, moved, this.face);
+    this.me.root.setAlpha(ghost ? 0.55 : 1);
     this.sender.tick(now, this.x, this.y, this.face, moved);
     this.zl.setZone(zoneAt(this.x, this.y));
 
-    const fog = a.phase === 'playing';
+    const playing = a.phase === 'playing', fog = playing && !ghost, dead = a.game?.dead || {};
+    const mates = a.priv?.mates || [];
     let visible = 0;
     for (const [uid, av] of this.avatars) {
       const m = this.motions.get(uid);
@@ -122,24 +131,62 @@ export class WorldScene extends Phaser.Scene {
       const d = Math.hypot(m.x - this.x, m.y - this.y);
       let al = fog ? (d < VISION * 0.82 ? 1 : d < VISION ? (VISION - d) / (VISION * 0.18) : 0) : 1;
       if (!av.online) al *= 0.35;
+      if (playing && dead[uid]) al = ghost ? al * 0.5 : 0; // 유령은 유령끼리만 보여요
       av.setAlpha(al); if (al > 0) visible++;
+      av.label.setColor(mates.includes(uid) ? '#ff6b6b' : '#ffffff');
+      av.dist = d;
     }
     this.visibleCount = visible;
     this.updateFog(fog);
+    for (const b of this.bodies.values()) {
+      const d = Math.hypot(b.x - this.x, b.y - this.y);
+      b.root.setVisible(!fog || d < VISION);
+    }
 
-    // 가까운 미션 찾기
-    let near = null;
-    if (a.phase === 'playing') {
+    // 가까운 미션·킬 대상·시체·긴급 버튼 찾기
+    const near = { task: null, kill: null, body: null, table: false };
+    if (playing && !a.isFrozen()) {
       let best = USE_RANGE;
       for (const t of a.tasks) {
         if (t.done) continue;
         const s = TASK_SPOTS[t.id]; if (!s) continue;
         const d = Math.hypot(s.x - this.x, s.y - this.y);
-        if (d < best) { best = d; near = t.id; }
+        if (d < best) { best = d; near.task = t.id; }
+      }
+      if (!ghost) {
+        if (a.priv?.role === 'imp') {
+          let kb = KILL_RANGE;
+          for (const [uid, av] of this.avatars) {
+            if (dead[uid] || mates.includes(uid) || !a.game?.members?.[uid] || av.dist == null) continue;
+            if (!this.motions.get(uid)?.has || av.dist >= kb) continue;
+            kb = av.dist; near.kill = uid;
+          }
+        }
+        let bb = REPORT_RANGE;
+        for (const [uid, b] of this.bodies) { const d = Math.hypot(b.x - this.x, b.y - this.y); if (d < bb) { bb = d; near.body = uid; } }
+        near.table = Math.hypot(TABLE.x - this.x, TABLE.y - this.y) < EMERGENCY_RANGE;
       }
     }
-    a.setNearTask(near);
+    a.setNear(near);
     a.myRoom = roomAt(this.x, this.y)?.id || null;
+  }
+
+  // 쓰러진 대원 (어지러운 별이 도는 모습)
+  setBodies(obj) {
+    obj = obj || {};
+    for (const [uid, b] of this.bodies) if (!obj[uid]) { b.root.destroy(); this.bodies.delete(uid); }
+    for (const [uid, v] of Object.entries(obj)) {
+      if (this.bodies.has(uid)) continue;
+      const p = decodePos(v), pl = this.app.players[uid]; if (!p || !pl) continue;
+      const root = this.add.container(p.x, p.y).setDepth(p.y - 5);
+      root.add(this.add.ellipse(0, 22, 76, 18, 0x000000, 0.3));
+      root.add(this.add.image(0, 10, `av_${pl.c}_0`).setScale(0.5).setRotation(-Math.PI / 2).setTint(0xcccccc));
+      const stars = this.add.container(-4, -18);
+      for (let i = 0; i < 3; i++) stars.add(this.add.star(Math.cos(i * 2.09) * 18, Math.sin(i * 2.09) * 7, 5, 4, 9, 0xffe14d).setStrokeStyle(2, 0x1a1018));
+      root.add(stars);
+      this.tweens.add({ targets: stars, angle: 360, duration: 2400, repeat: -1 });
+      this.bodies.set(uid, { root, x: p.x, y: p.y });
+    }
   }
 
   makeFog() {

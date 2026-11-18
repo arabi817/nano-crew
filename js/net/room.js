@@ -15,6 +15,12 @@ export const P = {
   pos: c => `rooms/${c}/pos`,
   done: c => `rooms/${c}/done`,
   doneOf: (c, u) => `rooms/${c}/done/${u}`,
+  game: c => `rooms/${c}/game`,          // 호스트가 쓰는 공개 게임 상태 (죽음, 시체, 회의, 승리)
+  priv: c => `rooms/${c}/private`,
+  privOf: (c, u) => `rooms/${c}/private/${u}`,
+  req: c => `rooms/${c}/req`,            // 학생 → 호스트 요청 (킬, 신고, 긴급 회의)
+  reqOf: (c, u) => `rooms/${c}/req/${u}`,
+  meet: (c, m) => `rooms/${c}/meet/${m}`, // 회의별 OX 답, 투표권, 채팅, 투표
 };
 
 export async function createRoom(db) {

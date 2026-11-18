@@ -36,4 +36,31 @@ export const CONTENT = {
       stay: [1, 2],     // 이미 제자리에 있어서 건드리면 안 되는 입자 수
     },
   },
+
+  // ── 회의 OX 퀴즈 (임시 10개, 3단계에서 40개로 늘려 검토받아요) ──
+  //  q: 문제, a: 정답('O' 또는 'X'), unit: 단원
+  ox: [
+    { q: '우심실은 폐동맥과 연결되어 있다.', a: 'O', unit: 'circ' },
+    { q: '좌심실은 대정맥과 연결되어 있다.', a: 'X', unit: 'circ' },
+    { q: '폐정맥은 좌심방과 연결되어 있다.', a: 'O', unit: 'circ' },
+    { q: '온몸순환은 좌심실에서 시작하여 우심방으로 돌아온다.', a: 'O', unit: 'circ' },
+    { q: '폐순환에서 혈액은 우심실 → 폐동맥 → 폐의 모세혈관 → 폐정맥 → 좌심방 순서로 흐른다.', a: 'O', unit: 'circ' },
+    { q: '폐포 안의 산소는 모세혈관 쪽으로 이동한다.', a: 'O', unit: 'resp' },
+    { q: '모세혈관 안의 이산화탄소는 폐포 쪽으로 이동한다.', a: 'O', unit: 'resp' },
+    { q: '이산화탄소는 폐포에서 모세혈관 쪽으로 이동한다.', a: 'X', unit: 'resp' },
+    { q: '들숨일 때 가로막은 위로 올라간다.', a: 'X', unit: 'resp' },
+    { q: '들숨일 때 흉강의 부피는 커지고 압력은 낮아진다.', a: 'O', unit: 'resp' },
+  ],
+
+  // ── 회의 토론 문장 틀 ([ ] 칸은 학생이 골라요) ──
+  //  place: 장소, person: 사람, mission: 미션
+  chat: [
+    { id: 'saw', text: '[장소]에서 [사람]을(를) 봤어요', slots: ['place', 'person'] },
+    { id: 'doing', text: '저는 [미션] 하고 있었어요', slots: ['mission'] },
+    { id: 'sus', text: '[사람] 의심돼요', slots: ['person'] },
+    { id: 'safe', text: '[사람]은(는) 믿을 수 있어요', slots: ['person'] },
+    { id: 'found', text: '[장소]에서 쓰러진 대원을 발견했어요', slots: ['place'] },
+    { id: 'notme', text: '저는 아니에요', slots: [] },
+    { id: 'skip', text: '건너뛰어요', slots: [] },
+  ],
 };

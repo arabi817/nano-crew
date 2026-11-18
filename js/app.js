@@ -7,11 +7,14 @@ import { avatarSVG } from './player/avatarSvg.js';
 import { WorldScene } from './scenes/WorldScene.js';
 import { Hud } from './ui/hud.js';
 import { Joystick } from './ui/joystick.js';
-import { openPanel } from './ui/panel.js';
+import { openPanel, openSheet } from './ui/panel.js';
 import { MISSIONS, STAGE1_TASKS } from './missions/index.js';
 import { TASK_SPOTS, spawnPoint, lobbySpawn, roomAt, roomName } from './map/map.js';
 import { sfx, unlockAudio } from './common/sfx.js';
 import { $, esc } from './common/util.js';
+import { settingsOf } from './common/rules.js';
+import { MeetingUI } from './game/meeting.js';
+import { showRoleReveal, showKilled, showEnd, hideEnd, setPaused, fakeTask } from './game/screens.js';
 
 const app = window.NC = {
   db: null, code: null, uid: null, players: {}, myPlayer: null, phase: 'lobby',
@@ -122,9 +125,14 @@ async function enterGame(rejoin) {
   app.startPos = decodePos(pos?.enc);
   localStorage.setItem('nc_last_room', code);
 
+  app.meta = meta;
+  [app.game, app.priv] = await Promise.all([db.get(P.game(code)), db.get(P.privOf(code, uid))]);
+  app.game = app.game || {};
+
   show('page-game');
   app.hud = new Hud(app);
   app.joy = new Joystick($('#joy-zone'));
+  app.hud.setPhase(app.phase === 'ended' ? 'playing' : app.phase);
   refreshTasks();
   try { await document.fonts.load('20px Jua'); } catch { }
   startPhaser();
@@ -144,12 +152,10 @@ async function enterGame(rejoin) {
     app.myPlayer = app.players[uid]; app.myColor = COLORS[app.myPlayer.c].hex;
     app.scene?.syncPlayers(app.players);
     app.hud.setLobby(Object.values(app.players).filter(p => p.on !== false).length);
-    updateProgress();
   });
-  db.onValue(P.done(code), v => {
-    app.allDone = v || {}; app.done = app.allDone[uid] || {};
-    refreshTasks(); updateProgress();
-  });
+  db.onValue(P.done(code), v => { app.allDone = v || {}; app.done = app.allDone[uid] || {}; refreshTasks(); });
+  db.onValue(P.privOf(code, uid), v => { app.priv = v; refreshTasks(); maybeReveal(); });
+  db.onValue(P.game(code), onGame);
   if (rejoin) app.hud.toast('다시 들어왔어요! 같은 캐릭터로 이어서 해요');
   if (new URLSearchParams(location.search).has('debug')) startDebug();
 }
@@ -158,63 +164,150 @@ function startPhaser() {
   const el = $('#phaser');
   const dpr = app.dpr = Math.min(window.devicePixelRatio || 1, 2);
   const W = el.clientWidth, H = el.clientHeight;
-  app.game = new Phaser.Game({
+  app.game_ = new Phaser.Game({
     type: Phaser.AUTO, parent: el, width: W * dpr, height: H * dpr, backgroundColor: '#140c12',
     scale: { mode: Phaser.Scale.NONE, zoom: 1 / dpr },
     input: { keyboard: true, mouse: false, touch: false }, banner: false,
   });
-  app.game.scene.add('world', WorldScene, true, { app }); // 장면이 켜지면 app.scene이 채워져요
-  addEventListener('resize', () => app.game.scale.resize(el.clientWidth * dpr, el.clientHeight * dpr));
+  app.game_.scene.add('world', WorldScene, true, { app }); // 장면이 켜지면 app.scene이 채워져요
+  addEventListener('resize', () => app.game_.scale.resize(el.clientWidth * dpr, el.clientHeight * dpr));
 }
 
-app.onSceneReady = () => { refreshTasks(); };
+app.onSceneReady = () => { refreshTasks(); app.scene.setBodies(app.game.bodies); maybeReveal(); };
+
+// ───── 상태 바뀜 처리 ─────
+function spawnTeleport() {
+  if (!app.scene?.ready) return;
+  const p = defaultStart('playing'); app.scene.teleport(p.x, p.y);
+}
 
 function onMeta(m) {
   if (!m) return ended();
+  app.meta = m;
+  setPaused(!!m.paused && m.state === 'playing');
   const prev = app.phase; app.phase = m.state;
   if (prev === m.state) return;
-  app.hud.setPhase(m.state); closeOverlays(); refreshTasks();
-  if (!app.scene?.ready) return;
-  if (m.state === 'playing') {
-    const p = defaultStart('playing'); app.scene.teleport(p.x, p.y);
-    sfx('start'); app.hud.toast('탐사 시작! 미션을 해결하세요');
-  } else {
-    const p = lobbySpawn(); app.scene.teleport(p.x, p.y);
+  app.hud.setPhase(m.state === 'ended' ? 'playing' : m.state); refreshTasks();
+  if (m.state !== 'ended') closeOverlays();
+  if (m.state === 'lobby') {
+    hideEnd(); app.meeting?.close(); app.meeting = null; app.priv = null; app.wasDead = false;
+    if (app.scene?.ready) { const p = lobbySpawn(); app.scene.teleport(p.x, p.y); }
     app.hud.toast('대기실로 돌아왔어요');
+  } else if (m.state === 'playing') {
+    spawnTeleport(); sfx('start'); maybeReveal();
   }
 }
 
-function closeOverlays() { app.panel?.close(); app.minimap?.close(); app.joy?.reset(); }
+function onGame(g) {
+  const prev = app.game || {};
+  app.game = g = g || {};
+  const uid = app.uid;
+  app.scene?.setBodies?.(g.bodies);
+  // 내가 쓰러짐
+  if (g.dead?.[uid] && !app.wasDead) {
+    app.wasDead = true;
+    if (!g.ejected?.[uid] && app.phase === 'playing') { closeOverlays(); sfx('kill'); showKilled(); }
+  }
+  if (!g.dead?.[uid]) app.wasDead = false;
+  // 회의
+  if (g.meeting) {
+    if (!app.meeting) { closeOverlays(); app.meeting = new MeetingUI(app); }
+    app.meeting.update(g.meeting);
+  } else if (app.meeting) {
+    app.meeting.close(); app.meeting = null;
+    if (app.phase === 'playing') { spawnTeleport(); app.hud.toast(app.amDead() ? '유령으로 미션을 계속하세요' : '회의가 끝났어요. 다시 탐사 시작!'); }
+  }
+  // 진행 바
+  const st = settingsOf(app.meta);
+  app.hud.showProgress(st.progress !== 'hidden');
+  if (g.progress) app.hud.setProgress(g.progress.t ? g.progress.d / g.progress.t : 0);
+  // 승리
+  if (g.winner && !prev.winner) {
+    app.meeting?.close(); app.meeting = null; closeOverlays();
+    const myWin = (g.winner.team === 'imp') === (app.priv?.role === 'imp');
+    sfx(myWin ? 'win' : 'lose');
+  }
+  if (g.winner && g.reveal) showEnd({ winner: g.winner, reveal: g.reveal, players: app.players, myId: uid, myTasks: app.priv?.tasks, done: app.done });
+  refreshTasks();
+}
+
+function maybeReveal() {
+  const m = app.meta, pv = app.priv;
+  if (!m || m.state !== 'playing' || !pv?.role || !app.scene?.ready || app.revealing) return;
+  const key = `nc_rv_${app.code}_${m.startedAt}`;
+  if (sessionStorage.getItem(key)) return;
+  const left = (app.game.revealUntil || 0) - app.db.now();
+  if (left < 800) { sessionStorage.setItem(key, 1); return; }
+  sessionStorage.setItem(key, 1);
+  app.revealing = true;
+  showRoleReveal({ role: pv.role, mates: pv.mates || [], players: app.players, me: app.myPlayer, impCount: app.game.impCount, ms: left })
+    .then(() => { app.revealing = false; });
+}
+
+function closeOverlays() { app.panel?.close(); app.minimap?.close(); app.sheet?.close(); app.joy?.reset(); }
 let leftShown = false;
-function kicked() { if (leftShown) return; leftShown = true; closeOverlays(); app.game?.destroy(true); notice('방에서 나왔어요', '선생님이 방에서 내보냈어요. 다시 들어가려면 방 코드를 넣어 주세요.'); }
-function ended() { if (leftShown) return; leftShown = true; closeOverlays(); app.game?.destroy(true); notice('판이 끝났어요', '선생님이 판을 끝냈어요. 수고했어요!'); }
+function kicked() { if (leftShown) return; leftShown = true; closeOverlays(); app.meeting?.close(); app.game_?.destroy(true); notice('방에서 나왔어요', '선생님이 방에서 내보냈어요. 다시 들어가려면 방 코드를 넣어 주세요.'); }
+function ended() { if (leftShown) return; leftShown = true; closeOverlays(); app.meeting?.close(); hideEnd(); app.game_?.destroy(true); notice('판이 끝났어요', '선생님이 판을 끝냈어요. 수고했어요!'); }
 
 function refreshTasks() {
-  app.tasks = STAGE1_TASKS.map(id => ({ id, title: MISSIONS[id].title, room: roomName(TASK_SPOTS[id].room), done: !!app.done[id] }));
-  app.hud?.setTasks(app.tasks);
-  if (app.scene?.ready) app.tasks.forEach(t => app.scene.setSpotPending(t.id, app.phase === 'playing' && !t.done));
+  const list = app.priv?.tasks || (app.phase === 'lobby' ? [] : STAGE1_TASKS);
+  const fake = app.priv?.role === 'imp';
+  app.tasks = list.map(id => ({ id, title: MISSIONS[id].title, room: roomName(TASK_SPOTS[id].room), done: !fake && !!app.done[id] }));
+  app.hud?.setTasks(app.tasks, { fake, dead: app.amDead() });
+  app.hud?.setRole(app.priv?.role, app.amDead());
+  if (app.scene?.ready) app.tasks.forEach(t => app.scene.setSpotPending(t.id, app.phase === 'playing' && !t.done && !fake));
 }
 
-function updateProgress() {
-  // 1단계: 봇을 뺀 실제 참가자 기준 (2단계에서 호스트가 계산하도록 바꿈)
-  const real = Object.keys(app.players).filter(id => !id.startsWith('bot'));
-  const total = real.length * STAGE1_TASKS.length;
-  let n = 0; real.forEach(id => { n += Object.keys(app.allDone[id] || {}).length; });
-  app.hud?.setProgress(total ? n / total : 0);
-}
+// ───── 버튼 ─────
+app.amDead = () => !!app.game?.dead?.[app.uid];
+app.privIds = () => app.game?.members || app.players;
+app.isFrozen = () => !!app.panel || !!app.minimap || !!app.sheet || !$('#notice').hidden || !!app.meeting
+  || !!app.revealing || !!app.meta?.paused || app.phase === 'ended' || !!app.faking;
+app.setNear = n => {
+  app.near = n;
+  const canUse = !!n.task || (n.table && !app.game?.emerg?.[app.uid]);
+  app.hud?.setUse(canUse);
+  app.hud?.setReport(!!n.body);
+  app.hud?.setKill(n.kill, app.priv?.killReadyAt ? app.priv.killReadyAt - app.db.now() : 0);
+};
+function blocked() { return app.phase !== 'playing' || app.isFrozen() || app.db.now() < (app.game?.revealUntil || 0); }
+function request(t, target = '') { app.db.set(P.reqOf(app.code, app.uid), { t, target, n: Date.now() }); }
 
-app.isFrozen = () => !!app.panel || !!app.minimap || !$('#notice').hidden;
-app.setNearTask = id => { if (id === app.nearTask) return; app.nearTask = id; app.hud?.setUse(!!id); };
 app.useAction = () => {
-  if (app.panel || app.phase !== 'playing') return;
-  const id = app.nearTask; if (!id || app.done[id]) return;
-  const M = MISSIONS[id];
-  app.joy.reset();
-  app.panel = openPanel({
-    title: M.title, sub: M.sub, mount: M.mount,
-    onSuccess: () => { app.db.set(P.doneOf(app.code, app.uid) + '/' + id, 1); app.hud.toast(`${M.title} 완료!`); },
-    onClose: () => { app.panel = null; },
-  });
+  if (blocked() || !app.near) return;
+  const id = app.near.task;
+  if (id) {
+    const M = MISSIONS[id];
+    app.joy.reset();
+    if (app.priv?.role === 'imp' && !app.amDead()) { app.faking = true; fakeTask(M.title).then(() => { app.faking = false; }); return; }
+    app.panel = openPanel({
+      title: M.title, sub: M.sub, mount: M.mount,
+      onSuccess: () => { app.db.set(P.doneOf(app.code, app.uid) + '/' + id, 1); app.hud.toast(`${M.title} 완료!`); },
+      onClose: () => { app.panel = null; },
+    });
+    return;
+  }
+  if (app.near.table && !app.amDead() && !app.game?.emerg?.[app.uid]) {
+    app.joy.reset();
+    app.sheet = openSheet({
+      title: '긴급 회의',
+      html: `<p class="sheet-p">긴급 회의를 열까요? 한 판에 <b>한 번만</b> 열 수 있어요.</p><div class="sheet-btns"><button class="btn btn-red press" data-y>회의 열기</button><button class="btn btn-gray press" data-n>취소</button></div>`,
+      onMount: (ov, close) => {
+        ov.querySelector('[data-y]').onclick = () => { request('emergency'); close(); };
+        ov.querySelector('[data-n]').onclick = close;
+      },
+      onClose: () => { app.sheet = null; },
+    });
+  }
+};
+app.killAction = () => {
+  if (blocked() || app.priv?.role !== 'imp' || app.amDead() || !app.near?.kill) return;
+  if ((app.priv.killReadyAt || 0) > app.db.now()) return;
+  request('kill', app.near.kill); sfx('kill');
+};
+app.reportAction = () => {
+  if (blocked() || app.amDead() || !app.near?.body) return;
+  request('report', app.near.body);
 };
 
 function startDebug() {
@@ -224,7 +317,7 @@ function startDebug() {
     const s = app.db.stats, now = performance.now(), dt = (now - lt) / 1000;
     const inMs = (s.inMsgs - last.inMsgs) / dt, inKB = (s.inBytes - last.inBytes) / dt / 1024;
     const outMs = (s.outMsgs - last.outMsgs) / dt;
-    box.innerHTML = `${esc(app.db.mode)} · FPS ${Math.round(app.game?.loop.actualFps || 0)}<br>
+    box.innerHTML = `${esc(app.db.mode)} · FPS ${Math.round(app.game_?.loop.actualFps || 0)}<br>
       받음 ${inMs.toFixed(0)}회/초 · ${inKB.toFixed(1)}KB/초(추정)<br>보냄 ${outMs.toFixed(1)}회/초 · 보이는 친구 ${app.scene?.visibleCount ?? 0}`;
     last = { ...s }; lt = now;
   }, 1000);

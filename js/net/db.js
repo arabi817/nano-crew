@@ -118,6 +118,7 @@ class LocalDB {
     return this._write(Object.entries(obj).map(([k, v]) => [base + '/' + segs(k).join('/'), v]));
   }
   remove(p) { return this.set(p, null); }
+  push(p, v) { const k = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); return this.set(`${p}/${k}`, v); }
   get(p) { return Promise.resolve(clone(getIn(this.tree, segs(p)))); }
   onValue(p, cb) {
     const s = { kind: 'v', path: segs(p), cb }; this.subs.add(s); this._eval(s, null, true);
@@ -167,6 +168,7 @@ class FirebaseDB {
   set(p, v) { this._out(v); return this.D.set(this.r(p), v); }
   update(p, o) { this._out(o); return this.D.update(this.r(p), o); }
   remove(p) { this._out(null); return this.D.remove(this.r(p)); }
+  push(p, v) { this._out(v); return this.D.push(this.r(p), v); }
   async get(p) { const s = await this.D.get(this.r(p)); this._in(s.val()); return s.val(); }
   onValue(p, cb) {
     return this.D.onValue(this.r(p), s => { this._in(s.val()); cb(s.val()); }, e => console.warn('읽기 거부:', p, e.message));

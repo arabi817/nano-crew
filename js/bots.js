@@ -7,6 +7,7 @@ import { COLORS, MAX_NUM, nickKey } from './common/colors.js';
 import { ROOMS, LOBBY, randomPointIn, spawnPoint, route, nearestRoomId, zoneAt, nearZones } from './map/map.js';
 import { NET } from '../config.js';
 import { $ } from './common/util.js';
+import { CONTENT } from '../data/content.js';
 
 const SPEED = 270;
 let db, code, bots = [], phase = 'lobby', players = {}, timer = 0, unsubs = [];
@@ -27,6 +28,7 @@ class Bot {
     }
   }
   step(dt, now) {
+    if (game.meeting || phase === 'ended') return; // 회의 중엔 멈춤
     if (!this.path.length) {
       this.wait -= dt; if (this.wait <= 0) this.plan();
       this.sender.tick(now, this.x, this.y, this.face, false); return;
@@ -73,8 +75,9 @@ async function start() {
   placeAll();
   unsubs.push(db.onValue(P.meta(code), m => {
     if (!m) return stop(true);
-    if (m.state !== phase) { phase = m.state; placeAll(); }
+    if (m.state !== phase) { phase = m.state; if (phase !== 'ended') placeAll(); }
   }));
+  unsubs.push(db.onValue(P.game(code), g => onBotGame(g || {})));
   // 창이 뒤에 가려져도 느려지지 않게 '워커' 시계를 씀 (일반 타이머는 숨은 탭에서 1초에 1번으로 느려짐)
   let last = performance.now();
   const tick = () => { const now = performance.now(), dt = Math.min(200, now - last); last = now; bots.forEach(b => b.step(dt, now)); };
@@ -83,6 +86,34 @@ async function start() {
     w.onmessage = tick; timer = { stop: () => w.terminate() };
   } catch { const id = setInterval(tick, 50); timer = { stop: () => clearInterval(id) }; }
   startStats();
+}
+
+// ── 회의에서 봇도 OX에 답하고(70% 정답) 투표해요 ──
+let game = {}, handled = '';
+function onBotGame(g) {
+  const prevMeet = game.meeting; game = g;
+  const m = g.meeting;
+  if (!m && prevMeet) placeAll(); // 회의가 끝나면 회의실로
+  if (!m) return;
+  const key = `${m.id}:${m.phase}`; if (key === handled) return; handled = key;
+  const alive = bots.filter(b => !g.dead?.[b.id] && g.members?.[b.id]);
+  const base = P.meet(code, m.id);
+  if (m.phase === 'ox') {
+    const ans = CONTENT.ox[m.q.i]?.a, wait = Math.max(0, m.startAt - db.now());
+    alive.forEach(b => setTimeout(() => {
+      const a = Math.random() < 0.7 ? ans : (ans === 'O' ? 'X' : 'O');
+      db.set(`${base}/ans/${b.id}`, a);
+    }, wait + 1000 + Math.random() * 6000));
+  }
+  if (m.phase === 'vote') {
+    db.get(`${base}/right`).then(right => {
+      const targets = Object.keys(g.members || {}).filter(id => !g.dead?.[id]);
+      alive.filter(b => right?.[b.id]).forEach(b => setTimeout(() => {
+        const v = Math.random() < 0.4 ? 'skip' : targets[Math.floor(Math.random() * targets.length)];
+        db.set(`${base}/vote/${b.id}`, v);
+      }, 2000 + Math.random() * 15000));
+    });
+  }
 }
 
 function placeAll() {

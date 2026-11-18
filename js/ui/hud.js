@@ -15,18 +15,34 @@ export class Hud {
     $('#btn-report').innerHTML = ICON.report + '<span>신고</span>';
     $('#btn-map').innerHTML = ICON.map + '<span>지도</span>';
     $('#btn-hat').innerHTML = ICON.hat + '<span>모자</span>';
+    $('#btn-kill').innerHTML = ICON.kill + '<span>킬</span><b class="cd"></b>';
     $('#btn-use').onclick = () => app.useAction();
+    $('#btn-report').onclick = () => app.reportAction();
+    $('#btn-kill').onclick = () => app.killAction();
     $('#btn-map').onclick = () => { sfx('click'); openMinimap(app); };
     $('#btn-hat').onclick = () => { sfx('click'); this.openHats(); };
     this.setPhase(app.phase);
   }
   setPhase(ph) { document.body.dataset.phase = ph; }
-  setTasks(tasks) {
+  setTasks(tasks, { fake = false, dead = false } = {}) {
+    $('.tasks-head').innerHTML = fake ? '<span class="imp-head">임포스터</span><small> 가짜 미션 · 하는 척만</small>' : dead ? '미션 <small>유령도 할 수 있어요</small>' : '미션';
     $('#task-list').innerHTML = tasks.map(t =>
       `<li class="${t.done ? 'done' : ''}"><b>${esc(t.room)}</b> ${esc(t.title)}</li>`).join('');
   }
+  setRole(role, dead) {
+    document.body.dataset.role = role || '';
+    document.body.classList.toggle('ghost', !!dead);
+  }
+  showProgress(on) { document.querySelector('.pbar').style.visibility = on ? '' : 'hidden'; }
   setProgress(r) { $('#pbar-fill').style.width = Math.round(Math.max(0, Math.min(1, r)) * 100) + '%'; }
-  setUse(on) { const b = $('#btn-use'); b.disabled = !on; b.classList.toggle('ready', on); }
+  setUse(on) { const b = $('#btn-use'); if (b.disabled === !on) return; b.disabled = !on; b.classList.toggle('ready', on); }
+  setReport(on) { const b = $('#btn-report'); b.disabled = !on; b.classList.toggle('ready', on); }
+  setKill(target, cdMs) {
+    const b = $('#btn-kill'), cd = Math.ceil(cdMs / 1000);
+    b.querySelector('.cd').textContent = cd > 0 ? cd : '';
+    const on = !!target && cd <= 0;
+    b.disabled = !on; b.classList.toggle('ready', on);
+  }
   setLobby(n) { $('#lobby-banner').textContent = `선생님이 시작하기를 기다리는 중 · ${n}명 접속`; }
   setConn(ok) { $('#conn-banner').hidden = ok; }
   toast(text) {

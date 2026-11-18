@@ -26,6 +26,12 @@ export function sfx(name) {
     case 'bad': tone(190, 0.28, { type: 'square', vol: 0.08, to: 110 }); break;
     case 'tick': tone(880, 0.07, { type: 'triangle', vol: 0.12 }); break;
     case 'click': tone(520, 0.05, { type: 'square', vol: 0.05 }); break;
+    case 'alarm': for (let i = 0; i < 4; i++) { tone(880, 0.18, { type: 'square', vol: 0.07, at: i * 0.36 }); tone(660, 0.18, { type: 'square', vol: 0.07, at: i * 0.36 + 0.18 }); } break;
+    case 'kill': tone(300, 0.25, { type: 'sawtooth', vol: 0.08, to: 80 }); break;
+    case 'vote': tone(740, 0.08, { type: 'triangle' }); tone(980, 0.1, { type: 'triangle', at: 0.07 }); break;
+    case 'eject': tone(500, 1.2, { type: 'sine', vol: 0.12, to: 120 }); break;
+    case 'win': [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.25, { type: 'triangle', at: i * 0.16 })); break;
+    case 'lose': [392, 330, 262].forEach((f, i) => tone(f, 0.35, { type: 'triangle', at: i * 0.22 })); break;
     case 'start': tone(392, 0.15, { type: 'triangle' }); tone(523, 0.15, { type: 'triangle', at: 0.14 }); tone(784, 0.3, { type: 'triangle', at: 0.28 }); break;
   }
 }

@@ -3,7 +3,52 @@ body.host { overflow: auto; touch-action: auto; }
 .view { display: none; min-height: 100vh; }
 body[data-view="start"] .view-start { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; }
 body[data-view="room"] .view-room { display: flex; flex-direction: column; }
-body.host[data-phase="lobby"] .only-play, body.host[data-phase="playing"] .only-lobby { display: none !important; }
+/* 화면 전환: body[data-hv]에 맞는 칸만 보여요 */
+body[data-hv="lobby"] :is(.hv-play, .hv-meet, .hv-ended):not(.hv-lobby),
+body[data-hv="play"] :is(.hv-lobby, .hv-meet, .hv-ended):not(.hv-play),
+body[data-hv="meet"] :is(.hv-lobby, .hv-play, .hv-ended):not(.hv-meet),
+body[data-hv="ended"] :is(.hv-lobby, .hv-play, .hv-meet):not(.hv-ended) { display: none !important; }
+.h-mute { font-size: 18px !important; padding: 6px 14px !important; }
+.bp-note { font-size: 20px; font-weight: 700; opacity: .8; }
+
+/* 회의 (TV) */
+.meet-view { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 16px 26px; min-height: 0; position: relative; background: #2a3138; }
+.hm-top { display: flex; align-items: center; gap: 20px; }
+.hm-title { font-family: var(--title); font-size: 52px; color: var(--yellow); -webkit-text-stroke: 9px var(--ink); paint-order: stroke fill; }
+.hm-phase { font-family: var(--title); font-size: 34px; background: var(--metal); border: 5px solid var(--ink); border-radius: 12px; padding: 4px 22px; }
+.hm-time { margin-left: auto; font-family: var(--title); font-size: 72px; -webkit-text-stroke: 10px var(--ink); paint-order: stroke fill; }
+.hm-who { font-size: 26px; font-weight: 900; }
+.hm-ox { text-align: center; padding: 18px 26px; }
+.hox-q { font-family: var(--title); font-size: clamp(34px, 3.4vw, 58px); }
+.hox-q.small { font-size: 28px; } .hox-q b { color: var(--yellow); margin-left: 12px; }
+.hox-sub { font-size: 22px; font-weight: 700; margin-top: 6px; }
+.hm-body { flex: 1; display: grid; grid-template-columns: 1fr 30%; gap: 16px; min-height: 0; }
+.hm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; align-content: start; overflow: auto; padding-top: 10px; }
+.hm-card { position: relative; display: flex; align-items: center; gap: 4px; background: #e9edf0; color: var(--ink); border: 4px solid var(--ink); border-radius: 12px; padding: 2px 8px 2px 2px; font-family: var(--title); font-size: 22px; }
+.hm-card svg { flex: none; width: 46px; height: auto; }
+.hm-card.dead { background: #59646b; opacity: .55; }
+.hm-card.skip { justify-content: center; background: #9aa7ad; min-height: 60px; gap: 10px; }
+.hm-card .tag { position: absolute; top: -10px; right: -6px; font-style: normal; font-size: 15px; padding: 0 7px; border: 3px solid var(--ink); border-radius: 8px; background: #59646b; color: #fff; }
+.hm-card .tag.ok { background: var(--green); } .hm-card .tag.cnt { background: var(--red); font-size: 20px; }
+.hm-chat { overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 20px; font-weight: 700; }
+.hm-eject { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #070409; overflow: hidden; z-index: 5; }
+.hm-eject.on { display: flex; }
+.hm-eject .ej-text { font-size: 72px; } .hm-eject .ej-sub { font-size: 46px; } .hm-eject .ej-left { font-size: 30px; }
+
+/* 종료 (TV) */
+.end-view { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 26px; overflow: auto; }
+.end-view.crew { background: #16336f; } .end-view.imp { background: #5e0f1c; }
+.ev-big { font-family: var(--title); font-size: 110px; color: var(--yellow); -webkit-text-stroke: 12px var(--ink); paint-order: stroke fill; text-shadow: 0 10px 0 var(--ink); }
+.ev-reason { font-size: 30px; font-weight: 900; }
+.ev-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.ev-grid .end-p { width: 120px; } .ev-grid .end-p span { font-size: 20px; } .ev-grid .end-p small { font-size: 14px; }
+
+/* 참가자 창 */
+.people { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.pp { display: flex; align-items: center; gap: 6px; background: #39444c; border: 3px solid var(--ink); border-radius: 10px; padding: 2px 6px; font-family: var(--title); font-size: 18px; }
+.pp.dead { opacity: .5; }
+.pp svg { width: 36px; height: auto; }
+.r-kick-b { margin-left: auto; font-family: var(--title); font-size: 14px; background: var(--red); color: #fff; border: 3px solid var(--ink); border-radius: 8px; padding: 3px 8px; cursor: pointer; }
 .start-btns { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
 .btn.big { font-size: 34px; padding: 18px 40px; }
 

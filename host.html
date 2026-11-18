@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="css/host.css">
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
-<body class="host bg-body" data-view="start">
+<body class="host bg-body" data-view="start" data-hv="lobby">
 
 <div id="mode-badge" class="mode-badge" hidden>혼자 시험 모드</div>
 
@@ -30,11 +30,12 @@
   <header class="h-bar">
     <div class="h-title">나노 탐사대</div>
     <div class="h-phase" id="h-phase">대기 중</div>
+    <button id="btn-mute" class="btn btn-gray press h-mute">소리 켜짐</button>
     <div class="h-code">방 코드 <b id="h-code">----</b></div>
   </header>
 
   <!-- 대기 중 -->
-  <div class="lobby-grid only-lobby">
+  <div class="lobby-grid hv-lobby">
     <div class="qr-card metal">
       <canvas id="qr"></canvas>
       <div class="qr-local" id="qr-local" hidden>
@@ -51,23 +52,50 @@
   </div>
 
   <!-- 게임 중: 학생 위치는 절대 보여 주지 않아요 -->
-  <div class="play-view only-play">
-    <div class="big-progress metal">
+  <div class="play-view hv-play">
+    <div class="big-progress metal" id="bp-box">
       <div class="bp-label">전체 미션 진행</div>
       <div class="bp-track"><div id="bp-fill" class="bp-fill"></div></div>
       <div class="bp-num" id="bp-num">0%</div>
     </div>
+    <div class="bp-note" id="bp-note"></div>
     <div class="play-stats">
-      <div class="stat metal"><span>접속 중</span><b id="st-online">0</b></div>
-      <div class="stat metal"><span>남은 임포스터</span><b id="st-imp">-</b><small>2단계에서 연결</small></div>
+      <div class="stat metal"><span>살아 있는 대원</span><b id="st-alive">0</b></div>
+      <div class="stat metal"><span>남은 임포스터</span><b id="st-imp">-</b></div>
     </div>
     <div id="sabotage" class="sabotage" hidden></div>
   </div>
 
+  <!-- 회의 중 -->
+  <div class="meet-view hv-meet">
+    <div class="hm-top">
+      <div class="hm-title" id="hm-title"></div>
+      <div class="hm-phase" id="hm-phase"></div>
+      <div class="hm-time" id="hm-time"></div>
+    </div>
+    <div class="hm-who" id="hm-who"></div>
+    <div class="hm-ox metal" id="hm-ox"></div>
+    <div class="hm-body">
+      <div class="hm-grid" id="hm-grid"></div>
+      <div class="hm-chat metal-dark" id="hm-chat"></div>
+    </div>
+    <div class="hm-eject" id="hm-eject"></div>
+  </div>
+
+  <!-- 종료 후 -->
+  <div class="end-view hv-ended">
+    <div class="ev-big" id="ev-big"></div>
+    <div class="ev-reason" id="ev-reason"></div>
+    <div class="ev-grid" id="ev-grid"></div>
+  </div>
+
   <footer class="h-foot">
-    <button id="btn-start" class="btn btn-green press only-lobby">게임 시작</button>
-    <button id="btn-lobby" class="btn btn-gray press only-play">대기실로 되돌리기</button>
-    <button id="btn-bots" class="btn btn-gray press">봇 30명 붙이기 (시험용)</button>
+    <button id="btn-start" class="btn btn-green press hv-lobby">게임 시작</button>
+    <button id="btn-pause" class="btn btn-yellow press hv-play hv-meet">일시정지</button>
+    <button id="btn-force" class="btn btn-red press hv-play">강제 회의</button>
+    <button id="btn-people" class="btn btn-gray press hv-play hv-meet">참가자 · 내보내기</button>
+    <button id="btn-again" class="btn btn-green press hv-ended">새 판 (대기실로)</button>
+    <button id="btn-bots" class="btn btn-gray press hv-lobby">봇 30명 붙이기 (시험용)</button>
     <button id="btn-end" class="btn btn-red press">판 종료 (방 삭제)</button>
   </footer>
 </section>

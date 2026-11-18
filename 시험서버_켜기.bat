@@ -6,5 +6,5 @@ echo  Nano Crew test server: http://localhost:8780
 echo  Close this window to stop the server.
 echo.
 start "" "http://localhost:8780/host.html"
-python -m http.server 8780
+python tools\devserver.py 8780 .
 pause
