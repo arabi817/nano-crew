@@ -41,14 +41,22 @@ export function drawMap(scene) {
   const anims = [];
   const base = gfx(scene, -1000);
   const areas = [...ROOMS, ...HALLS];
+  // 방 위쪽 뒷벽 (우주선 벽 패널). 벽 자리까지 검은 테두리를 넓혀요.
+  base.fillStyle(INK, 1); ROOMS.forEach(r => base.fillRoundedRect(r.x - 36, r.y - 36 - WALL, r.w + 72, r.h + 72 + WALL, 22));
   base.fillStyle(INK, 1); areas.forEach(a => base.fillRoundedRect(a.x - 36, a.y - 36, a.w + 72, a.h + 72, 22));
   base.fillStyle(0x4a3346, 1); areas.forEach(a => base.fillRoundedRect(a.x - 28, a.y - 28, a.w + 56, a.h + 56, 16));
   base.fillStyle(0x634660, 1); areas.forEach(a => base.fillRect(a.x - 10, a.y - 10, a.w + 20, a.h + 20));
+  drawWalls(scene);
+  const hallG = gfx(scene, -996);
   HALLS.forEach(h => {
     base.fillStyle(0x6b5a69, 1); base.fillRect(h.x, h.y, h.w, h.h);
-    base.fillStyle(0xe8c860, 0.35);
-    if (h.w > h.h) for (let x = h.x + 10; x < h.x + h.w - 20; x += 60) base.fillRect(x, h.y + h.h / 2 - 4, 30, 8);
-    else for (let y = h.y + 10; y < h.y + h.h - 20; y += 60) base.fillRect(h.x + h.w / 2 - 4, y, 8, 30);
+    useArt(scene, 'rooms/hall.jpg', key => scene.add.tileSprite(h.x, h.y, h.w, h.h, key).setOrigin(0).setTileScale(0.5).setDepth(-997));
+    hallG.lineStyle(6, INK, 1);   // 벽을 뚫고 지나가는 복도 양옆 선
+    if (h.w > h.h) { hallG.lineBetween(h.x, h.y, h.x + h.w, h.y); hallG.lineBetween(h.x, h.y + h.h, h.x + h.w, h.y + h.h); }
+    else { hallG.lineBetween(h.x, h.y, h.x, h.y + h.h); hallG.lineBetween(h.x + h.w, h.y, h.x + h.w, h.y + h.h); }
+    hallG.fillStyle(0xe8c860, 0.45);
+    if (h.w > h.h) for (let x = h.x + 10; x < h.x + h.w - 20; x += 60) hallG.fillRect(x, h.y + h.h / 2 - 4, 30, 8);
+    else for (let y = h.y + 10; y < h.y + h.h - 20; y += 60) hallG.fillRect(h.x + h.w / 2 - 4, y, 8, 30);
   });
   ROOMS.forEach(r => {
     base.fillStyle(r.floor, 1); base.fillRect(r.x, r.y, r.w, r.h);
@@ -129,6 +137,35 @@ export function drawMap(scene) {
     }
   });
   return { spots, sabSpots, setClot: setClotRoom };
+}
+
+// ───── 방 뒷벽 ─────
+const WALL = 96;   // 벽 높이 (방 위쪽 바깥, 걸을 수 없는 곳)
+function drawWalls(scene) {
+  const g = gfx(scene, -998), edge = gfx(scene, -996), art = hasArt('rooms/wall.jpg');
+  ROOMS.forEach(r => {
+    const y = r.y - WALL;
+    // 위에서 들어오는 복도 자리는 비우고 남은 구간마다 벽을 그려요
+    const gaps = HALLS.filter(h => h.y + h.h === r.y).map(h => [h.x, h.x + h.w]).sort((p, q) => p[0] - q[0]);
+    const segs = []; let x0 = r.x;
+    for (const [a, b] of gaps) { if (a > x0) segs.push([x0, a]); x0 = Math.max(x0, b); }
+    if (x0 < r.x + r.w) segs.push([x0, r.x + r.w]);
+    for (const [sx, ex] of segs) {
+      const w = ex - sx;
+      if (art) useArt(scene, 'rooms/wall.jpg', key => scene.add.tileSprite(sx, y, w, WALL, key).setOrigin(0)
+        .setTileScale(WALL / scene.textures.get(key).getSourceImage().height).setTilePosition(sx, 0).setDepth(-998));
+      else {   // 코드 벽: 금속 패널 + 관 + 작은 불빛
+        g.fillStyle(0x4a3346, 1); g.fillRect(sx, y, w, WALL);
+        g.fillStyle(0x634660, 1); g.fillRect(sx, y + 8, w, WALL - 26);
+        g.lineStyle(4, INK, 0.8);
+        for (let x = sx + 120; x < ex; x += 120) g.lineBetween(x, y + 8, x, y + WALL - 18);
+        g.fillStyle(0x7d6079, 1); g.fillRect(sx, y + 38, w, 12); g.lineStyle(3, INK, 1); g.strokeRect(sx, y + 38, w, 12);
+        for (let x = sx + 60; x < ex - 20; x += 240) { g.fillStyle((x - r.x) % 480 < 240 ? 0x5fe0c8 : 0xffcc33, 1); g.fillRect(x, y + 18, 14, 10); }
+      }
+      edge.fillStyle(INK, 1); edge.fillRect(sx, r.y - 10, w, 10);        // 벽과 바닥 사이 선
+      edge.fillStyle(0x000000, 0.18); edge.fillRect(sx, r.y, w, 20);     // 바닥에 지는 벽 그림자
+    }
+  });
 }
 
 // ───── 방마다 소품 ─────
@@ -273,7 +310,7 @@ const PROPS = {
     ends.forEach((e, k) => {
       const c = scene.add.container(e.x, e.y).setDepth(-780);
       const cl = scene.add.graphics();
-      const offs = art(scene, 'props/alveoli.png', 0, 0, 130, 130, { into: c, rot: k * 0.9 }) ? [] : [[0, 0], [-30, -18], [30, -18], [-36, 18], [36, 18], [0, 34], [0, -36]];
+      const offs = art(scene, 'props/alveoli.png', 0, 0, 130, 130, { into: c, rot: Math.atan2(top.y - e.y, top.x - e.x) + Math.PI / 2 }) ? [] : [[0, 0], [-30, -18], [30, -18], [-36, 18], [36, 18], [0, 34], [0, -36]];
       offs.forEach(([ox, oy]) => { cl.fillStyle(INK, 1); cl.fillCircle(ox, oy, 25); });
       offs.forEach(([ox, oy]) => { cl.fillStyle(0xf2a6b8, 1); cl.fillCircle(ox, oy, 19); cl.fillStyle(0xffffff, 0.5); cl.fillCircle(ox - 6, oy - 6, 5); });
       c.add(cl);

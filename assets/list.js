@@ -1,8 +1,8 @@
-// 지금 assets 폴더에 '들어 있는' 그림 목록이에요.
+// 지금 assets 폴더에 '들어 있는' 그림 목록이에요. (tools/art/update_list.py가 자동으로 만들어요)
 // 여기 적힌 그림만 불러오고, 목록에 없으면 지금의 코드 그림을 그대로 써요.
 // (없는 그림을 찾으러 가면 학생 패드에 오류가 쌓여서 목록으로 관리해요. 자세한 칸 설명은 ASSETS.md)
 export const LIST = [
-  // 캐릭터 몸통 12색 (tools/art/make_body.py로 만든 것)
+  // characters
   'characters/body_0.png',
   'characters/body_0_na.png',
   'characters/body_1.png',
@@ -27,4 +27,54 @@ export const LIST = [
   'characters/body_10_na.png',
   'characters/body_11.png',
   'characters/body_11_na.png',
+  'characters/foot_0.png',
+  'characters/foot_1.png',
+  'characters/foot_2.png',
+  'characters/foot_3.png',
+  'characters/foot_4.png',
+  'characters/foot_5.png',
+  'characters/foot_6.png',
+  'characters/foot_7.png',
+  'characters/foot_8.png',
+  'characters/foot_9.png',
+  'characters/foot_10.png',
+  'characters/foot_11.png',
+  'characters/hat1.png',
+  'characters/hat2.png',
+  'characters/hat3.png',
+  'characters/hat4.png',
+  'characters/hat5.png',
+  // rooms
+  'rooms/bladder.jpg',
+  'rooms/digest.jpg',
+  'rooms/hall.jpg',
+  'rooms/heart.jpg',
+  'rooms/kidney.jpg',
+  'rooms/large.jpg',
+  'rooms/lobby.jpg',
+  'rooms/lung.jpg',
+  'rooms/meeting.jpg',
+  'rooms/power.jpg',
+  'rooms/small.jpg',
+  'rooms/vessel.jpg',
+  'rooms/wall.jpg',
+  // props
+  'props/alveoli.png',
+  'props/colon.png',
+  'props/crate.png',
+  'props/glomerulus.png',
+  'props/heart.png',
+  'props/kidney.png',
+  'props/mitochondria.png',
+  'props/mouth.png',
+  'props/stomach.png',
+  'props/table.png',
+  // devices
+  'devices/clot.png',
+  'devices/sab_kidney.png',
+  'devices/sab_o2.png',
+  'devices/task.png',
+  'devices/vent.png',
+  // ui
+  'ui/logo.png',
 ];

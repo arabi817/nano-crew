@@ -1,5 +1,5 @@
 # 대원 몸통 그림 만들기: GPT가 그린 빨간 원본 1장 → 배경 지우기 → 12색 칠하기 → assets/characters/ 저장
-# 사용: python tools/art/make_body.py assets/_raw/body_master.png [바깥선추가px]   (Pillow, numpy 필요)
+# 사용: python tools/art/make_body.py assets/_raw/body_master.webp [바깥선추가px]   (Pillow, numpy 필요)
 import colorsys, re, sys
 from pathlib import Path
 import numpy as np
@@ -10,12 +10,26 @@ import os
 OUT = Path(os.environ.get('ART_OUT', ROOT / 'assets' / 'characters'))   # 시험용으로 다른 폴더에 만들 때 ART_OUT
 W, H = 320, 380                       # viewBox -40 -55 80 95 의 4배
 
+def raw_file(folder, name):
+    """원본은 png 또는 webp(용량 줄인 보관본) 중 있는 것"""
+    for ext in ('.png', '.webp'):
+        if (folder / f'{name}{ext}').exists(): return folder / f'{name}{ext}'
+    return None
+
 def colors():
     src = (ROOT / 'js/common/colors.js').read_text(encoding='utf-8')
     return re.findall(r"hex: '(#[0-9a-fA-F]{6})'", src)[:12]
 
 def remove_green(a):
+    """초록(#00ff00) 또는 마젠타(#ff00ff) 단색 배경 지우기 (왼쪽 위 구석 색으로 판단)."""
     r, g, b = [a[..., i].astype(int) for i in range(3)]
+    cr, cg, cb = a[4, 4, :3].astype(int)
+    if cr > 150 and cb > 150 and cg < 100:                       # 마젠타 배경 (초록 물건용)
+        key = (r > 140) & (b > 140) & (r > g + 60) & (b > g + 60)
+        a[key, 3] = 0
+        lo = np.minimum(r, b); spill = (a[..., 3] > 0) & (lo > g + 30)
+        a[spill, 0] = np.minimum(r, g + 30)[spill]; a[spill, 2] = np.minimum(b, g + 30)[spill]
+        return a
     key = (g > 140) & (g > r + 60) & (g > b + 60)
     a[key, 3] = 0
     spill = (a[..., 3] > 0) & (g > np.maximum(r, b))           # 외곽선 가장자리에 남은 초록 빼기
@@ -52,15 +66,16 @@ def place(img, m):
     ry = (bottom - top) * k / 2
     return can, (W / 2, BOTTOM - ry, ry)
 
-def recolor(a, target):
-    """빨간 칠(분홍 안테나 공 포함)만 골라 target 색으로, 밝고 어두운 정도는 그대로."""
+def recolor(a, target, base=None):
+    """빨간 칠(분홍 안테나 공 포함)만 골라 target 색으로, 밝고 어두운 정도는 그대로.
+    base: 기준 밝기 (발처럼 몸보다 어두운 그림은 몸의 기준 밝기를 넘겨서 더 어둡게 칠해요)"""
     out = a.copy()
     rgb = a[..., :3] / 255.0
     hls = np.apply_along_axis(lambda p: colorsys.rgb_to_hls(*p), 2, rgb)
     hsv_s = rgb.max(2) - rgb.min(2)
     h, l, s = hls[..., 0], hls[..., 1], hls[..., 2]
     paint = (a[..., 3] > 0) & ((h > 0.88) | (h < 0.045)) & (hsv_s > 0.18) & (rgb.max(2) > 0.3)
-    base = np.median(l[paint & (s > 0.6)])
+    if base is None: base = np.median(l[paint & (s > 0.6)])
     th, tl, ts = colorsys.rgb_to_hls(*[int(target[i:i + 2], 16) / 255 for i in (1, 3, 5)])
     ys, xs = np.nonzero(paint)
     for y, x in zip(ys, xs):

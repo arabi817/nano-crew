@@ -436,6 +436,7 @@ app.sabAction = () => {
 
 function startDebug() {
   const box = $('#debug'); box.hidden = false;
+  window.nanoApp = app; // 시험할 때 콘솔에서 살펴보기용
   let last = { ...app.db.stats }, lt = performance.now();
   setInterval(() => {
     const s = app.db.stats, now = performance.now(), dt = (now - lt) / 1000;
