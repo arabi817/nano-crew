@@ -1,6 +1,10 @@
 // 게임 화면 속 캐릭터 (Phaser). 걸을 때 통통 튀고, 발이 번갈아 움직여요.
 import { COLORS, HATS } from '../common/colors.js';
-import { bodySVG, footSVG } from './avatarSvg.js';
+import { bodySVG, footSVG, hatOnlySVG, bodyArt, footArt, hatArt } from './avatarSvg.js';
+import { loadImg } from '../common/assets.js';
+
+// 화면에서 몸통은 가로 80, 발은 가로 24 크기 (그림 파일이 더 크면 그만큼 줄여요)
+export const fitScale = (scene, key, w) => w / (scene.textures.get(key).getSourceImage().width || w);
 
 function addSvg(scene, key, svg) {
   return new Promise(res => {
@@ -12,13 +16,46 @@ function addSvg(scene, key, svg) {
   });
 }
 
+// 그림 파일이 있으면 몸통 + 모자를 한 장으로 합쳐서 텍스처로 만들어요.
+function addArt(scene, key, paths, svgFallback) {
+  if (scene.textures.exists(key)) return Promise.resolve();
+  return Promise.all(paths.map(p => loadImg(p))).then(imgs => {
+    if (!imgs[0]) return addSvg(scene, key, svgFallback);
+    if (scene.textures.exists(key)) return;
+    const { width: w, height: h } = imgs[0];
+    const tex = scene.textures.createCanvas(key, w, h), ctx = tex.getContext();
+    imgs.forEach(img => img && ctx.drawImage(img, 0, 0, w, h));
+    tex.refresh();
+  });
+}
+
 export function loadAvatarTextures(scene) {
   const jobs = [];
   COLORS.forEach((c, ci) => {
-    HATS.forEach(h => jobs.push(addSvg(scene, `av_${ci}_${h.id}`, bodySVG(c.hex, h.id))));
-    jobs.push(addSvg(scene, `ft_${ci}`, footSVG(c.hex)));
+    HATS.forEach(h => {
+      const body = bodyArt(ci, h.id), key = `av_${ci}_${h.id}`, svg = bodySVG(c.hex, h.id);
+      if (!body) return jobs.push(addSvg(scene, key, svg));
+      const hat = hatArt(h.id);
+      // 모자 그림이 아직 없으면 코드 모자를 그림 몸통 위에 얹어요
+      const hatSvgOnly = h.id && !hat;
+      jobs.push(addArt(scene, key, hat ? [body, hat] : [body], svg).then(() => hatSvgOnly && overlaySvgHat(scene, key, h.id)));
+    });
+    const ft = footArt(ci);
+    jobs.push(ft ? addArt(scene, `ft_${ci}`, [ft], footSVG(c.hex)) : addSvg(scene, `ft_${ci}`, footSVG(c.hex)));
   });
   return Promise.all(jobs);
+}
+
+// 코드 모자만 그림 몸통 위에 그리기 (모자 그림을 하나씩 바꿔 끼우는 동안 쓰는 임시 방법)
+function overlaySvgHat(scene, key, hatId) {
+  const tex = scene.textures.get(key); if (!tex?.getContext) return;
+  const hatOnly = hatOnlySVG(hatId, tex.getSourceImage().width, tex.getSourceImage().height);
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => { const c = tex.getSourceImage(); tex.getContext().drawImage(img, 0, 0, c.width, c.height); tex.refresh(); res(); };
+    img.onerror = () => res();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(hatOnly);
+  });
 }
 
 export class Avatar {
@@ -26,9 +63,9 @@ export class Avatar {
     this.scene = scene; this.c = c; this.hat = hat;
     this.root = scene.add.container(0, 0);
     this.shadow = scene.add.ellipse(0, 33, 48, 12, 0x000000, 0.28);
-    this.footL = scene.add.image(-11, 29, `ft_${c}`).setScale(0.5);
-    this.footR = scene.add.image(11, 29, `ft_${c}`).setScale(0.5);
-    this.body = scene.add.image(0, -7.5, `av_${c}_${hat}`).setScale(0.5);
+    this.footL = scene.add.image(-11, 29, `ft_${c}`).setScale(fitScale(scene, `ft_${c}`, 24));
+    this.footR = scene.add.image(11, 29, `ft_${c}`).setScale(fitScale(scene, `ft_${c}`, 24));
+    this.body = scene.add.image(0, -7.5, `av_${c}_${hat}`).setScale(fitScale(scene, `av_${c}_${hat}`, 80));
     this.inner = scene.add.container(0, 0, [this.footL, this.footR, this.body]);
     this.label = scene.add.text(0, -58, label, {
       fontFamily: 'Jua', fontSize: '21px', color: '#ffffff', stroke: '#1a1018', strokeThickness: 6,
@@ -39,8 +76,9 @@ export class Avatar {
   setLook(c, hat) {
     if (c === this.c && hat === this.hat) return;
     this.c = c; this.hat = hat;
-    this.body.setTexture(`av_${c}_${hat}`);
+    this.body.setTexture(`av_${c}_${hat}`).setScale(fitScale(this.scene, `av_${c}_${hat}`, 80));
     this.footL.setTexture(`ft_${c}`); this.footR.setTexture(`ft_${c}`);
+    this.footL.setScale(fitScale(this.scene, `ft_${c}`, 24)); this.footR.setScale(fitScale(this.scene, `ft_${c}`, 24));
   }
   setLabel(t) { this.label.setText(t); }
   setPos(x, y) { this.root.setPosition(x, y); this.root.setDepth(y); }

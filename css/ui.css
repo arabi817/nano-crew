@@ -564,3 +564,4 @@ body.sab-big #phaser::after { content: ''; position: absolute; inset: 0; pointer
 .pw-line { font-family: var(--title); font-size: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; }
 .pw-blank { min-width: 120px; height: 46px; border: 4px dashed var(--yellow); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; }
 .pw-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.logo-img { display: block; width: min(560px, 86vw); height: auto; margin: 0 auto; }

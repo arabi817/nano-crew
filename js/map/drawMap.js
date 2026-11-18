@@ -1,5 +1,6 @@
-// 임시 맵 그림 (코드로 그림). 나중에 assets/ 그림으로 바꿔 끼울 수 있게 4단계에서 정리합니다.
+// 맵 그림. assets/list.js에 그림 파일이 있으면 그 그림을, 없으면 코드로 그린 그림을 써요. (칸 설명은 assets/ASSETS.md)
 import { ROOMS, HALLS, TABLE, TASK_SPOTS, SAB_SPOTS, VENTS, doorsOf } from './map.js';
+import { hasArt, useArt } from '../common/assets.js';
 
 const INK = 0x1a1018;
 
@@ -26,6 +27,16 @@ function tube(g, pts, w, color) { // 둥근 관 (외곽선 포함)
 }
 const pt = (x, y) => ({ x, y });
 
+// 그림 파일 한 장 놓기: (x, y) = 그림 가운데, w×h = 화면 크기. into(컨테이너)를 주면 그 안에 넣어요.
+// 그림이 목록에 없으면 false → 코드 그림을 그려요.
+function art(scene, path, x, y, w, h, { depth = -800, rot = 0, flip = false, into = null, onImage } = {}) {
+  return useArt(scene, path, key => {
+    const im = scene.add.image(x, y, key).setDisplaySize(w, h).setRotation(rot).setFlipX(flip);
+    if (into) into.add(im); else im.setDepth(depth);
+    onImage?.(im);
+  });
+}
+
 export function drawMap(scene) {
   const anims = [];
   const base = gfx(scene, -1000);
@@ -41,6 +52,7 @@ export function drawMap(scene) {
   });
   ROOMS.forEach(r => {
     base.fillStyle(r.floor, 1); base.fillRect(r.x, r.y, r.w, r.h);
+    useArt(scene, `rooms/${r.id}.jpg`, key => scene.add.image(r.x, r.y, key).setOrigin(0).setDisplaySize(r.w, r.h).setDepth(-999));
     base.lineStyle(2, 0x000000, 0.07);
     for (let x = r.x + 80; x < r.x + r.w; x += 80) base.lineBetween(x, r.y, x, r.y + r.h);
     for (let y = r.y + 80; y < r.y + r.h; y += 80) base.lineBetween(r.x, y, r.x + r.w, y);
@@ -53,11 +65,13 @@ export function drawMap(scene) {
   // 미션 장치
   const spots = {};
   for (const [id, s] of Object.entries(TASK_SPOTS)) {
-    const g = gfx(scene, -600);
-    g.fillStyle(INK, 1); g.fillRoundedRect(s.x - 50, s.y - 38, 100, 76, 12);
-    g.fillStyle(0x56656e, 1); g.fillRoundedRect(s.x - 44, s.y - 32, 88, 64, 9);
-    g.fillStyle(0x9fe3c0, 1); g.fillRoundedRect(s.x - 34, s.y - 24, 68, 34, 6);
-    g.fillStyle(0xffcc33, 1); g.fillCircle(s.x - 20, s.y + 20, 6); g.fillStyle(0xe5484d, 1); g.fillCircle(s.x, s.y + 20, 6);
+    if (!art(scene, 'devices/task.png', s.x, s.y, 100, 76, { depth: -600 })) {
+      const g = gfx(scene, -600);
+      g.fillStyle(INK, 1); g.fillRoundedRect(s.x - 50, s.y - 38, 100, 76, 12);
+      g.fillStyle(0x56656e, 1); g.fillRoundedRect(s.x - 44, s.y - 32, 88, 64, 9);
+      g.fillStyle(0x9fe3c0, 1); g.fillRoundedRect(s.x - 34, s.y - 24, 68, 34, 6);
+      g.fillStyle(0xffcc33, 1); g.fillCircle(s.x - 20, s.y + 20, 6); g.fillStyle(0xe5484d, 1); g.fillCircle(s.x, s.y + 20, 6);
+    }
     const hl = gfx(scene, -590);
     hl.lineStyle(7, 0xffe14d, 1); hl.strokeRoundedRect(s.x - 58, s.y - 46, 116, 92, 16);
     const tw = scene.tweens.add({ targets: hl, alpha: { from: 1, to: 0.25 }, duration: 600, yoyo: true, repeat: -1 });
@@ -66,6 +80,7 @@ export function drawMap(scene) {
 
   // 혈관 통로 (벤트): 둥근 철망 뚜껑
   for (const v of Object.values(VENTS)) {
+    if (art(scene, 'devices/vent.png', v.x, v.y, 92, 58, { depth: -620 })) continue;
     const g = gfx(scene, -620);
     g.fillStyle(INK, 1); g.fillEllipse(v.x, v.y, 92, 58);
     g.fillStyle(0x7a2b38, 1); g.fillEllipse(v.x, v.y, 80, 46);
@@ -75,29 +90,34 @@ export function drawMap(scene) {
   // 사보타주 해결 장치
   const sabSpots = {};
   for (const [id, s] of Object.entries(SAB_SPOTS)) {
-    const g = gfx(scene, -610);
-    g.fillStyle(INK, 1); g.fillRoundedRect(s.x - 44, s.y - 40, 88, 80, 12);
-    g.fillStyle(0x56656e, 1); g.fillRoundedRect(s.x - 38, s.y - 34, 76, 68, 9);
-    if (s.kind === 'o2') { g.fillStyle(0xffffff, 1); g.fillCircle(s.x, s.y, 22); g.fillStyle(0x3b8bea, 1); g.fillCircle(s.x, s.y, 16); }
-    else { g.fillStyle(0xd9877c, 1); g.fillRoundedRect(s.x - 26, s.y - 22, 52, 44, 8); }
+    if (!art(scene, `devices/sab_${s.kind}.png`, s.x, s.y, 88, 80, { depth: -610 })) {
+      const g = gfx(scene, -610);
+      g.fillStyle(INK, 1); g.fillRoundedRect(s.x - 44, s.y - 40, 88, 80, 12);
+      g.fillStyle(0x56656e, 1); g.fillRoundedRect(s.x - 38, s.y - 34, 76, 68, 9);
+      if (s.kind === 'o2') { g.fillStyle(0xffffff, 1); g.fillCircle(s.x, s.y, 22); g.fillStyle(0x3b8bea, 1); g.fillCircle(s.x, s.y, 16); }
+      else { g.fillStyle(0xd9877c, 1); g.fillRoundedRect(s.x - 26, s.y - 22, 52, 44, 8); }
+    }
     const hl = gfx(scene, -600);
     hl.lineStyle(8, 0xff3b3b, 1); hl.strokeRoundedRect(s.x - 54, s.y - 50, 108, 100, 16); hl.setVisible(false);
     const tw = scene.tweens.add({ targets: hl, alpha: { from: 1, to: 0.2 }, duration: 350, yoyo: true, repeat: -1 });
     sabSpots[id] = { setOn(on) { hl.setVisible(on); } };
   }
   // 혈관 막힘: 문에 혈전 덩어리
-  const clotG = gfx(scene, -500);
+  const clotG = gfx(scene, -500), clotIms = [], clotArt = hasArt('devices/clot.png');
   const setClot = roomId => {
-    clotG.clear(); if (!roomId) return;
+    clotG.clear(); clotIms.splice(0).forEach(im => im.destroy()); if (!roomId) return;
     for (const d of doorsOf(roomId)) {
       const cx = d.x + d.w / 2, cy = d.y + d.h / 2, horiz = d.w < d.h;
       for (let i = -2; i <= 2; i++) {
         const x = horiz ? cx : cx + i * d.w / 5, y = horiz ? cy + i * d.h / 5 : cy;
+        if (clotArt) { art(scene, 'devices/clot.png', x, y, 62, 62, { depth: -500, rot: i * 1.1, onImage: im => roomId === clotRoom ? clotIms.push(im) : im.destroy() }); continue; }
         clotG.fillStyle(INK, 1); clotG.fillCircle(x, y, 30); clotG.fillStyle(0x8e1f2c, 1); clotG.fillCircle(x, y, 24);
         clotG.fillStyle(0xc0394a, 1); clotG.fillCircle(x - 6, y - 6, 9);
       }
     }
   };
+  let clotRoom = null;
+  const setClotRoom = roomId => { clotRoom = roomId; setClot(roomId); };
 
   const cam = scene.cameras.main;
   scene.events.on('update', time => {
@@ -108,7 +128,7 @@ export function drawMap(scene) {
       a.fn(t);
     }
   });
-  return { spots, sabSpots, setClot };
+  return { spots, sabSpots, setClot: setClotRoom };
 }
 
 // ───── 방마다 소품 ─────
@@ -116,6 +136,7 @@ const PROPS = {
   meeting(scene, r) {
     const g = gfx(scene), { x, y } = TABLE;
     g.lineStyle(12, 0x7a8e95, 1); g.strokeCircle(x, y, 300);
+    if (art(scene, 'props/table.png', x, y + 6, 360, 360)) return;
     g.fillStyle(INK, 1); g.fillCircle(x, y + 12, TABLE.r + 8);
     g.fillStyle(0x4f6169, 1); g.fillCircle(x, y, TABLE.r);
     g.lineStyle(8, INK, 1); g.strokeCircle(x, y, TABLE.r);
@@ -127,6 +148,7 @@ const PROPS = {
   power(scene, r) {
     const g = gfx(scene);
     [[r.x + 170, r.y + 150, 0.3], [r.x + 190, r.y + r.h - 110, -0.2], [r.x + r.w - 170, r.y + r.h - 120, 0.5]].forEach(([x, y, rot]) => {
+      if (art(scene, 'props/mitochondria.png', x, y, 216, 124, { rot })) return;
       inkFill(g, blob(x, y, 100, 54, rot), 0x5cae4c);
       inkFill(g, blob(x, y, 82, 38, rot), 0xa6e08f, 0);
       const c = Math.cos(rot), s = Math.sin(rot), pts = [];
@@ -143,6 +165,7 @@ const PROPS = {
   digest(scene, r, anims) {
     const g = gfx(scene);
     const mx = r.x + 190, my = r.y + r.h / 2 + 40;
+    if (!art(scene, 'props/mouth.png', mx, my, 216, 156)) {
     g.fillStyle(INK, 1); g.fillEllipse(mx, my, 210, 150);
     g.fillStyle(0x9c3b3b, 1); g.fillEllipse(mx, my, 196, 136);
     g.fillStyle(0xe0607a, 1); g.fillEllipse(mx, my + 30, 120, 50);
@@ -152,12 +175,18 @@ const PROPS = {
       g.fillRect(tx, my - 64, 22, 22); g.strokeRect(tx, my - 64, 22, 22);
       g.fillRect(tx, my + 42, 22, 22); g.strokeRect(tx, my + 42, 22, 22);
     }
+    }
     const sx = r.x + r.w - 220, sy = r.y + r.h / 2 + 30, st = gfx(scene, -795), wall = gfx(scene, -790);
+    // 위 그림이 있으면 꿈틀거림(크기 변화)만 주고, 없으면 코드로 출렁이는 위를 그려요
+    const stomachArt = art(scene, 'props/stomach.png', sx, sy, 300, 230, { depth: -795, onImage: im =>
+      scene.tweens.add({ targets: im, scaleX: im.scaleX * 1.05, scaleY: im.scaleY * 0.95, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }) });
     anims.push({
       r, fn: t => {
         st.clear();
-        inkFill(st, blob(sx, sy, 135, 95, -0.5, 0.06, t * 2), 0xf08a6a);
-        inkFill(st, blob(sx - 8, sy - 4, 92, 56, -0.5, 0.09, t * 2 + 1), 0xf7b08f, 0);
+        if (!stomachArt) {
+          inkFill(st, blob(sx, sy, 135, 95, -0.5, 0.06, t * 2), 0xf08a6a);
+          inkFill(st, blob(sx - 8, sy - 4, 92, 56, -0.5, 0.09, t * 2 + 1), 0xf7b08f, 0);
+        }
         wall.clear();
         const top = [pt(r.x, r.y)];
         for (let x = r.x; x <= r.x + r.w; x += 20) top.push(pt(x, r.y + 30 + Math.sin(x * 0.03 + t * 3) * 10));
@@ -191,6 +220,7 @@ const PROPS = {
   large(scene, r) {
     const g = gfx(scene);
     const x = r.x + 130, y = r.y + 140, w = r.w - 260, h = r.h - 260;
+    if (art(scene, 'props/colon.png', x + w / 2, y + h / 2, w + 70, h + 70)) return;
     g.lineStyle(62, INK, 1); g.strokeRoundedRect(x, y, w, h, 90);
     g.lineStyle(48, 0xc48b5c, 1); g.strokeRoundedRect(x, y, w, h, 90);
     g.fillStyle(0x7a5030, 1);
@@ -203,10 +233,12 @@ const PROPS = {
     tube(g, [pt(cx + 30, cy - 50), pt(cx + 30, r.y + 110), pt(cx + 150, r.y + 110), pt(cx + 150, r.y + 50)], 38, 0xd6404f);
     const c = scene.add.container(cx, cy).setDepth(-780);
     const h = scene.add.graphics();
+    if (!art(scene, 'props/heart.png', 0, 22, 236, 230, { into: c })) {
     h.fillStyle(INK, 1); h.fillCircle(-48, -22, 63); h.fillCircle(48, -22, 63); h.fillTriangle(-108, 4, 108, 4, 0, 128);
     h.fillStyle(0xd6404f, 1); h.fillCircle(-48, -22, 56); h.fillCircle(48, -22, 56); h.fillTriangle(-98, 4, 98, 4, 0, 116);
     h.fillStyle(0xffffff, 0.45); h.fillEllipse(-62, -46, 34, 20);
     h.lineStyle(5, 0x8e2333, 1); h.lineBetween(0, -40, 0, 70);
+    }
     c.add(h);
     scene.tweens.add({ targets: c, scale: { from: 1, to: 1.09 }, duration: 380, yoyo: true, repeat: -1, ease: 'Quad.easeOut', repeatDelay: 260 });
   },
@@ -241,7 +273,7 @@ const PROPS = {
     ends.forEach((e, k) => {
       const c = scene.add.container(e.x, e.y).setDepth(-780);
       const cl = scene.add.graphics();
-      const offs = [[0, 0], [-30, -18], [30, -18], [-36, 18], [36, 18], [0, 34], [0, -36]];
+      const offs = art(scene, 'props/alveoli.png', 0, 0, 130, 130, { into: c, rot: k * 0.9 }) ? [] : [[0, 0], [-30, -18], [30, -18], [-36, 18], [36, 18], [0, 34], [0, -36]];
       offs.forEach(([ox, oy]) => { cl.fillStyle(INK, 1); cl.fillCircle(ox, oy, 25); });
       offs.forEach(([ox, oy]) => { cl.fillStyle(0xf2a6b8, 1); cl.fillCircle(ox, oy, 19); cl.fillStyle(0xffffff, 0.5); cl.fillCircle(ox - 6, oy - 6, 5); });
       c.add(cl);
@@ -251,6 +283,8 @@ const PROPS = {
   kidney(scene, r) {
     const g = gfx(scene);
     [[r.x + 140, r.y + 320, 0.25], [r.x + 400, r.y + 320, -0.25]].forEach(([x, y, rot]) => {
+      // 콩팥 그림: 오목한 곳이 오른쪽을 보는 왼쪽 콩팥 1장 → 오른쪽 것은 좌우 뒤집기
+      if (art(scene, 'props/kidney.png', x, y, 170, 230, { rot, flip: rot < 0 })) return;
       const pts = blob(x, y, 70, 100, rot).map((p, i, a) => {
         const ang = i / a.length * Math.PI * 2;
         const dent = Math.max(0, Math.cos(ang - (rot < 0 ? Math.PI : 0))) ** 6 * 30;
@@ -259,6 +293,7 @@ const PROPS = {
       inkFill(g, pts, 0xa8524a);
       g.fillStyle(0xd9877c, 1); g.fillEllipse(x, y, 60, 110);
     });
+    if (art(scene, 'props/glomerulus.png', r.x + r.w / 2, r.y + 150, 100, 100)) return;
     g.fillStyle(INK, 1); g.fillCircle(r.x + r.w / 2, r.y + 150, 44);
     g.fillStyle(0xd6404f, 1); g.fillCircle(r.x + r.w / 2, r.y + 150, 37);
     g.lineStyle(5, 0x8e2333, 1);
@@ -288,6 +323,7 @@ const PROPS = {
   lobby(scene, r, anims) {
     const g = gfx(scene);
     const crate = (x, y, s) => {
+      if (art(scene, 'props/crate.png', x + s / 2, y + s / 2, s + 10, s + 10)) return;
       g.fillStyle(INK, 1); g.fillRoundedRect(x - 5, y - 5, s + 10, s + 10, 8);
       g.fillStyle(0xc9925a, 1); g.fillRoundedRect(x, y, s, s, 6);
       g.lineStyle(6, 0x8e5e33, 1); g.lineBetween(x + 10, y + 10, x + s - 10, y + s - 10); g.lineBetween(x + s - 10, y + 10, x + 10, y + s - 10);

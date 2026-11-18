@@ -4,6 +4,7 @@ import { createDB } from './net/db.js';
 import { P, createRoom, isBot } from './net/room.js';
 import { COLORS, nickOf, nickKeyOf, byNick } from './common/colors.js';
 import { avatarSVG } from './player/avatarSvg.js';
+import { applyLogo } from './common/assets.js';
 import { findPos } from './net/posSync.js';
 import { Judge } from './host/judge.js';
 import { settingsOf, settingsHTML } from './common/rules.js';
@@ -223,3 +224,5 @@ function drawQR(text) {
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.fillStyle = '#1a1018';
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) ctx.fillRect((c + m) * cell, (r + m) * cell, cell, cell);
 }
+
+applyLogo();

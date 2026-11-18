@@ -2,7 +2,7 @@
 import { WORLD, walkable, SPOTS, SAB_SPOTS, VENTS, TABLE, roomAt, zoneAt, seeThrough, lineOfSight } from '../map/map.js';
 import { KILL_RANGE, REPORT_RANGE, EMERGENCY_RANGE } from '../common/rules.js';
 import { drawMap } from '../map/drawMap.js';
-import { Avatar, loadAvatarTextures } from '../player/avatar.js';
+import { Avatar, loadAvatarTextures, fitScale } from '../player/avatar.js';
 import { PosSender, RemoteMotion, ZoneListener, decodePos } from '../net/posSync.js';
 import { P } from '../net/room.js';
 import { nickOf } from '../common/colors.js';
@@ -240,7 +240,7 @@ export class WorldScene extends Phaser.Scene {
       const p = decodePos(v), pl = this.app.players[uid]; if (!p || !pl) continue;
       const root = this.add.container(p.x, p.y).setDepth(p.y - 5);
       root.add(this.add.ellipse(0, 22, 76, 18, 0x000000, 0.3));
-      root.add(this.add.image(0, 10, `av_${pl.c}_0`).setScale(0.5).setRotation(-Math.PI / 2).setTint(0xcccccc));
+      root.add(this.add.image(0, 10, `av_${pl.c}_0`).setScale(fitScale(this, `av_${pl.c}_0`, 80)).setRotation(-Math.PI / 2).setTint(0xcccccc));
       const stars = this.add.container(-4, -18);
       for (let i = 0; i < 3; i++) stars.add(this.add.star(Math.cos(i * 2.09) * 18, Math.sin(i * 2.09) * 7, 5, 4, 9, 0xffe14d).setStrokeStyle(2, 0x1a1018));
       root.add(stars);

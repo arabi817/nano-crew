@@ -4,6 +4,7 @@ import { P, spawnOrder } from './net/room.js';
 import { decodePos, findPos } from './net/posSync.js';
 import { COLORS, NAME_MAX, nickOf, nickKey, checkName } from './common/colors.js';
 import { avatarSVG } from './player/avatarSvg.js';
+import { applyLogo } from './common/assets.js';
 import { WorldScene } from './scenes/WorldScene.js';
 import { Hud } from './ui/hud.js';
 import { Joystick } from './ui/joystick.js';
@@ -445,3 +446,5 @@ function startDebug() {
     last = { ...s }; lt = now;
   }, 1000);
 }
+
+applyLogo();
