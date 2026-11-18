@@ -1,5 +1,5 @@
 // 게임 세계 화면: 맵 그리기, 내 캐릭터 이동, 다른 친구 위치 받기, 시야(안개)
-import { WORLD, walkable, SPOTS, SAB_SPOTS, VENTS, TABLE, roomAt, zoneAt } from '../map/map.js';
+import { WORLD, walkable, SPOTS, SAB_SPOTS, VENTS, TABLE, roomAt, zoneAt, seeThrough, lineOfSight } from '../map/map.js';
 import { KILL_RANGE, REPORT_RANGE, EMERGENCY_RANGE } from '../common/rules.js';
 import { drawMap } from '../map/drawMap.js';
 import { Avatar, loadAvatarTextures } from '../player/avatar.js';
@@ -10,6 +10,7 @@ import { NET } from '../../config.js';
 
 const SPEED = 270, RADIUS = 20, USE_RANGE = 115;
 export const VISION = 380; // 크루원 시야 반지름
+export const IMP_VISION = 500; // 바이러스는 시야가 더 넓어요 (명세)
 
 export class WorldScene extends Phaser.Scene {
   constructor() { super('world'); }
@@ -35,7 +36,7 @@ export class WorldScene extends Phaser.Scene {
   fitZoom() {
     const dpr = this.app.dpr || 1;
     const w = this.scale.width / dpr, h = this.scale.height / dpr;
-    const z = Math.max(0.45, Math.min(1.5, Math.min(w, h) / (VISION * 2.05)));
+    const z = Math.max(0.45, Math.min(1.5, Math.min(w, h) / (this.visionR() * 2.05)));
     this.cameras.main.setZoom(z * dpr);
   }
 
@@ -137,6 +138,8 @@ export class WorldScene extends Phaser.Scene {
     this.zl.setZone(zoneAt(this.x, this.y));
 
     const playing = a.phase === 'playing', fog = playing && !ghost, dead = a.game?.dead || {};
+    const VR = this.visionR();
+    if (VR !== this.lastVR) { this.lastVR = VR; this.fitZoom(); }
     const mates = a.priv?.mates || [];
     let visible = 0;
     for (const [uid, av] of this.avatars) {
@@ -145,7 +148,8 @@ export class WorldScene extends Phaser.Scene {
       m.sample(now);
       av.setPos(m.x, m.y); av.update(dt, m.moving, m.face);
       const d = Math.hypot(m.x - this.x, m.y - this.y);
-      let al = fog ? (d < VISION * 0.82 ? 1 : d < VISION ? (VISION - d) / (VISION * 0.18) : 0) : 1;
+      let al = fog ? (d < VR * 0.82 ? 1 : d < VR ? (VR - d) / (VR * 0.18) : 0) : 1;
+      if (fog && al > 0 && !lineOfSight(this.x, this.y, m.x, m.y)) al = 0; // 벽 너머는 안 보여요
       if (!av.online) al *= 0.35;
       if (playing && dead[uid]) al = ghost ? al * 0.5 : 0; // 유령은 유령끼리만 보여요
       av.setAlpha(al); if (al > 0) visible++;
@@ -157,7 +161,7 @@ export class WorldScene extends Phaser.Scene {
     this.updateFog(fog);
     for (const b of this.bodies.values()) {
       const d = Math.hypot(b.x - this.x, b.y - this.y);
-      b.root.setVisible(!fog || d < VISION);
+      b.root.setVisible(!fog || (d < VR && lineOfSight(this.x, this.y, b.x, b.y)));
     }
 
     // 가까운 미션·킬 대상·시체·긴급 버튼 찾기
@@ -245,24 +249,50 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  visionR() { return this.app.priv?.role === 'imp' && !this.app.amDead?.() ? IMP_VISION : VISION; }
+
+  // 시야: 내 자리에서 사방으로 시선을 쏴서 벽에 막히는 곳까지만 밝게 (어몽어스처럼).
+  // 시야 밖은 맵 모양이 희미하게 보일 정도로만 어둡게 해요.
   makeFog() {
     const S = 512, tex = this.textures.createCanvas('fogHole', S, S), ctx = tex.getContext();
-    const g = ctx.createRadialGradient(S / 2, S / 2, S * 0.32, S / 2, S / 2, S / 2);
-    g.addColorStop(0, 'rgba(10,6,10,0)'); g.addColorStop(1, 'rgba(10,6,10,0.94)');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, S, S); tex.refresh();
-    this.fogImg = this.add.image(0, 0, 'fogHole').setDepth(9000).setDisplaySize(VISION * 2, VISION * 2);
-    this.fogRects = this.add.graphics().setDepth(9000);
+    const g = ctx.createRadialGradient(S / 2, S / 2, S * 0.36, S / 2, S / 2, S / 2);
+    g.addColorStop(0, 'rgba(8,4,10,0)'); g.addColorStop(1, 'rgba(8,4,10,0.8)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(S / 2, S / 2, S / 2, 0, Math.PI * 2); ctx.fill(); tex.refresh(); // 원 안쪽만 (바깥은 RT가 덮음)
+    this.fogImg = this.add.image(0, 0, 'fogHole').setDepth(9001);
+    this.fogPoly = this.make.graphics({ add: false });
+    this.rays = 140;
+  }
+  visPolygon(x, y, R) {
+    const pts = [], n = this.rays, step = 14;
+    for (let i = 0; i < n; i++) {
+      const an = i / n * Math.PI * 2, c = Math.cos(an), s = Math.sin(an);
+      let d = step;
+      while (d < R && seeThrough(x + c * d, y + s * d)) d += step;
+      if (d < R) { // 벽 경계를 조금 더 정확히
+        let lo = d - step, hi = d;
+        for (let k = 0; k < 3; k++) { const mid = (lo + hi) / 2; if (seeThrough(x + c * mid, y + s * mid)) lo = mid; else hi = mid; }
+        d = Math.min(R, hi + 26); // 벽 앞면이 살짝 보이게
+      }
+      pts.push({ x: x + c * d, y: y + s * d });
+    }
+    return pts;
   }
   updateFog(on) {
-    this.fogImg.setVisible(on); this.fogRects.setVisible(on);
-    if (!on) return;
-    const R = VISION, x = this.x, y = this.y, v = this.cameras.main.worldView, m = 200;
-    this.fogImg.setPosition(x, y);
-    const g = this.fogRects; g.clear(); g.fillStyle(0x0a060a, 0.94);
-    const L = v.x - m, T = v.y - m, Rr = v.right + m, B = v.bottom + m;
-    g.fillRect(L, T, Rr - L, (y - R) - T);
-    g.fillRect(L, y + R, Rr - L, B - (y + R));
-    g.fillRect(L, y - R, (x - R) - L, 2 * R);
-    g.fillRect(x + R, y - R, Rr - (x + R), 2 * R);
+    this.fogImg.setVisible(on);
+    if (!on) { this.fogRT?.setVisible(false); return; }
+    const cam = this.cameras.main, v = cam.worldView, pad = 60;
+    const W = Math.ceil(v.width + pad * 2), H = Math.ceil(v.height + pad * 2);
+    if (!this.fogRT || this.fogRT.width < W || this.fogRT.height < H) {
+      this.fogRT?.destroy();
+      this.fogRT = this.add.renderTexture(0, 0, W + 100, H + 100).setOrigin(0, 0).setDepth(9000);
+    }
+    const rt = this.fogRT, ox = v.x - pad, oy = v.y - pad, R = this.visionR();
+    rt.setVisible(true).setPosition(ox, oy);
+    rt.clear(); rt.fill(0x08040a, 0.8);
+    const poly = this.visPolygon(this.x, this.y, R).map(p => ({ x: p.x - ox, y: p.y - oy }));
+    this.fogPoly.clear(); this.fogPoly.fillStyle(0xffffff, 1); this.fogPoly.fillPoints(poly, true);
+    rt.erase(this.fogPoly);
+    this.fogImg.setPosition(this.x, this.y).setDisplaySize(R * 2, R * 2);
   }
+
 }

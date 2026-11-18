@@ -123,6 +123,14 @@ export function doorsOf(roomId) {
 }
 export function setBlockedDoors(list) { blockedDoors = list || []; }
 const inDoor = (x, y) => blockedDoors.some(d => inRect(d, x, y));
+// 시선이 지나갈 수 있는 곳 (방·복도 안, 막힌 문 제외). 벽과 맵 바깥은 시야를 가려요.
+export const seeThrough = (x, y) => inAreas(x, y) && !inDoor(x, y);
+// 두 점 사이가 벽에 막히지 않았나?
+export function lineOfSight(ax, ay, bx, by, step = 18) {
+  const d = Math.hypot(bx - ax, by - ay), n = Math.ceil(d / step);
+  for (let i = 1; i < n; i++) { const k = i / n; if (!seeThrough(ax + (bx - ax) * k, ay + (by - ay) * k)) return false; }
+  return true;
+}
 
 // 반지름 r인 캐릭터가 (x,y)에 설 수 있나?
 export function walkable(x, y, r) {
