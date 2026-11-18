@@ -2,7 +2,7 @@
 // ※ 게임 중 학생 위치는 절대 보여 주지 않아요. (판정용으로만 받아요)
 import { createDB } from './net/db.js';
 import { P, createRoom, isBot } from './net/room.js';
-import { COLORS, nickOf, nickKey } from './common/colors.js';
+import { COLORS, nickOf, nickKeyOf, byNick } from './common/colors.js';
 import { avatarSVG } from './player/avatarSvg.js';
 import { findPos } from './net/posSync.js';
 import { Judge } from './host/judge.js';
@@ -83,7 +83,7 @@ function draw() {
 
 function drawRoster() {
   const players = judge.players;
-  const list = Object.entries(players).sort((a, b) => (a[1].c - b[1].c) || (a[1].n - b[1].n));
+  const list = Object.entries(players).sort((a, b) => byNick(a[1], b[1]));
   const real = list.filter(([id]) => !isBot(id)), bots = list.length - real.length;
   $('#roster-count').textContent = `${real.length}명` + (bots ? ` + 봇 ${bots}` : '');
   $('#roster').innerHTML = list.map(([id, p]) => `
@@ -124,7 +124,7 @@ function drawMeeting(m) {
     $('#hm-ox').innerHTML = `<div class="hox-q small">${esc(m.q.text)} <b>정답 ${esc(m.qa || '')}</b></div><div class="hox-sub">이번 회의 투표권: ${nRight}명 / 살아 있는 대원 ${voters.length}명</div>`;
   }
   const ids = judge.ids().filter(id => players[id]);
-  ids.sort((a, b) => (g.dead?.[a] ? 1 : 0) - (g.dead?.[b] ? 1 : 0) || players[a].c - players[b].c || players[a].n - players[b].n);
+  ids.sort((a, b) => (g.dead?.[a] ? 1 : 0) - (g.dead?.[b] ? 1 : 0) || byNick(players[a], players[b]));
   const counts = m.result?.counts || {};
   $('#hm-grid').innerHTML = ids.map(id => {
     const dead = !!g.dead?.[id], n = counts[id] || 0;
@@ -178,7 +178,7 @@ function tickTime() {
 // ───── 교사 버튼 ─────
 function openPeople() {
   const players = judge.players;
-  const ids = Object.keys(players).sort((a, b) => players[a].c - players[b].c || players[a].n - players[b].n);
+  const ids = Object.keys(players).sort((a, b) => byNick(players[a], players[b]));
   openSheet({
     title: '참가자 (역할은 안 보여요)',
     html: `<div class="people">${ids.map(id => `<div class="pp ${judge.game.dead?.[id] ? 'dead' : ''}">${avatarOf(players[id], 40)}<span>${esc(nickOf(players[id]))}</span><button class="r-kick-b press" data-id="${esc(id)}">내보내기</button></div>`).join('')}</div>`,
@@ -190,7 +190,7 @@ async function kick(id) {
   const p = judge.players[id]; if (!p) return;
   if (!confirm(`${nickOf(p)}을(를) 방에서 내보낼까요?`)) return;
   judge.onKicked(id);
-  const upd = { [`players/${id}`]: null, [`nicks/${nickKey(p.c, p.n)}`]: null };
+  const upd = { [`players/${id}`]: null, [`nicks/${nickKeyOf(p)}`]: null };
   const at = await findPos(db, P.pos(code), id);
   if (at) upd[`pos/${at.zone}/${id}`] = null;
   db.update(P.room(code), upd);

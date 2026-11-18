@@ -2,7 +2,7 @@
 import { createDB } from './net/db.js';
 import { P, spawnOrder } from './net/room.js';
 import { decodePos, findPos } from './net/posSync.js';
-import { COLORS, MAX_NUM, nickOf, nickKey } from './common/colors.js';
+import { COLORS, NAME_MAX, nickOf, nickKey, checkName } from './common/colors.js';
 import { avatarSVG } from './player/avatarSvg.js';
 import { WorldScene } from './scenes/WorldScene.js';
 import { Hud } from './ui/hud.js';
@@ -64,41 +64,50 @@ async function tryCode(code) {
 function openPicker() {
   show('page-pick');
   const { db, code, uid } = app;
-  let c = null, n = null, taken = {};
+  let c = Math.floor(Math.random() * COLORS.length), taken = {};
+  const input = $('#name-input');
+  input.maxLength = NAME_MAX;
+  try { input.value = localStorage.getItem('nc_last_name') || ''; } catch { }
   $('#color-grid').innerHTML = COLORS.map((col, i) =>
     `<button class="swatch press" data-c="${i}" style="--sw:${col.hex}"><span>${col.name}</span></button>`).join('');
-  $('#num-grid').innerHTML = Array.from({ length: MAX_NUM }, (_, i) =>
-    `<button class="num press" data-n="${i + 1}">${i + 1}</button>`).join('');
-  const isTaken = (cc, nn) => taken[nickKey(cc, nn)] && taken[nickKey(cc, nn)] !== uid;
+  const problem = () => {
+    const name = input.value.trim();
+    const bad = checkName(name); if (bad) return bad;
+    const owner = taken[nickKey(name)];
+    if (owner && owner !== uid) return '이미 다른 친구가 쓰는 이름이에요';
+    return null;
+  };
   function render() {
     document.querySelectorAll('.swatch').forEach(b => b.classList.toggle('sel', +b.dataset.c === c));
-    document.querySelectorAll('.num').forEach(b => {
-      const nn = +b.dataset.n;
-      b.disabled = c === null || isTaken(c, nn);
-      b.classList.toggle('sel', nn === n);
-    });
-    if (c !== null && n !== null && isTaken(c, n)) n = null;
-    $('#pick-preview').innerHTML = avatarSVG(c === null ? '#9aa7b8' : COLORS[c].hex, 0, 150);
-    $('#pick-name').textContent = c === null ? '색깔을 고르세요' : n === null ? `${COLORS[c].name} ?` : `${COLORS[c].name} ${n}`;
-    $('#pick-go').disabled = c === null || n === null;
+    $('#pick-preview').innerHTML = avatarSVG(COLORS[c].hex, 0, 150);
+    const name = input.value.trim();
+    $('#pick-name').textContent = name || '이름을 지어 주세요';
+    const p = name ? problem() : null;
+    say('#pick-msg', p || '');
+    $('#pick-go').disabled = !name || !!p;
   }
   const unsub = db.onValue(P.nicks(code), v => { taken = v || {}; render(); });
+  input.oninput = render;
+  input.onkeydown = e => { if (e.key === 'Enter' && !$('#pick-go').disabled) $('#pick-go').click(); };
   $('#color-grid').onclick = e => { const b = e.target.closest('.swatch'); if (!b) return; sfx('click'); c = +b.dataset.c; render(); };
-  $('#num-grid').onclick = e => { const b = e.target.closest('.num'); if (!b || b.disabled) return; sfx('click'); n = +b.dataset.n; render(); };
   $('#pick-go').onclick = async () => {
+    const name = input.value.trim();
+    if (problem()) return render();
     $('#pick-go').disabled = true; say('#pick-msg', '');
-    const k = nickKey(c, n);
+    const k = nickKey(name);
     try {
       const cur = await db.get(P.nick(code, k));
       if (cur && cur !== uid) throw new Error('taken');
-      const me = { c, n, hat: 0, on: true, j: db.now() };
+      const me = { c, name, hat: 0, on: true, j: db.now() };
       await db.update(P.room(code), { [`nicks/${k}`]: uid, [`players/${uid}`]: me });
+      try { localStorage.setItem('nc_last_name', name); } catch { }
       unsub(); app.myPlayer = me; enterGame(false);
     } catch (e) {
-      say('#pick-msg', '방금 다른 친구가 골랐어요. 다른 번호를 골라 주세요'); n = null; render();
+      say('#pick-msg', '방금 다른 친구가 같은 이름을 썼어요. 다른 이름을 지어 주세요'); $('#pick-go').disabled = false;
     }
   };
   render();
+  setTimeout(() => input.focus(), 100);
 }
 
 function defaultStart(phase) {

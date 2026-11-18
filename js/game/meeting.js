@@ -1,7 +1,7 @@
 // 학생 패드의 회의 창: 경보 → OX 퀴즈 → 토론(정해진 문장) → 투표 → 결과·추방
 import { CONTENT } from '../../data/content.js';
 import { P } from '../net/room.js';
-import { nickOf, COLORS } from '../common/colors.js';
+import { nickOf, COLORS, byNick } from '../common/colors.js';
 import { MISSIONS } from '../missions/index.js';
 import { PLACES, chatHTML, callerText, avatarOf, PHASE_NAME, missionName } from './shared.js';
 import { sfx } from '../common/sfx.js';
@@ -97,7 +97,7 @@ export class MeetingUI {
   renderGrid() {
     const m = this.m, g = this.app.game || {}, players = this.app.players;
     const ids = Object.keys(this.app.privIds()).filter(id => players[id]);
-    ids.sort((a, b) => (g.dead?.[a] ? 1 : 0) - (g.dead?.[b] ? 1 : 0) || players[a].c - players[b].c || players[a].n - players[b].n);
+    ids.sort((a, b) => (g.dead?.[a] ? 1 : 0) - (g.dead?.[b] ? 1 : 0) || byNick(players[a], players[b]));
     const counts = m.result?.counts || {}, voting = m.phase === 'vote', showRes = m.phase === 'result';
     const mates = this.app.priv?.mates || [];
     this.$('.meet-grid').innerHTML = ids.map(id => {

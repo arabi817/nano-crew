@@ -1,17 +1,32 @@
-// 닉네임 = 색깔 + 번호 (실명은 쓰지 않아요)
+import { BANNED, NAME_MAX } from '../../data/names.js';
+export { NAME_MAX };
+// 캐릭터 색깔 (한 방에서 여러 명이 같은 색을 써도 돼요)
 export const COLORS = [
   { name: '빨강', hex: '#e5484d' }, { name: '주황', hex: '#f7801e' }, { name: '노랑', hex: '#ffcc33' },
   { name: '연두', hex: '#9ad94e' }, { name: '초록', hex: '#2f9e5a' }, { name: '청록', hex: '#14a3a0' },
   { name: '하늘', hex: '#55c2f0' }, { name: '파랑', hex: '#3b5fd9' }, { name: '보라', hex: '#8a4fc4' },
   { name: '분홍', hex: '#f27bb3' }, { name: '갈색', hex: '#9a6136' }, { name: '흰색', hex: '#eef1f4' },
 ];
-export const MAX_NUM = 40;
 export const HATS = [
   { id: 0, name: '없음' }, { id: 1, name: '야구모자' }, { id: 2, name: '리본' },
   { id: 3, name: '왕관' }, { id: 4, name: '새싹' }, { id: 5, name: '요리사' },
 ];
-export const nickOf = p => p ? `${COLORS[p.c]?.name ?? '?'} ${p.n}` : '';
-export const nickKey = (c, n) => `${c}_${n}`;
+// 닉네임: 학생이 직접 입력 (예전 방식 '색깔 + 번호'도 읽을 수 있게 남겨 둠)
+export const nickOf = p => !p ? '' : p.name || `${COLORS[p.c]?.name ?? '?'} ${p.n}`;
+export const nickKey = name => String(name).toLowerCase();      // 같은 이름 막기용 열쇠
+export const byNick = (a, b) => nickOf(a).localeCompare(nickOf(b), 'ko');
+export const nickKeyOf = p => p?.name ? nickKey(p.name) : `${p?.c}_${p?.n}`;
+
+// 이름 검사: 문제가 없으면 null, 있으면 안내 문장
+export function checkName(raw) {
+  const name = String(raw || '').trim();
+  if (!name) return '이름을 넣어 주세요';
+  if (name.length > NAME_MAX) return `${NAME_MAX}글자까지 쓸 수 있어요`;
+  if (!/^[가-힣a-zA-Z0-9]+$/.test(name)) return '한글, 영어, 숫자만 쓸 수 있어요 (띄어쓰기·특수문자 안 돼요)';
+  const plain = name.toLowerCase().replace(/[0-9]/g, '');
+  if (BANNED.some(w => plain.includes(w.toLowerCase()))) return '쓸 수 없는 이름이에요. 다른 이름을 지어 주세요';
+  return null;
+}
 export const hexNum = h => parseInt(h.slice(1), 16);
 
 // 색 섞기: t만큼 to 색 쪽으로

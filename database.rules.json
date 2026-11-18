@@ -13,9 +13,9 @@
           ".read": "auth != null",
           "$uid": {
             ".write": "auth != null && root.child('rooms/' + $code + '/meta').exists() && (auth.uid === $uid || root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid)",
-            ".validate": "newData.hasChildren(['c', 'n'])",
+            ".validate": "newData.hasChildren(['c', 'name'])",
             "c": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 12" },
-            "n": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 40" },
+            "name": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 8" },
             "hat": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 20" },
             "on": { ".validate": "newData.isBoolean()" },
             "j": { ".validate": "newData.isNumber()" },
@@ -26,6 +26,7 @@
         "nicks": {
           ".read": "auth != null",
           "$key": {
+            ".validate": "$key.length <= 8",
             ".write": "auth != null && root.child('rooms/' + $code + '/meta').exists() && ((!data.exists() && newData.val() === auth.uid) || data.val() === auth.uid || root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid)"
           }
         },

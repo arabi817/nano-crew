@@ -3,7 +3,7 @@
 import { createDB } from './net/db.js';
 import { P, spawnOrder } from './net/room.js';
 import { PosSender } from './net/posSync.js';
-import { COLORS, MAX_NUM, nickKey } from './common/colors.js';
+import { COLORS, nickKey } from './common/colors.js';
 import { ROOMS, LOBBY, randomPointIn, spawnPoint, route, nearestRoomId, zoneAt, nearZones } from './map/map.js';
 import { NET } from '../config.js';
 import { $ } from './common/util.js';
@@ -60,12 +60,12 @@ async function start() {
   phase = meta.state;
   const taken = (await db.get(P.nicks(code))) || {};
   const upd = {}; let i = 0;
-  outer: for (let n = MAX_NUM; n >= 1; n--) for (let c = 0; c < COLORS.length; c++) {
-    if (bots.length >= want) break outer;
-    const k = nickKey(c, n); if (taken[k]) continue;
-    const id = 'bot' + String(i++).padStart(2, '0');
-    const b = new Bot(id, c, n); bots.push(b);
-    upd[`players/${id}`] = { c, n, hat: Math.floor(Math.random() * 6), on: true, j: db.now() + i };
+  for (let t = 1; bots.length < want && t < 200; t++) {
+    const name = '봇' + String(t).padStart(2, '0'), k = nickKey(name);
+    if (taken[k]) continue;
+    const id = 'bot' + String(i++).padStart(2, '0'), c = (t - 1) % COLORS.length;
+    const b = new Bot(id, c, name); bots.push(b);
+    upd[`players/${id}`] = { c, name, hat: Math.floor(Math.random() * 6), on: true, j: db.now() + i };
     upd[`nicks/${k}`] = id;
     [`players/${id}`, `nicks/${k}`].forEach(p => db.onDisconnectRemove(`${P.room(code)}/${p}`));
   }
@@ -126,7 +126,7 @@ async function stop(roomGone) {
   if (!roomGone && bots.length) {
     const upd = {};
     bots.forEach(b => {
-      upd[`players/${b.id}`] = null; upd[`nicks/${nickKey(b.c, b.n)}`] = null;
+      upd[`players/${b.id}`] = null; upd[`nicks/${nickKey(b.n)}`] = null;
       if (b.sender.zone) upd[`pos/${b.sender.zone}/${b.id}`] = null;
     });
     await db.update(P.room(code), upd);
