@@ -159,7 +159,17 @@ function drawEnd() {
   $('#ev-grid').innerHTML = ids.map(id => `<div class="end-p ${reveal[id]}">${avatarOf(players[id], 64)}<span>${esc(nickOf(players[id]))}</span><small>${reveal[id] === 'imp' ? '임포스터' : '크루원'}${g.ejected?.[id] ? ' · 추방' : g.dead?.[id] ? ' · 쓰러짐' : ''}</small></div>`).join('');
 }
 
+let lastSabAt = 0;
 function tickTime() {
+  // 사보타주 경보 (TV)
+  const sab = judge?.game?.sab, box = $('#sabotage');
+  if (sab && judge.meta?.state === 'playing') {
+    if (sab.at !== lastSabAt) { lastSabAt = sab.at; sfx('alarm'); }
+    const left = Math.max(0, Math.ceil((sab.endsAt - db.now()) / 1000));
+    const name = { o2: '산소 부족!', kidney: '콩팥 정지!', clot: '혈관 막힘' }[sab.kind] || '';
+    box.hidden = false; box.classList.toggle('small', sab.kind === 'clot');
+    box.textContent = sab.kind === 'clot' ? `${name} · 한 방의 문이 막혔어요 · ${left}초` : `${name} ${left}초 안에 막아야 해요`;
+  } else if (box) box.hidden = true;
   const m = judge?.game?.meeting; if (!m) return;
   const left = Math.max(0, Math.ceil((m.endsAt - db.now()) / 1000));
   $('#hm-time').textContent = m.phase === 'result' ? '' : (db.now() < (m.startAt || 0) ? '소집 중' : `${left}초`);

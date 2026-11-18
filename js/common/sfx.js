@@ -32,6 +32,7 @@ export function sfx(name) {
     case 'eject': tone(500, 1.2, { type: 'sine', vol: 0.12, to: 120 }); break;
     case 'win': [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.25, { type: 'triangle', at: i * 0.16 })); break;
     case 'lose': [392, 330, 262].forEach((f, i) => tone(f, 0.35, { type: 'triangle', at: i * 0.22 })); break;
+    case 'vent': tone(200, 0.3, { type: 'sine', vol: 0.15, to: 500 }); break;
     case 'start': tone(392, 0.15, { type: 'triangle' }); tone(523, 0.15, { type: 'triangle', at: 0.14 }); tone(784, 0.3, { type: 'triangle', at: 0.28 }); break;
   }
 }

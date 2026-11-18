@@ -1,5 +1,5 @@
 // 임시 맵 그림 (코드로 그림). 나중에 assets/ 그림으로 바꿔 끼울 수 있게 4단계에서 정리합니다.
-import { ROOMS, HALLS, TABLE, TASK_SPOTS } from './map.js';
+import { ROOMS, HALLS, TABLE, TASK_SPOTS, SAB_SPOTS, VENTS, doorsOf } from './map.js';
 
 const INK = 0x1a1018;
 
@@ -64,6 +64,41 @@ export function drawMap(scene) {
     spots[id] = { setPending(on) { hl.setVisible(on); tw[on ? 'resume' : 'pause'](); } };
   }
 
+  // 혈관 통로 (벤트): 둥근 철망 뚜껑
+  for (const v of Object.values(VENTS)) {
+    const g = gfx(scene, -620);
+    g.fillStyle(INK, 1); g.fillEllipse(v.x, v.y, 92, 58);
+    g.fillStyle(0x7a2b38, 1); g.fillEllipse(v.x, v.y, 80, 46);
+    g.lineStyle(6, INK, 1);
+    for (let i = -2; i <= 2; i++) g.lineBetween(v.x + i * 14, v.y - 18 + Math.abs(i) * 3, v.x + i * 14, v.y + 18 - Math.abs(i) * 3);
+  }
+  // 사보타주 해결 장치
+  const sabSpots = {};
+  for (const [id, s] of Object.entries(SAB_SPOTS)) {
+    const g = gfx(scene, -610);
+    g.fillStyle(INK, 1); g.fillRoundedRect(s.x - 44, s.y - 40, 88, 80, 12);
+    g.fillStyle(0x56656e, 1); g.fillRoundedRect(s.x - 38, s.y - 34, 76, 68, 9);
+    if (s.kind === 'o2') { g.fillStyle(0xffffff, 1); g.fillCircle(s.x, s.y, 22); g.fillStyle(0x3b8bea, 1); g.fillCircle(s.x, s.y, 16); }
+    else { g.fillStyle(0xd9877c, 1); g.fillRoundedRect(s.x - 26, s.y - 22, 52, 44, 8); }
+    const hl = gfx(scene, -600);
+    hl.lineStyle(8, 0xff3b3b, 1); hl.strokeRoundedRect(s.x - 54, s.y - 50, 108, 100, 16); hl.setVisible(false);
+    const tw = scene.tweens.add({ targets: hl, alpha: { from: 1, to: 0.2 }, duration: 350, yoyo: true, repeat: -1 });
+    sabSpots[id] = { setOn(on) { hl.setVisible(on); } };
+  }
+  // 혈관 막힘: 문에 혈전 덩어리
+  const clotG = gfx(scene, -500);
+  const setClot = roomId => {
+    clotG.clear(); if (!roomId) return;
+    for (const d of doorsOf(roomId)) {
+      const cx = d.x + d.w / 2, cy = d.y + d.h / 2, horiz = d.w < d.h;
+      for (let i = -2; i <= 2; i++) {
+        const x = horiz ? cx : cx + i * d.w / 5, y = horiz ? cy + i * d.h / 5 : cy;
+        clotG.fillStyle(INK, 1); clotG.fillCircle(x, y, 30); clotG.fillStyle(0x8e1f2c, 1); clotG.fillCircle(x, y, 24);
+        clotG.fillStyle(0xc0394a, 1); clotG.fillCircle(x - 6, y - 6, 9);
+      }
+    }
+  };
+
   const cam = scene.cameras.main;
   scene.events.on('update', time => {
     const v = cam.worldView, t = time / 1000;
@@ -73,7 +108,7 @@ export function drawMap(scene) {
       a.fn(t);
     }
   });
-  return { spots };
+  return { spots, sabSpots, setClot };
 }
 
 // ───── 방마다 소품 ─────

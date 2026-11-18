@@ -2,6 +2,7 @@
 import { nickOf } from '../common/colors.js';
 import { avatarOf, missionName } from './shared.js';
 import { esc } from '../common/util.js';
+import { stepCount } from '../missions/index.js';
 
 function overlay(cls, html) {
   const ov = document.createElement('div');
@@ -35,7 +36,8 @@ export function showEnd({ winner, reveal, players, myId, myTasks, done }) {
   const myRole = reveal?.[myId], won = myRole && ((winner.team === 'imp') === (myRole === 'imp'));
   const imps = Object.entries(reveal || {}).filter(([, r]) => r === 'imp').map(([id]) => id);
   const list = Object.keys(reveal || {}).sort((a, b) => (reveal[a] === 'imp' ? 0 : 1) - (reveal[b] === 'imp' ? 0 : 1));
-  const mine = (myTasks || []).map(t => `<li class="${done?.[t] ? 'ok' : ''}">${esc(missionName(t))} ${done?.[t] ? '완료' : '못 함'}</li>`).join('');
+  const fin = t => (+done?.[t] || 0) >= stepCount(t);
+  const mine = (myTasks || []).map(t => `<li class="${fin(t) ? 'ok' : ''}">${esc(missionName(t))} ${fin(t) ? '완료' : '못 함'}</li>`).join('');
   overlay('end ' + (winner.team === 'imp' ? 'imp' : 'crew'), `
     <div class="end-big">${winner.team === 'imp' ? '임포스터 승리' : '크루원 승리'}</div>
     <div class="end-reason">${esc(winner.reason)}</div>

@@ -19,6 +19,10 @@ export class Hud {
     $('#btn-use').onclick = () => app.useAction();
     $('#btn-report').onclick = () => app.reportAction();
     $('#btn-kill').onclick = () => app.killAction();
+    $('#btn-vent').innerHTML = ICON.vent + '<span>통로</span>';
+    $('#btn-sab').innerHTML = ICON.sab + '<span>사보타주</span><b class="cd"></b>';
+    $('#btn-vent').onclick = () => app.ventAction();
+    $('#btn-sab').onclick = () => app.sabAction();
     $('#btn-map').onclick = () => { sfx('click'); openMinimap(app); };
     $('#btn-hat').onclick = () => { sfx('click'); this.openHats(); };
     this.setPhase(app.phase);
@@ -27,7 +31,7 @@ export class Hud {
   setTasks(tasks, { fake = false, dead = false } = {}) {
     $('.tasks-head').innerHTML = fake ? '<span class="imp-head">임포스터</span><small> 가짜 미션 · 하는 척만</small>' : dead ? '미션 <small>유령도 할 수 있어요</small>' : '미션';
     $('#task-list').innerHTML = tasks.map(t =>
-      `<li class="${t.done ? 'done' : ''}"><b>${esc(t.room)}</b> ${esc(t.title)}</li>`).join('');
+      `<li class="${t.done ? 'done' : ''}"><b>${esc(t.room)}</b> ${esc(t.title)}${t.n > 1 && !fake ? ` <small>${t.step}/${t.n}</small>` : ''}</li>`).join('');
   }
   setRole(role, dead) {
     document.body.dataset.role = role || '';
@@ -37,6 +41,12 @@ export class Hud {
   setProgress(r) { $('#pbar-fill').style.width = Math.round(Math.max(0, Math.min(1, r)) * 100) + '%'; }
   setUse(on) { const b = $('#btn-use'); if (b.disabled === !on) return; b.disabled = !on; b.classList.toggle('ready', on); }
   setReport(on) { const b = $('#btn-report'); b.disabled = !on; b.classList.toggle('ready', on); }
+  setVent(on) { const b = $('#btn-vent'); if (b.disabled === !on) return; b.disabled = !on; b.classList.toggle('ready', on); }
+  setSab(cdMs) { // cdMs < 0 이면 진행 중
+    const b = $('#btn-sab'), cd = Math.ceil(cdMs / 1000), t = cdMs < 0 ? '' : cd > 0 ? cd : '';
+    if (b.querySelector('.cd').textContent !== String(t)) b.querySelector('.cd').textContent = t;
+    b.classList.toggle('dim', cdMs < 0 || cd > 0);
+  }
   setKill(target, cdMs) {
     const b = $('#btn-kill'), cd = Math.ceil(cdMs / 1000);
     b.querySelector('.cd').textContent = cd > 0 ? cd : '';

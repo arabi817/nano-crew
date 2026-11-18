@@ -7,6 +7,8 @@ export const ICON = {
   map: S(`<path d="M6 12 l12 -4 l12 4 l12 -4 v28 l-12 4 l-12 -4 l-12 4 z" fill="#fff" ${K}/><path d="M18 8 v28 M30 12 v28" fill="none" ${K}/>`),
   hat: S(`<path d="M8 32 q0 -20 16 -20 q16 0 16 20 z" fill="#fff" ${K}/><path d="M34 31 h10 q1 4 -3 4 h-11" fill="#fff" ${K}/>`),
   kill: S(`<path d="M10 38 L30 18" fill="none" stroke="#1a1018" stroke-width="9" stroke-linecap="round"/><path d="M10 38 L30 18" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/><circle cx="34" cy="14" r="8" fill="#fff" ${K}/><path d="M30 10 l8 8 M38 10 l-8 8" stroke="#1a1018" stroke-width="3" stroke-linecap="round"/>`),
+  vent: S(`<ellipse cx="24" cy="26" rx="19" ry="12" fill="#7a2b38" ${K}/><path d="M14 20 v12 M20 17 v18 M26 17 v18 M32 17 v18 M38 20 v12" stroke="#1a1018" stroke-width="3"/>`),
+  sab: S(`<path d="M24 6 L44 40 H4 Z" fill="#ffcc33" ${K}/><path d="M24 18 v11" stroke="#1a1018" stroke-width="5" stroke-linecap="round"/><circle cx="24" cy="34" r="3" fill="#1a1018"/>`),
   close: S(`<path d="M12 12 L36 36 M36 12 L12 36" fill="none" stroke="#1a1018" stroke-width="7" stroke-linecap="round"/><path d="M12 12 L36 36 M36 12 L12 36" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`),
   check: S(`<circle cx="24" cy="24" r="21" fill="#3fbf5f" ${K}/><path d="M13 25 l7 7 l15 -16" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`),
 };

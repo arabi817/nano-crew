@@ -8,8 +8,10 @@ import { WorldScene } from './scenes/WorldScene.js';
 import { Hud } from './ui/hud.js';
 import { Joystick } from './ui/joystick.js';
 import { openPanel, openSheet } from './ui/panel.js';
-import { MISSIONS, STAGE1_TASKS } from './missions/index.js';
-import { TASK_SPOTS, spawnPoint, lobbySpawn, roomAt, roomName } from './map/map.js';
+import { MISSIONS, SAB_FIX } from './missions/index.js';
+import { SPOTS, SAB_SPOTS, VENTS, spawnPoint, lobbySpawn, roomAt, roomName, doorsOf, setBlockedDoors } from './map/map.js';
+import { CONTENT } from '../data/content.js';
+import { PLACES } from './game/shared.js';
 import { sfx, unlockAudio } from './common/sfx.js';
 import { $, esc } from './common/util.js';
 import { settingsOf } from './common/rules.js';
@@ -173,7 +175,7 @@ function startPhaser() {
   addEventListener('resize', () => app.game_.scale.resize(el.clientWidth * dpr, el.clientHeight * dpr));
 }
 
-app.onSceneReady = () => { refreshTasks(); app.scene.setBodies(app.game.bodies); maybeReveal(); };
+app.onSceneReady = () => { refreshTasks(); app.scene.setBodies(app.game.bodies); onSab(app.game.sab); maybeReveal(); };
 
 // ───── 상태 바뀜 처리 ─────
 function spawnTeleport() {
@@ -203,6 +205,7 @@ function onGame(g) {
   app.game = g = g || {};
   const uid = app.uid;
   app.scene?.setBodies?.(g.bodies);
+  if (JSON.stringify(g.sab || null) !== JSON.stringify(prev.sab || null)) onSab(g.sab);
   // 내가 쓰러짐
   if (g.dead?.[uid] && !app.wasDead) {
     app.wasDead = true;
@@ -250,12 +253,50 @@ function kicked() { if (leftShown) return; leftShown = true; closeOverlays(); ap
 function ended() { if (leftShown) return; leftShown = true; closeOverlays(); app.meeting?.close(); hideEnd(); app.game_?.destroy(true); notice('판이 끝났어요', '선생님이 판을 끝냈어요. 수고했어요!'); }
 
 function refreshTasks() {
-  const list = app.priv?.tasks || (app.phase === 'lobby' ? [] : STAGE1_TASKS);
+  const list = app.priv?.tasks || [];
   const fake = app.priv?.role === 'imp';
-  app.tasks = list.map(id => ({ id, title: MISSIONS[id].title, room: roomName(TASK_SPOTS[id].room), done: !fake && !!app.done[id] }));
+  app.tasks = list.filter(id => MISSIONS[id]).map(id => {
+    const M = MISSIONS[id], n = M.steps.length, step = fake ? 0 : Math.min(n, +app.done[id] || 0);
+    const spot = M.steps[Math.min(step, n - 1)].spot;
+    return { id, title: M.title, step, n, spot, room: roomName(SPOTS[spot].room), done: step >= n };
+  });
   app.hud?.setTasks(app.tasks, { fake, dead: app.amDead() });
   app.hud?.setRole(app.priv?.role, app.amDead());
-  if (app.scene?.ready) app.tasks.forEach(t => app.scene.setSpotPending(t.id, app.phase === 'playing' && !t.done && !fake));
+  if (app.scene?.ready) {
+    const on = new Set(app.phase === 'playing' && !fake ? app.tasks.filter(t => !t.done).map(t => t.spot) : []);
+    Object.keys(SPOTS).forEach(id => app.scene.setSpotPending(id, on.has(id)));
+  }
+}
+
+// ───── 사보타주 경보 ─────
+let sabTimer = 0;
+function onSab(sab) {
+  const big = sab && sab.kind !== 'clot';
+  setBlockedDoors(sab?.kind === 'clot' ? doorsOf(sab.room) : []);
+  const mi = app.scene?.mapInfo;
+  if (mi) {
+    mi.setClot(sab?.kind === 'clot' ? sab.room : null);
+    for (const [id, s] of Object.entries(SAB_SPOTS)) mi.sabSpots[id].setOn(!!sab && s.kind === sab.kind);
+  }
+  document.body.classList.toggle('sab-big', !!big);
+  clearInterval(sabTimer);
+  const box = $('#sab-banner');
+  if (!sab) {
+    box.hidden = true;
+    if (app.sabPanel) { app.panel?.close(); app.sabPanel = false; }
+    if (app.lastSabAt && app.phase === 'playing' && !app.game?.meeting && !app.game?.winner) app.hud?.toast('사보타주를 막았어요!');
+    return;
+  }
+  if (sab.at !== app.lastSabAt) { app.lastSabAt = sab.at; sfx('alarm'); }
+  box.hidden = false;
+  const S = CONTENT.sabotage[sab.kind];
+  const tick = () => {
+    const left = Math.max(0, Math.ceil((sab.endsAt - app.db.now()) / 1000));
+    box.innerHTML = sab.kind === 'clot'
+      ? `<b>혈관 막힘</b> ${esc(roomName(sab.room))} 문이 막혔어요 · ${left}초`
+      : `<b>${esc(S.name)}!</b> ${esc(S.guide)} <span class="sab-time">${left}초</span>`;
+  };
+  tick(); sabTimer = setInterval(tick, 250);
 }
 
 // ───── 버튼 ─────
@@ -265,30 +306,40 @@ app.isFrozen = () => !!app.panel || !!app.minimap || !!app.sheet || !$('#notice'
   || !!app.revealing || !!app.meta?.paused || app.phase === 'ended' || !!app.faking;
 app.setNear = n => {
   app.near = n;
-  const canUse = !!n.task || (n.table && !app.game?.emerg?.[app.uid]);
+  const big = app.game?.sab && app.game.sab.kind !== 'clot';
+  const canUse = !!n.sab || !!n.task || (n.table && !app.game?.emerg?.[app.uid] && !big);
   app.hud?.setUse(canUse);
   app.hud?.setReport(!!n.body);
   app.hud?.setKill(n.kill, app.priv?.killReadyAt ? app.priv.killReadyAt - app.db.now() : 0);
+  app.hud?.setVent(!!n.vent);
+  app.hud?.setSab(app.game?.sab ? -1 : (app.game?.sabReadyAt || 0) - app.db.now());
 };
 function blocked() { return app.phase !== 'playing' || app.isFrozen() || app.db.now() < (app.game?.revealUntil || 0); }
 function request(t, target = '') { app.db.set(P.reqOf(app.code, app.uid), { t, target, n: Date.now() }); }
+const visPath = () => `rooms/${app.code}/vis/${app.uid}`;
+const holdPath = () => `rooms/${app.code}/sabHold/${app.uid}`;
 
 app.useAction = () => {
   if (blocked() || !app.near) return;
+  app.joy.reset();
+  if (app.near.sab) return openSabFix(app.near.sab);
   const id = app.near.task;
   if (id) {
-    const M = MISSIONS[id];
-    app.joy.reset();
+    const M = MISSIONS[id], t = app.tasks.find(x => x.id === id), step = t.step, S = M.steps[step];
     if (app.priv?.role === 'imp' && !app.amDead()) { app.faking = true; fakeTask(M.title).then(() => { app.faking = false; }); return; }
+    const visible = M.visible && !app.amDead();
+    if (visible) { app.db.set(visPath(), id); app.db.onDisconnectRemove(visPath()); }
     app.panel = openPanel({
-      title: M.title, sub: M.sub, mount: M.mount,
-      onSuccess: () => { app.db.set(P.doneOf(app.code, app.uid) + '/' + id, 1); app.hud.toast(`${M.title} 완료!`); },
-      onClose: () => { app.panel = null; },
+      title: M.title + (t.n > 1 ? ` (${step + 1}/${t.n})` : ''), sub: S.sub, mount: S.mount,
+      onSuccess: () => {
+        app.db.set(P.doneOf(app.code, app.uid) + '/' + id, step + 1);
+        app.hud.toast(step + 1 >= t.n ? `${M.title} 완료!` : `${M.title} ${step + 1}/${t.n} · 다음은 ${roomName(SPOTS[M.steps[step + 1].spot].room)}`);
+      },
+      onClose: () => { app.panel = null; if (visible) app.db.remove(visPath()); },
     });
     return;
   }
   if (app.near.table && !app.amDead() && !app.game?.emerg?.[app.uid]) {
-    app.joy.reset();
     app.sheet = openSheet({
       title: '긴급 회의',
       html: `<p class="sheet-p">긴급 회의를 열까요? 한 판에 <b>한 번만</b> 열 수 있어요.</p><div class="sheet-btns"><button class="btn btn-red press" data-y>회의 열기</button><button class="btn btn-gray press" data-n>취소</button></div>`,
@@ -300,6 +351,34 @@ app.useAction = () => {
     });
   }
 };
+
+// 사보타주 해결 창
+function openSabFix(spotId) {
+  const s = SAB_SPOTS[spotId];
+  app.sabPanel = true;
+  if (s.kind === 'kidney') {
+    app.panel = openPanel({
+      title: '콩팥 정지 해결', sub: '걸러지는 물질만 보먼주머니로 보내 콩팥을 다시 움직이세요.', mount: SAB_FIX.kidney,
+      onSuccess: () => request('fix', 'kidney'), onClose: () => { app.panel = null; },
+    });
+    return;
+  }
+  // 산소 부족: 누르고 있는 동안만 신호를 보냄
+  const other = s.side === 'lung' ? '심장실' : '폐실';
+  app.panel = openPanel({
+    title: '산소 공급 버튼', sub: `손바닥 칸을 누르고 있으세요. ${other}에서도 누군가 동시에 눌러야 해요.`,
+    mount: el => {
+      el.innerHTML = `<div class="o2"><div class="o2-pad">누르고 있기</div><div class="o2-msg">${other} 쪽을 기다리는 중...</div></div>`;
+      const pad = el.querySelector('.o2-pad');
+      const on = e => { e.preventDefault(); pad.setPointerCapture?.(e.pointerId); pad.classList.add('on'); app.db.set(holdPath(), s.side); app.db.onDisconnectRemove(holdPath()); };
+      const off = () => { pad.classList.remove('on'); app.db.remove(holdPath()); };
+      pad.addEventListener('pointerdown', on); pad.addEventListener('pointerup', off); pad.addEventListener('pointercancel', off);
+      return off;
+    },
+    onClose: () => { app.panel = null; app.db.remove(holdPath()); },
+  });
+}
+
 app.killAction = () => {
   if (blocked() || app.priv?.role !== 'imp' || app.amDead() || !app.near?.kill) return;
   if ((app.priv.killReadyAt || 0) > app.db.now()) return;
@@ -308,6 +387,34 @@ app.killAction = () => {
 app.reportAction = () => {
   if (blocked() || app.amDead() || !app.near?.body) return;
   request('report', app.near.body);
+};
+// 혈관 통로: 짝 통로로 순간 이동
+app.ventAction = () => {
+  if (blocked() || app.priv?.role !== 'imp' || app.amDead() || !app.near?.vent) return;
+  const to = VENTS[VENTS[app.near.vent].to];
+  sfx('vent'); app.scene.ventTo(to.x, to.y + 50);
+};
+// 사보타주 메뉴 (임포스터, 유령이어도 가능)
+app.sabAction = () => {
+  if (blocked() || app.priv?.role !== 'imp') return;
+  const g = app.game || {};
+  if (g.sab) return app.hud.toast('이미 사보타주가 진행 중이에요');
+  const wait = Math.ceil(((g.sabReadyAt || 0) - app.db.now()) / 1000);
+  if (wait > 0) return app.hud.toast(`${wait}초 뒤에 쓸 수 있어요`);
+  const S = CONTENT.sabotage;
+  app.sheet = openSheet({
+    title: '사보타주',
+    html: `<div class="sab-menu">
+      <button class="sab-opt press" data-k="o2"><b>${S.o2.name}</b><small>${S.o2.sec}초 안에 못 막으면 승리</small></button>
+      <button class="sab-opt press" data-k="kidney"><b>${S.kidney.name}</b><small>${S.kidney.sec}초 안에 못 막으면 승리</small></button>
+      <div class="sab-clot"><b>${S.clot.name}</b> <small>${S.clot.sec}초 동안 고른 방의 문을 막아요</small>
+        <div class="opt-list">${PLACES.map(p => `<button class="opt press" data-room="${p.id}">${esc(p.name)}</button>`).join('')}</div></div></div>`,
+    onMount: (ov, close) => {
+      ov.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { request('sab', b.dataset.k); close(); });
+      ov.querySelectorAll('[data-room]').forEach(b => b.onclick = () => { request('sab', 'clot:' + b.dataset.room); close(); });
+    },
+    onClose: () => { app.sheet = null; },
+  });
 };
 
 function startDebug() {

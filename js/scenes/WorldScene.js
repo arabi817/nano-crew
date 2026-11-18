@@ -1,5 +1,5 @@
 // 게임 세계 화면: 맵 그리기, 내 캐릭터 이동, 다른 친구 위치 받기, 시야(안개)
-import { WORLD, walkable, TASK_SPOTS, TABLE, roomAt, zoneAt } from '../map/map.js';
+import { WORLD, walkable, SPOTS, SAB_SPOTS, VENTS, TABLE, roomAt, zoneAt } from '../map/map.js';
 import { KILL_RANGE, REPORT_RANGE, EMERGENCY_RANGE } from '../common/rules.js';
 import { drawMap } from '../map/drawMap.js';
 import { Avatar, loadAvatarTextures } from '../player/avatar.js';
@@ -20,11 +20,13 @@ export class WorldScene extends Phaser.Scene {
     cam.setBackgroundColor('#140c12');
     cam.setBounds(-400, -400, WORLD.w + 800, WORLD.h + 800);
     this.mapInfo = drawMap(this);
-    this.avatars = new Map(); this.motions = new Map(); this.bodies = new Map();
+    this.avatars = new Map(); this.motions = new Map(); this.bodies = new Map(); this.vis = {};
     this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT', false);
     this.input.keyboard.on('keydown-E', () => this.app.useAction());
     this.input.keyboard.on('keydown-Q', () => this.app.killAction());
     this.input.keyboard.on('keydown-R', () => this.app.reportAction());
+    this.input.keyboard.on('keydown-V', () => this.app.ventAction());
+    this.input.keyboard.on('keydown-F', () => this.app.sabAction());
     this.makeFog();
     this.scale.on('resize', () => this.fitZoom()); this.fitZoom();
     loadAvatarTextures(this).then(() => this.onReady());
@@ -57,7 +59,10 @@ export class WorldScene extends Phaser.Scene {
       onGone: k => this.motions.delete(k),
     });
     this.zl.setZone(zoneAt(this.x, this.y));
-    this.events.once('shutdown', () => this.zl?.stop());
+    // 보이는 미션: 누가 어떤 미션을 하는 중인지
+    this.vis = {};
+    this.unsubVis = a.db.onValue(`rooms/${a.code}/vis`, v => { this.vis = v || {}; });
+    this.events.once('shutdown', () => { this.zl?.stop(); this.unsubVis?.(); });
     this.ready = true;
     a.onSceneReady();
   }
@@ -80,6 +85,17 @@ export class WorldScene extends Phaser.Scene {
       av.setLook(p.c, p.hat || 0); av.setLabel(nickOf(p)); av.online = p.on !== false;
     }
     for (const [uid, av] of this.avatars) if (!players[uid]) { av.destroy(); this.avatars.delete(uid); }
+  }
+
+  // 혈관 통로: 잠깐 사라졌다가 짝 통로에서 나타나요
+  ventTo(x, y) {
+    this.ghostPuff(this.x, this.y);
+    this.teleport(x, y);
+    this.ghostPuff(x, y);
+  }
+  ghostPuff(x, y) {
+    const c = this.add.circle(x, y + 10, 30, 0x7a2b38, 0.8).setDepth(y + 1).setStrokeStyle(5, 0x1a1018);
+    this.tweens.add({ targets: c, scale: 2, alpha: 0, duration: 450, onComplete: () => c.destroy() });
   }
 
   teleport(x, y) {
@@ -135,6 +151,7 @@ export class WorldScene extends Phaser.Scene {
       av.setAlpha(al); if (al > 0) visible++;
       av.label.setColor(mates.includes(uid) ? '#ff6b6b' : '#ffffff');
       av.dist = d;
+      av.setFx(playing && !dead[uid] ? this.vis[uid] : null);
     }
     this.visibleCount = visible;
     this.updateFog(fog);
@@ -144,14 +161,22 @@ export class WorldScene extends Phaser.Scene {
     }
 
     // 가까운 미션·킬 대상·시체·긴급 버튼 찾기
-    const near = { task: null, kill: null, body: null, table: false };
+    this.me.setFx(playing && !ghost ? this.vis[a.uid] : null);
+    const near = { task: null, kill: null, body: null, table: false, sab: null, vent: null };
     if (playing && !a.isFrozen()) {
       let best = USE_RANGE;
       for (const t of a.tasks) {
         if (t.done) continue;
-        const s = TASK_SPOTS[t.id]; if (!s) continue;
+        const s = SPOTS[t.spot]; if (!s) continue;
         const d = Math.hypot(s.x - this.x, s.y - this.y);
         if (d < best) { best = d; near.task = t.id; }
+      }
+      const sab = a.game?.sab;
+      if (sab && !ghost) for (const [id, s] of Object.entries(SAB_SPOTS)) {
+        if (s.kind === sab.kind && Math.hypot(s.x - this.x, s.y - this.y) < USE_RANGE + 20) near.sab = id;
+      }
+      if (!ghost && a.priv?.role === 'imp') for (const [id, v] of Object.entries(VENTS)) {
+        if (Math.hypot(v.x - this.x, v.y - this.y) < 95) near.vent = id;
       }
       if (!ghost) {
         if (a.priv?.role === 'imp') {

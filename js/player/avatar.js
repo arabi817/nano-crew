@@ -63,6 +63,30 @@ export class Avatar {
       this.footL.x += (-11 - this.footL.x) * k; this.footR.x += (11 - this.footR.x) * k;
     }
   }
+  // 보이는 미션 효과 (다른 친구 화면에도 보여요)
+  setFx(id) {
+    if (id === this.fxId) return;
+    this.fxId = id; this.fx?.destroy(); this.fx = null; this.fxTweens?.forEach(t => t.remove()); this.fxTweens = [];
+    if (!id) return;
+    const s = this.scene, c = s.add.container(0, 0); this.fx = c;
+    if (id === 'bloodScan') { // 초록 스캔 빛이 위아래로 훑음
+      const beam = s.add.rectangle(0, -10, 74, 10, 0x6dfc9c, 0.75).setStrokeStyle(2, 0x1a1018);
+      const glow = s.add.ellipse(0, 30, 80, 22, 0x6dfc9c, 0.35);
+      c.add([glow, beam]);
+      this.fxTweens.push(s.tweens.add({ targets: beam, y: { from: -40, to: 30 }, duration: 700, yoyo: true, repeat: -1 }));
+    } else if (id === 'colon') { // 찌꺼기가 아래로 쏟아짐
+      for (let i = 0; i < 3; i++) {
+        const d = s.add.circle(30 + i * 8, -20, 6, 0x8a5a2b).setStrokeStyle(2, 0x1a1018);
+        c.add(d);
+        this.fxTweens.push(s.tweens.add({ targets: d, y: { from: -30, to: 40 }, alpha: { from: 1, to: 0 }, duration: 800, delay: i * 250, repeat: -1 }));
+      }
+    } else if (id === 'breathModel') { // 머리 위 풍선이 부풀었다 줄었다
+      const b = s.add.ellipse(0, -84, 26, 30, 0xf2a6b8).setStrokeStyle(3, 0x1a1018);
+      c.add(b);
+      this.fxTweens.push(s.tweens.add({ targets: b, scale: { from: 0.6, to: 1.25 }, duration: 900, yoyo: true, repeat: -1 }));
+    }
+    this.root.addAt(c, 1);
+  }
   setAlpha(a) { this.root.setAlpha(a); this.root.setVisible(a > 0.01); }
   destroy() { this.root.destroy(); }
 }

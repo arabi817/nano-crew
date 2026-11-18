@@ -7,7 +7,7 @@ import { COLORS, MAX_NUM, nickKey } from './common/colors.js';
 import { ROOMS, LOBBY, randomPointIn, spawnPoint, route, nearestRoomId, zoneAt, nearZones } from './map/map.js';
 import { NET } from '../config.js';
 import { $ } from './common/util.js';
-import { CONTENT } from '../data/content.js';
+import { OX } from '../data/ox.js';
 
 const SPEED = 270;
 let db, code, bots = [], phase = 'lobby', players = {}, timer = 0, unsubs = [];
@@ -99,7 +99,7 @@ function onBotGame(g) {
   const alive = bots.filter(b => !g.dead?.[b.id] && g.members?.[b.id]);
   const base = P.meet(code, m.id);
   if (m.phase === 'ox') {
-    const ans = CONTENT.ox[m.q.i]?.a, wait = Math.max(0, m.startAt - db.now());
+    const ans = OX[m.q.i]?.a, wait = Math.max(0, m.startAt - db.now());
     alive.forEach(b => setTimeout(() => {
       const a = Math.random() < 0.7 ? ans : (ans === 'O' ? 'X' : 'O');
       db.set(`${base}/ans/${b.id}`, a);

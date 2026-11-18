@@ -35,10 +35,64 @@ export const HALLS = [
 export const TABLE = { x: 1750, y: 1350, r: 170 };     // 회의 테이블 (못 지나감)
 export const BLOCKS = [{ x: TABLE.x, y: TABLE.y, r: TABLE.r }];
 
-// 미션 위치 (1단계: 2개)
-export const TASK_SPOTS = {
+// 미션 장치 위치 (미션 단계마다 하나씩)
+export const SPOTS = {
+  // 소화실
+  digestWireMouth: { room: 'digest', x: 330, y: 310, label: '입 패널' },
+  digestWireStomach: { room: 'digest', x: 780, y: 310, label: '위 패널' },
+  nutrientTest: { room: 'digest', x: 300, y: 680 },
+  gutAssembly: { room: 'digest', x: 600, y: 680 },
+  // 작은창자실
+  digestWireSmall: { room: 'small', x: 1500, y: 310, label: '작은창자 패널' },
+  villi: { room: 'small', x: 2000, y: 310 },
+  powerGlucose: { room: 'small', x: 1750, y: 450, label: '포도당 캡슐' },
+  // 큰창자실
+  colon: { room: 'large', x: 2950, y: 475 },
+  // 심장실
   heartWiring: { room: 'heart', x: 3255, y: 1560 },
+  heartbeat: { room: 'heart', x: 3260, y: 1180 },
+  // 혈관 관제실
+  rbcCard: { room: 'vessel', x: 1500, y: 2200 },
+  bloodScan: { room: 'vessel', x: 2000, y: 2200 },
+  vesselCheck: { room: 'vessel', x: 1750, y: 2390 },
+  wasteUreaPick: { room: 'vessel', x: 1500, y: 2390, label: '요소 받기' },
+  // 폐실
   alveoliFilter: { room: 'lung', x: 260, y: 1140 },
+  breathModel: { room: 'lung', x: 400, y: 1140 },
+  diaphragm: { room: 'lung', x: 780, y: 1150 },
+  airPath: { room: 'lung', x: 600, y: 1330 },
+  powerO2: { room: 'lung', x: 230, y: 1330, label: '산소 캡슐' },
+  wasteCO2Out: { room: 'lung', x: 230, y: 1590, label: '이산화탄소 배출구' },
+  // 세포 발전소
+  powerFinal: { room: 'power', x: 560, y: 2230, label: '발전기' },
+  wasteCO2Pick: { room: 'power', x: 230, y: 2230, label: '이산화탄소 받기' },
+  // 콩팥실
+  nephron1: { room: 'kidney', x: 2580, y: 2040, label: '사구체 장치' },
+  nephron2: { room: 'kidney', x: 2970, y: 2040, label: '세뇨관 장치' },
+  wasteSort: { room: 'kidney', x: 2775, y: 2410 },
+  wasteUreaDrop: { room: 'kidney', x: 2580, y: 2420, label: '요소 넣기' },
+  // 방광 처리실
+  ureaFactory: { room: 'bladder', x: 3330, y: 2090 },
+};
+export const TASK_SPOTS = SPOTS; // 예전 이름
+
+// 사보타주 해결 장치
+export const SAB_SPOTS = {
+  o2Lung: { room: 'lung', x: 800, y: 1600, kind: 'o2', side: 'lung' },
+  o2Heart: { room: 'heart', x: 2730, y: 1120, kind: 'o2', side: 'heart' },
+  kidneyStop: { room: 'kidney', x: 2970, y: 2420, kind: 'kidney' },
+};
+
+// 혈관 통로(벤트): 임포스터만 써요. 서로 먼 방끼리 4쌍
+export const VENTS = {
+  vDigest: { room: 'digest', x: 820, y: 680, to: 'vKidney' },
+  vKidney: { room: 'kidney', x: 2775, y: 2205, to: 'vDigest' },
+  vLarge: { room: 'large', x: 2680, y: 680, to: 'vPower' },
+  vPower: { room: 'power', x: 820, y: 2400, to: 'vLarge' },
+  vSmall: { room: 'small', x: 2080, y: 600, to: 'vBladder' },
+  vBladder: { room: 'bladder', x: 3600, y: 2410, to: 'vSmall' },
+  vLung: { room: 'lung', x: 420, y: 1330, to: 'vHeart' },
+  vHeart: { room: 'heart', x: 3270, y: 1370, to: 'vLung' },
 };
 
 export const LOBBY = ROOMS.find(r => r.lobby);
@@ -49,12 +103,32 @@ const AREAS = [...ROOMS, ...HALLS];
 const inRect = (a, x, y) => x >= a.x && x <= a.x + a.w && y >= a.y && y <= a.y + a.h;
 const inAreas = (x, y) => AREAS.some(a => inRect(a, x, y));
 
+// 혈관 막힘(사보타주): 막힌 방의 문(복도 입구) 사각형
+let blockedDoors = [];
+export function doorsOf(roomId) {
+  const r = ROOMS.find(q => q.id === roomId); if (!r) return [];
+  const out = [], D = 46;
+  for (const h of HALLS) {
+    if (h.a !== roomId && h.b !== roomId) continue;
+    if (h.w > h.h) { // 가로 복도: 방이 왼쪽/오른쪽
+      if (Math.abs(h.x - (r.x + r.w)) < 2) out.push({ x: h.x, y: h.y, w: D, h: h.h });
+      else out.push({ x: h.x + h.w - D, y: h.y, w: D, h: h.h });
+    } else {
+      if (Math.abs(h.y - (r.y + r.h)) < 2) out.push({ x: h.x, y: h.y, w: h.w, h: D });
+      else out.push({ x: h.x, y: h.y + h.h - D, w: h.w, h: D });
+    }
+  }
+  return out;
+}
+export function setBlockedDoors(list) { blockedDoors = list || []; }
+const inDoor = (x, y) => blockedDoors.some(d => inRect(d, x, y));
+
 // 반지름 r인 캐릭터가 (x,y)에 설 수 있나?
 export function walkable(x, y, r) {
-  if (!inAreas(x, y)) return false;
+  if (!inAreas(x, y) || inDoor(x, y)) return false;
   for (let i = 0; i < 8; i++) {
-    const an = i * Math.PI / 4;
-    if (!inAreas(x + Math.cos(an) * r, y + Math.sin(an) * r)) return false;
+    const an = i * Math.PI / 4, px = x + Math.cos(an) * r, py = y + Math.sin(an) * r;
+    if (!inAreas(px, py) || inDoor(px, py)) return false;
   }
   for (const b of BLOCKS) if (Math.hypot(x - b.x, y - b.y) < b.r + r) return false;
   return true;

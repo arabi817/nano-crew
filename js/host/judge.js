@@ -3,9 +3,10 @@
 // 상태는 모두 Firebase에 있어서, 교사 화면을 새로고침해도 이어서 판정해요.
 import { P, isBot } from '../net/room.js';
 import { decodePos } from '../net/posSync.js';
-import { TABLE } from '../map/map.js';
+import { TABLE, SAB_SPOTS } from '../map/map.js';
+import { OX } from '../../data/ox.js';
+import { assignTasks, stepCount } from '../missions/index.js';
 import { CONTENT } from '../../data/content.js';
-import { STAGE1_TASKS } from '../missions/index.js';
 import { settingsOf, KILL_RANGE, REPORT_RANGE, EMERGENCY_RANGE, REVEAL_MS, ALARM_MS, RESULT_MS } from '../common/rules.js';
 import { shuffle } from '../common/util.js';
 
@@ -34,6 +35,7 @@ export class Judge {
         removed: z => { delete this.zones[z]; },
       }),
       db.onChildren(P.req(code), { added: (u, r) => this.onReq(u, r), changed: (u, r) => this.onReq(u, r) }),
+      db.onValue(`${P.room(code)}/sabHold`, v => { this.sabHold = v || {}; this.checkO2(); }),
     );
     this.timer = setInterval(() => this.tick(), 250);
   }
@@ -49,7 +51,7 @@ export class Judge {
     let d = 0, t = 0;
     for (const id of this.ids()) {
       const p = this.priv[id]; if (p.role !== 'crew') continue;
-      for (const task of p.tasks || []) { t++; if (this.done[id]?.[task]) d++; }
+      for (const task of p.tasks || []) { t++; if ((this.done[id]?.[task] || 0) >= stepCount(task)) d++; }
     }
     return { d, t };
   }
@@ -66,28 +68,31 @@ export class Judge {
     const priv = {};
     for (const id of ids) {
       const isImp = imps.includes(id);
-      priv[id] = { role: isImp ? 'imp' : 'crew', tasks: [...STAGE1_TASKS] };
+      priv[id] = { role: isImp ? 'imp' : 'crew', tasks: assignTasks({ unit: s.unit, exclude: s.exclude || [] }) };
       if (isImp) { priv[id].mates = imps.filter(x => x !== id); priv[id].killReadyAt = now + REVEAL_MS + s.killCd * 1000; }
     }
-    const crewTasks = (ids.length - nImp) * STAGE1_TASKS.length;
+    const crewTasks = ids.filter(id => !imps.includes(id)).reduce((n, id) => n + priv[id].tasks.length, 0);
     await this.db.update(this.R, {
-      private: priv, done: null, meet: null, req: null,
+      private: priv, done: null, meet: null, req: null, vis: null, sabHold: null,
       game: { round: 0, impCount: nImp, revealUntil: now + REVEAL_MS, progress: { d: 0, t: crewTasks }, members: Object.fromEntries(ids.map(id => [id, true])) },
       'meta/state': 'playing', 'meta/startedAt': now, 'meta/paused': false, 'meta/settings': s,
     });
   }
 
   async resetToLobby() {
-    await this.db.update(this.R, { private: null, game: null, done: null, meet: null, req: null, 'meta/state': 'lobby', 'meta/paused': false });
+    await this.db.update(this.R, { private: null, game: null, done: null, meet: null, req: null, vis: null, sabHold: null, 'meta/state': 'lobby', 'meta/paused': false });
   }
 
   // ── 학생 요청 처리 ──
   onReq(uid, r) {
     this.db.remove(P.reqOf(this.code, uid));
     if (!r || this.meta?.state !== 'playing' || this.meta.paused || this.game.meeting) return;
-    if (!this.priv[uid] || !this.alive(uid)) return;
+    if (!this.priv[uid]) return;
     if (this.db.now() < (this.game.revealUntil || 0)) return;
-    if (r.t === 'kill') this.tryKill(uid, r.target);
+    if (r.t === 'sab') return this.trySabotage(uid, r.target); // 유령 임포스터도 사보타주 가능
+    if (!this.alive(uid)) return;
+    if (r.t === 'fix') this.tryFix(uid, r.target);
+    else if (r.t === 'kill') this.tryKill(uid, r.target);
     else if (r.t === 'report') this.tryReport(uid, r.target);
     else if (r.t === 'emergency') this.tryEmergency(uid);
   }
@@ -114,7 +119,7 @@ export class Judge {
     this.startMeeting(uid, body);
   }
   tryEmergency(uid) {
-    if (this.game.emerg?.[uid]) return;
+    if (this.game.emerg?.[uid] || this.bigSab()) return; // 큰 사보타주 중에는 긴급 버튼 못 씀
     const a = this.posOf(uid);
     if (!a || dist(a, TABLE) > EMERGENCY_RANGE * 1.4) return;
     (this.game.emerg ||= {})[uid] = true;
@@ -122,11 +127,47 @@ export class Judge {
     this.startMeeting(uid, '');
   }
 
+  // ── 사보타주 ──
+  bigSab() { const k = this.game.sab?.kind; return k === 'o2' || k === 'kidney'; }
+  trySabotage(uid, what) {
+    if (this.roleOf(uid) !== 'imp' || this.game.sab) return;
+    const now = this.db.now();
+    if (now < (this.game.sabReadyAt || 0)) return;
+    const [kind, room] = String(what || '').split(':');
+    const S = CONTENT.sabotage[kind]; if (!S || kind === 'cooldown') return;
+    if (kind === 'clot' && !room) return;
+    const sab = { kind, endsAt: now + S.sec * 1000, at: now };
+    if (room) sab.room = room;
+    this.game.sab = sab;
+    this.db.update(this.R, { 'game/sab': sab, sabHold: null });
+  }
+  endSab() {
+    this.game.sab = null;
+    this.db.update(this.R, { 'game/sab': null, 'game/sabReadyAt': this.db.now() + CONTENT.sabotage.cooldown * 1000, sabHold: null });
+  }
+  near(uid, spotId, k = 1.7) { const a = this.posOf(uid), s = SAB_SPOTS[spotId]; return a && s && dist(a, s) < 140 * k; }
+  tryFix(uid, kind) {
+    if (this.game.sab?.kind !== kind || kind !== 'kidney') return;
+    if (!this.near(uid, 'kidneyStop')) return;
+    this.endSab();
+  }
+  // 산소 부족: 폐실·심장실 버튼을 서로 다른 두 사람이 동시에 누르고 있으면 해결
+  checkO2() {
+    if (this.game.sab?.kind !== 'o2' || this.game.meeting) return;
+    const h = this.sabHold || {}, by = { lung: null, heart: null };
+    for (const [uid, side] of Object.entries(h)) {
+      if (!this.priv[uid] || !this.alive(uid)) continue;
+      const spot = side === 'lung' ? 'o2Lung' : 'o2Heart';
+      if (this.near(uid, spot)) by[side] = uid;
+    }
+    if (by.lung && by.heart && by.lung !== by.heart) this.endSab();
+  }
+
   // ── 회의 ──
   pickQuestion() {
     const s = this.s, used = this.game.oxUsed || {};
-    let pool = CONTENT.ox.map((q, i) => ({ ...q, i })).filter(q => s.unit === 'all' || q.unit === s.unit);
-    if (!pool.length) pool = CONTENT.ox.map((q, i) => ({ ...q, i }));
+    let pool = OX.map((q, i) => ({ ...q, i })).filter(q => s.unit === 'all' || q.unit === s.unit);
+    if (!pool.length) pool = OX.map((q, i) => ({ ...q, i }));
     const fresh = pool.filter(q => !used[q.i]);
     const list = fresh.length ? fresh : pool;
     return list[Math.floor(Math.random() * list.length)];
@@ -136,7 +177,9 @@ export class Judge {
     const now = this.db.now(), s = this.s, id = (this.game.round || 0) + 1, q = this.pickQuestion();
     const meeting = { id, phase: 'ox', caller, body: body || '', startAt: now + ALARM_MS, endsAt: now + ALARM_MS + s.oxSec * 1000, q: { i: q.i, text: q.q } };
     this.game.meeting = meeting;
-    const upd = { 'game/meeting': meeting, 'game/round': id, 'game/bodies': null, [`game/oxUsed/${q.i}`]: true };
+    const upd = { 'game/meeting': meeting, 'game/round': id, 'game/bodies': null, [`game/oxUsed/${q.i}`]: true,
+      'game/sab': null, 'game/sabReadyAt': now + ALARM_MS + CONTENT.sabotage.cooldown * 1000, sabHold: null };
+    this.game.sab = null;
     if (s.progress === 'meeting') upd['game/progress'] = this.progress();
     this.db.update(this.R, upd);
   }
@@ -152,6 +195,11 @@ export class Judge {
     }
   }
   tick() {
+    const sab = this.game.sab;
+    if (sab && !this.game.meeting && !this.meta?.paused && this.meta?.state === 'playing' && !this.game.winner && this.db.now() >= sab.endsAt) {
+      if (sab.kind === 'clot') this.endSab();
+      else this.endGame({ team: 'imp', reason: CONTENT.sabotage[sab.kind].fail });
+    }
     const m = this.game.meeting;
     if (!m || this.meta?.paused || this.meta?.state !== 'playing') return;
     const now = this.db.now();
@@ -167,7 +215,7 @@ export class Judge {
     if (this.stepKey === key) return; this.stepKey = key;
     const now = this.db.now(), s = this.s, base = `meet/${m.id}`;
     if (phase === 'ox') {
-      const ans = CONTENT.ox[m.q.i]?.a, right = {};
+      const ans = OX[m.q.i]?.a, right = {};
       for (const id of this.aliveVoters()) right[id] = this.cur.ans[id] === ans;
       this.db.update(this.R, {
         [`${base}/right`]: right,
@@ -241,6 +289,7 @@ export class Judge {
     const now = this.db.now();
     if (!this.meta?.paused) { this.pausedAt = now; this.db.update(this.R, { 'meta/paused': true, 'meta/pausedAt': now }); return; }
     const gap = now - (this.meta.pausedAt || now), upd = { 'meta/paused': false };
+    if (this.game.sab) upd['game/sab/endsAt'] = this.game.sab.endsAt + gap;
     if (this.game.meeting) { upd['game/meeting/endsAt'] = this.game.meeting.endsAt + gap; if (this.game.meeting.startAt) upd['game/meeting/startAt'] = this.game.meeting.startAt + gap; }
     for (const id of this.ids()) if (this.roleOf(id) === 'imp' && this.priv[id].killReadyAt) upd[`private/${id}/killReadyAt`] = this.priv[id].killReadyAt + gap;
     this.db.update(this.R, upd);

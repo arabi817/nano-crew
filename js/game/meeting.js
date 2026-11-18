@@ -2,7 +2,7 @@
 import { CONTENT } from '../../data/content.js';
 import { P } from '../net/room.js';
 import { nickOf, COLORS } from '../common/colors.js';
-import { STAGE1_TASKS } from '../missions/index.js';
+import { MISSIONS } from '../missions/index.js';
 import { PLACES, chatHTML, callerText, avatarOf, PHASE_NAME, missionName } from './shared.js';
 import { sfx } from '../common/sfx.js';
 import { esc } from '../common/util.js';
@@ -158,7 +158,7 @@ export class MeetingUI {
     const slot = tpl.slots[i], g = this.app.game || {};
     let opts = [];
     if (slot === 'place') opts = PLACES.map(p => [p.id, p.name]);
-    if (slot === 'mission') opts = (this.app.priv?.tasks || STAGE1_TASKS).map(t => [t, missionName(t)]);
+    if (slot === 'mission') opts = (this.app.priv?.tasks || Object.keys(MISSIONS)).map(t => [t, missionName(t)]);
     if (slot === 'person') opts = Object.keys(this.app.privIds()).filter(id => this.app.players[id] && !g.dead?.[id] && id !== this.app.uid)
       .map(id => [id, nickOf(this.app.players[id])]);
     const label = { place: '장소', person: '사람', mission: '미션' }[slot];

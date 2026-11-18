@@ -51,6 +51,22 @@
           ".read": "auth != null"
         },
 
+        "vis": {
+          ".read": "auth != null",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.isString() && newData.val().length < 20"
+          }
+        },
+
+        "sabHold": {
+          ".read": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.val() === 'lung' || newData.val() === 'heart'"
+          }
+        },
+
         "req": {
           ".read": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid",
           "$uid": {

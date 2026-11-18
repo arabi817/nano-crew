@@ -352,3 +352,186 @@ body:not([data-role="imp"]) .only-imp, body.ghost .only-imp, body.ghost #btn-rep
 .ej-sub { font-family: var(--title); font-size: 30px; color: var(--yellow); animation: fxin 1s 2s both; }
 .ej-left { font-size: 20px; font-weight: 700; animation: fxin 1s 2.6s both; }
 @media (max-width: 760px) { .meet-body { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; } .ox-b { width: 120px; height: 120px; font-size: 80px; } }
+
+/* ═════════ 3단계: 사보타주·통로 ═════════ */
+body:not([data-role="imp"]) .only-imp-any { display: none !important; }
+.imp-col { display: flex; flex-direction: column; gap: 10px; }
+.abtn-sab, .abtn-vent { width: 84px; height: 84px; border-radius: 18px; }
+.abtn-sab .ico, .abtn-vent .ico { width: 40px; height: 40px; }
+.abtn-sab span, .abtn-vent span { font-size: 16px; }
+.abtn-sab { background: #b8860b; } .abtn-sab.dim { filter: grayscale(.8) brightness(.75); }
+.abtn-vent { background: #7a2b38; } .abtn-vent.ready { background: #c0394a; animation: pulse 1s infinite; }
+.sab-banner { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); max-width: 92vw; text-align: center; font-weight: 900; font-size: 18px; background: var(--red); border: 4px solid var(--ink); border-radius: 10px; padding: 6px 16px; pointer-events: none; animation: flash .7s steps(2) infinite; }
+.sab-banner b { font-family: var(--title); font-weight: 400; font-size: 24px; margin-right: 6px; }
+.sab-time { font-family: var(--title); font-size: 26px; margin-left: 6px; }
+body.sab-big #phaser::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 10px rgba(229, 72, 77, .7), inset 0 0 80px rgba(229, 72, 77, .5); animation: fxout .8s alternate infinite; }
+.sab-menu { display: flex; flex-direction: column; gap: 10px; }
+.sab-opt { display: flex; flex-direction: column; align-items: flex-start; background: var(--red); color: #fff; border: 4px solid var(--ink); border-radius: 12px; padding: 10px 14px; cursor: pointer; box-shadow: 0 4px 0 var(--ink); }
+.sab-opt b { font-family: var(--title); font-weight: 400; font-size: 24px; }
+.sab-clot { background: #5d6b74; border: 4px solid var(--ink); border-radius: 12px; padding: 10px; }
+.sab-clot b { font-family: var(--title); font-weight: 400; font-size: 22px; }
+.sab-clot .opt-list { margin-top: 6px; }
+.sabotage.small { font-size: 34px; background: #8e2333; }
+.o2 { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+.o2-pad { width: 200px; height: 200px; border-radius: 30px; border: 6px solid var(--ink); background: #3b8bea; display: flex; align-items: center; justify-content: center; font-family: var(--title); font-size: 30px; color: #fff; -webkit-text-stroke: 6px var(--ink); paint-order: stroke fill; box-shadow: 0 8px 0 var(--ink); touch-action: none; cursor: pointer; }
+.o2-pad.on { background: var(--green); transform: translateY(6px); box-shadow: 0 2px 0 var(--ink); }
+.o2-msg { font-weight: 900; font-size: 18px; }
+
+/* ═════════ 3단계: 미션 공통 조각 ═════════ */
+.dragging { z-index: 20; position: relative; cursor: grabbing; filter: drop-shadow(0 8px 0 rgba(0, 0, 0, .35)); }
+.snapback { transition: transform .2s; }
+.sg-h { font-family: var(--title); font-size: 19px; color: #9fe3c0; margin-bottom: 6px; }
+.sg-item { display: inline-flex; align-items: center; justify-content: center; font-family: var(--title); font-size: 19px; background: #e9edf0; color: var(--ink); border: 4px solid var(--ink); border-radius: 10px; padding: 7px 12px; box-shadow: 0 4px 0 var(--ink); cursor: grab; touch-action: none; user-select: none; }
+.sg-item.ok { background: #bff0cc; cursor: default; box-shadow: none; }
+/* 분류 */
+.sg { position: absolute; inset: 0; display: grid; grid-template-rows: auto 1fr; gap: 12px; padding: 14px; }
+.sg-tray { background: rgba(255, 255, 255, .06); border: 3px dashed #4b565c; border-radius: 10px; padding: 10px; }
+.sg-items { display: flex; flex-wrap: wrap; gap: 8px; min-height: 52px; }
+.sg-note { font-size: 14px; font-weight: 700; opacity: .8; margin-top: 6px; }
+.sg-bins { display: flex; gap: 12px; min-height: 0; }
+.sg-bin { flex: 1; display: flex; flex-direction: column; background: #2b3439; border: 4px solid var(--ink); border-radius: 12px; box-shadow: inset 0 0 0 4px #4b565c; padding: 8px; min-height: 120px; }
+.sg-bin-h { font-family: var(--title); font-size: 22px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.sg-bin-h small { font-family: var(--body); font-size: 13px; opacity: .7; }
+.sg-bin-in { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; justify-content: center; padding-top: 6px; }
+.sg.villi .sg-bin:first-child { background: #8e2333; } .sg.villi .sg-bin:last-child { background: #c9a25b; }
+.sg.neph .sg-bin { background: #a8524a; }
+.sg.chutes .sg-bin { background: #3d4a52; }
+.sg.scan .sg-bin { background: #f4f6f8; color: var(--ink); }
+.scan-cell svg { width: 86px; height: 86px; }
+.scan-light { position: absolute; left: 0; right: 0; height: 10px; background: rgba(109, 252, 156, .55); box-shadow: 0 0 20px #6dfc9c; animation: scanmove 2s ease-in-out infinite alternate; pointer-events: none; }
+@keyframes scanmove { from { top: 30%; } to { top: 96%; } }
+/* 두 구역 */
+.zs { position: absolute; inset: 0; display: flex; gap: 0; padding: 14px; }
+.zs-zone { flex: 1; display: flex; flex-direction: column; border: 4px solid var(--ink); border-radius: 12px; padding: 10px; }
+.zs-zone:first-child { background: #e8d36a; color: var(--ink); } .zs-zone:last-child { background: #c9404f; }
+.zs-h { font-family: var(--title); font-size: 26px; text-align: center; margin-bottom: 8px; }
+.zs-in { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; align-content: center; justify-content: center; }
+.zs-wall { width: 16px; background: repeating-linear-gradient(0deg, #f2a6b8 0 10px, #1a1018 10px 13px); border-radius: 6px; margin: 30px 6px; }
+/* 선 잇기 */
+.wg { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 7%; padding: 10px 18px; }
+.wg-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+.wg-col { display: flex; flex-direction: column; justify-content: space-around; gap: 6px; }
+.wg-title { font-family: var(--title); font-size: 18px; text-align: center; color: #9fe3c0; }
+.wg-node { display: flex; align-items: center; gap: 6px; touch-action: none; cursor: grab; }
+.wg-label { flex: 1; font-family: var(--title); font-size: 18px; line-height: 1.15; background: #e9edf0; color: var(--ink); border: 4px solid var(--ink); border-radius: 10px; padding: 7px 8px; text-align: center; box-shadow: 0 4px 0 var(--ink); }
+.wg-dot { flex: none; width: 26px; height: 26px; border-radius: 50%; background: #2b3439; border: 5px solid var(--ink); box-shadow: inset 0 0 0 4px #4b565c; }
+.wg-dot.r { background: var(--yellow); box-shadow: none; }
+.wg-node.ok .wg-label { background: #bff0cc; }
+.wg[style*="--cols:2"] .wg-label { font-size: 22px; }
+/* 순서 */
+.og { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 14px; }
+.og-title { font-family: var(--title); font-size: 22px; text-align: center; }
+.og-track { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; }
+.og-slot { min-width: 44px; padding: 6px 8px; text-align: center; font-family: var(--title); font-size: 16px; background: #2b3439; border: 3px solid var(--ink); border-radius: 8px; }
+.og-slot.ok { background: var(--green); }
+.og-arrow { width: 12px; height: 12px; border-top: 4px solid #9aa7ad; border-right: 4px solid #9aa7ad; transform: rotate(45deg); }
+.og-btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 760px; }
+.og-btn { font-family: var(--title); font-size: 22px; background: var(--yellow); color: var(--ink); border: 4px solid var(--ink); border-radius: 12px; padding: 10px 16px; box-shadow: 0 5px 0 var(--ink); cursor: pointer; }
+.og-btn.ok, .og-btn:disabled { background: #59646b; color: #9aa7ad; box-shadow: 0 1px 0 var(--ink); transform: translateY(4px); }
+/* 영양소 검출 */
+.nt { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr auto; gap: 10px; padding: 12px; }
+.nt-shelf { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: center; }
+.nt-bottle { display: flex; flex-direction: column; align-items: center; font-weight: 900; font-size: 13px; text-align: center; }
+.nt-bottle i { width: 46px; height: 64px; border: 4px solid var(--ink); border-radius: 8px 8px 12px 12px; background: #cfe6f3; }
+.nt-bottle.off { opacity: .35; }
+.nt-bottle.use i { background: #fff3c4; box-shadow: 0 0 0 5px var(--yellow); animation: pulse 1s infinite; cursor: grab; }
+.nt-bench { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.nt-tube { width: 70px; height: 180px; border: 5px solid var(--ink); border-top: none; border-radius: 0 0 36px 36px; background: rgba(255, 255, 255, .15); display: flex; align-items: flex-end; overflow: hidden; }
+.nt-liquid { width: 100%; height: 45%; background: #e9e2c8; transition: background 1s, height .6s; }
+.nt-liquid.drop { height: 60%; }
+.nt-heat { font-family: var(--title); font-size: 18px; background: #ff7a1a; border: 4px solid var(--ink); border-radius: 10px; padding: 6px 14px; box-shadow: 0 4px 0 var(--ink); }
+.nt-heat.on { background: var(--red); }
+.nt-msg { font-weight: 900; text-align: center; }
+.nt-choices { grid-column: 1 / -1; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; min-height: 60px; }
+/* 소화관 조립 */
+.ga { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(260px, 52%) 1fr; gap: 14px; padding: 12px; }
+.ga-body { position: relative; max-width: 380px; }
+.ga-outline { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ga-slot { position: absolute; transform: translate(-50%, -50%); width: 82px; height: 32px; border: 3px dashed var(--ink); border-radius: 10px; background: rgba(255, 255, 255, .65); display: flex; align-items: center; justify-content: center; }
+.ga-slot.organ { border-color: #7a2b38; background: rgba(255, 220, 200, .8); }
+.ga-slot .sg-item { font-size: 15px; padding: 2px 6px; }
+.ga-tray { display: flex; flex-wrap: wrap; gap: 8px; }
+/* 레버 (큰창자) */
+.lv { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 40px; }
+.lv-tank { position: relative; width: 200px; height: 260px; border: 5px solid var(--ink); border-radius: 18px; background: #d9b48a; overflow: hidden; }
+.lv-water { position: absolute; left: 0; right: 0; bottom: 0; height: 60%; background: #6fb7e0; transition: height .1s; }
+.lv-waste { position: absolute; left: 30%; width: 40%; top: 20%; height: 30%; background: #7a5030; border-radius: 40%; border: 4px solid var(--ink); }
+.lv-tag { position: absolute; left: 8px; font-family: var(--title); font-size: 16px; color: #fff; -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
+.lv-tag.a { top: 8px; } .lv-tag.b { bottom: 8px; }
+.lv-rail { position: relative; width: 40px; height: 280px; background: #2b3439; border: 5px solid var(--ink); border-radius: 20px; }
+.lv-handle { position: absolute; left: -36px; width: 104px; height: 60px; top: 0; background: var(--red); color: #fff; border: 5px solid var(--ink); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-family: var(--title); font-size: 18px; touch-action: none; cursor: grab; box-shadow: 0 5px 0 var(--ink); }
+.lv-msg { position: absolute; bottom: 10px; font-weight: 900; }
+/* 적혈구 카드 */
+.rc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+.rc-reader { position: relative; width: min(560px, 90%); height: 110px; background: #3d4a52; border: 5px solid var(--ink); border-radius: 14px; }
+.rc-slot { position: absolute; left: 10px; right: 10px; top: 50%; height: 10px; background: #111; border-radius: 6px; }
+.rc-card { position: absolute; left: 6px; top: 12px; width: 150px; height: 82px; background: #e5484d; color: #fff; border: 4px solid var(--ink); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: var(--title); font-size: 20px; -webkit-text-stroke: 5px var(--ink); paint-order: stroke fill; touch-action: none; cursor: grab; }
+.rc-msg { font-weight: 900; font-size: 18px; }
+/* 심장 박동 */
+.hb { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.hb-msg { font-family: var(--title); font-size: 24px; }
+.hb-pads { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.hb-pad { width: 150px; height: 100px; font-family: var(--title); font-size: 24px; border: 5px solid var(--ink); border-radius: 18px; box-shadow: 0 5px 0 var(--ink); color: var(--ink); cursor: pointer; background: #f0a0a8; }
+.hb-pad.p0, .hb-pad.p2 { background: #8fb2e8; }
+.hb-pad.lit { background: #fff; box-shadow: 0 0 0 6px var(--yellow), 0 5px 0 var(--ink); }
+.hb-steps { display: flex; gap: 8px; } .hb-steps i { width: 22px; height: 22px; border-radius: 50%; border: 4px solid var(--ink); background: #2b3439; } .hb-steps i.ok { background: var(--green); }
+/* 혈관 정비 */
+.vc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px; }
+.vc-top { display: flex; align-items: center; gap: 16px; }
+.vc-cross { width: 90px; height: 90px; border-radius: 50%; background: #e5484d; border: 4px solid var(--ink); }
+.vc-cross.v-동맥 { box-shadow: inset 0 0 0 18px #c9404f; } .vc-cross.v-정맥 { box-shadow: inset 0 0 0 7px #8fb2e8; background: #4f7bd9; } .vc-cross.v-모세혈관 { width: 40px; height: 40px; box-shadow: inset 0 0 0 3px #f2a6b8; }
+.vc-name { font-family: var(--title); font-size: 40px; display: flex; flex-direction: column; } .vc-name small { font-size: 16px; opacity: .7; }
+.vc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: min(640px, 100%); }
+.vc-sw { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 16px; text-align: left; background: #3d4a52; border: 4px solid var(--ink); border-radius: 10px; padding: 8px; cursor: pointer; }
+.vc-sw i { width: 34px; height: 20px; border-radius: 10px; background: #59646b; border: 3px solid var(--ink); flex: none; }
+.vc-sw.on { background: #2f6b45; } .vc-sw.on i { background: var(--green); }
+/* 호흡 모형 */
+.bm { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; }
+.bm-jar { position: relative; justify-self: center; width: 220px; height: 300px; border: 6px solid var(--ink); border-bottom: none; border-radius: 80px 80px 0 0; background: rgba(191, 230, 246, .25); }
+.bm-tube { position: absolute; left: 50%; top: -30px; width: 16px; height: 120px; margin-left: -8px; background: #e6eef5; border: 4px solid var(--ink); }
+.bm-balloon { position: absolute; top: 80px; width: 64px; height: 76px; border-radius: 50%; background: #f2a6b8; border: 4px solid var(--ink); transition: transform .1s; }
+.bm-balloon.l { left: 40px; } .bm-balloon.r { right: 40px; }
+.bm-sheet { position: absolute; left: -6px; right: -6px; bottom: -10px; height: 18px; background: #e5484d; border: 4px solid var(--ink); border-radius: 8px; }
+.bm-knob { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); width: 110px; height: 46px; background: var(--yellow); border: 4px solid var(--ink); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: var(--title); font-size: 18px; color: var(--ink); touch-action: none; cursor: grab; }
+.bm-side { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+.bm-s { font-family: var(--title); font-size: 22px; background: #2b3439; border: 3px solid var(--ink); border-radius: 8px; padding: 4px 10px; }
+.bm-s.on { background: var(--green); } .bm-s.dim { opacity: .7; }
+.bm-count { font-weight: 900; }
+.bm-q { font-size: 20px; font-weight: 900; margin-bottom: 6px; } .bm-quiz .og-btn { margin: 4px; }
+/* 가로막 조종 */
+.dg { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px; }
+.dg-title { font-family: var(--title); font-size: 28px; } .dg-title small { font-size: 16px; opacity: .7; }
+.dg-row { display: flex; align-items: center; gap: 8px; }
+.dg-name { width: 110px; font-family: var(--title); font-size: 20px; text-align: right; }
+.dg-opt { width: 120px; font-family: var(--title); font-size: 19px; background: #3d4a52; color: #fff; border: 4px solid var(--ink); border-radius: 10px; padding: 6px; cursor: pointer; }
+.dg-opt.on { background: var(--yellow); color: var(--ink); }
+/* 공기 경로 */
+.ap { position: absolute; inset: 0; touch-action: none; }
+.ap-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.ap-dot { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.ap-dot i { width: 54px; height: 54px; border-radius: 50%; background: #e9edf0; border: 5px solid var(--ink); }
+.ap-dot.ok i { background: #9fdcf5; }
+.ap-dot span { font-family: var(--title); font-size: 20px; -webkit-text-stroke: 5px var(--ink); paint-order: stroke fill; color: #fff; }
+.ap-msg { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font-weight: 900; pointer-events: none; }
+/* 운반 (세포 발전소·노폐물) */
+.cy { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 30px; }
+.cy-src, .cy-dst { width: 230px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #2b3439; border: 4px solid var(--ink); border-radius: 14px; padding: 10px; }
+.cy-cap { font-family: var(--title); font-size: 20px; background: var(--cc); color: var(--ink); border: 4px solid var(--ink); border-radius: 30px; padding: 12px 20px; touch-action: none; cursor: grab; box-shadow: 0 4px 0 var(--ink); }
+.cy-slot { width: 160px; height: 90px; border: 4px dashed #9aa7ad; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+.cy-arrow { width: 40px; height: 40px; border-top: 8px solid var(--yellow); border-right: 8px solid var(--yellow); transform: rotate(45deg); }
+.pw { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1.4fr; grid-template-rows: 1fr auto; gap: 10px; padding: 12px; }
+.pw-bag { display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; background: #2b3439; border: 4px solid var(--ink); border-radius: 14px; }
+.pw-machine { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; background: #56656e; border: 4px solid var(--ink); border-radius: 14px; padding: 10px; }
+.pw-hopper { grid-column: 1 / -1; min-height: 70px; border: 4px dashed #c9d1d8; border-radius: 12px; display: flex; gap: 8px; align-items: center; justify-content: center; font-weight: 900; }
+.pw-gauge { position: relative; height: 34px; background: #2b3439; border: 4px solid var(--ink); border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.pw-fill { position: absolute; left: 0; bottom: 0; top: 0; width: 0; background: var(--yellow); transition: width 1s; }
+.pw-gauge span { position: relative; font-family: var(--title); }
+.pw-fill[style*="100%"] { width: 100%; }
+.pw-lever { font-family: var(--title); font-size: 18px; background: var(--red); color: #fff; border: 4px solid var(--ink); border-radius: 10px; padding: 8px 12px; box-shadow: 0 4px 0 var(--ink); }
+.pw-lever:disabled { filter: grayscale(1); }
+.pw-out { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: center; min-height: 30px; }
+.pw-o { font-family: var(--title); background: #9aa7ad; border: 3px solid var(--ink); border-radius: 20px; padding: 4px 12px; animation: pop .4s; }
+.pw-eq { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.pw-line { font-family: var(--title); font-size: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; }
+.pw-blank { min-width: 120px; height: 46px; border: 4px dashed var(--yellow); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; }
+.pw-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
