@@ -125,7 +125,7 @@ export const CONTENT = {
     },
     vesselCheck: {
       title: '혈관 정비', unit: 'circ', type: 'short',
-      guide: '화면에 나온 혈관에 맞는 특징 칸만 켜고 확인을 누르세요.',
+      guide: '화면에 나온 혈관에 맞는 특징 칸을 모두 켜세요.',
       vessels: {
         '동맥': ['벽 두껍고 탄력 있음', '혈압 높음'],
         '정맥': ['벽 얇음', '판막 있음'],
@@ -152,7 +152,7 @@ export const CONTENT = {
     },
     diaphragm: {
       title: '가로막 조종', unit: 'resp', type: 'short',
-      guide: '들숨과 날숨에 맞게 스위치를 맞추고 확인을 누르세요.',
+      guide: '들숨과 날숨에 맞게 줄마다 알맞은 쪽을 누르세요.',
       rows: [
         { name: '갈비뼈', in: '올라감', out: '내려감' },
         { name: '가로막', in: '내려감', out: '올라감' },

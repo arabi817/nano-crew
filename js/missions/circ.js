@@ -85,15 +85,15 @@ export function vesselCheck(el, api, C) {
     const v = names[r], right = C.vessels[v];
     el.innerHTML = `<div class="vc"><div class="vc-top"><div class="vc-cross v-${esc(v)}"></div><div class="vc-name">${esc(v)}<small>${r + 1} / ${names.length}</small></div></div>
       <div class="vc-grid">${shuffle(allFeats).map(f => `<button class="vc-sw press" data-f="${esc(f)}"><i></i>${esc(f)}</button>`).join('')}</div>
-      <button class="btn btn-green press vc-ok">확인</button></div>`;
-    el.querySelectorAll('.vc-sw').forEach(b => b.onclick = () => b.classList.toggle('on'));
-    el.querySelector('.vc-ok').onclick = () => {
-      const on = [...el.querySelectorAll('.vc-sw.on')].map(b => b.dataset.f);
-      const ok = on.length === right.length && right.every(f => on.includes(f));
-      if (!ok) return api.wrong();
-      api.good(); r++;
-      if (r >= names.length) api.success(); else setTimeout(draw, 400);
-    };
+      <div class="vc-tip">맞는 특징을 모두 켜면 바로 다음으로 넘어가요</div></div>`;
+    // 맞는 칸만 켜져요. 틀린 칸을 누르면 흔들려요. 다 켜면 자동 완료 (어몽어스처럼)
+    let got = 0;
+    el.querySelectorAll('.vc-sw').forEach(b => b.onclick = () => {
+      if (b.classList.contains('on')) return;
+      if (!right.includes(b.dataset.f)) return api.wrong();
+      b.classList.add('on'); api.good();
+      if (++got >= right.length) { r++; if (r >= names.length) api.success(); else setTimeout(draw, 500); }
+    });
   };
   draw();
   return () => { };

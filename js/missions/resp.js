@@ -55,17 +55,15 @@ export function diaphragm(el, api, C) {
       ${C.rows.map((row, k) => {
         const opts = shuffle([row.in, row.out]);
         return `<div class="dg-row" data-k="${k}"><span class="dg-name">${esc(row.name)}</span>${opts.map(o => `<button class="dg-opt press" data-o="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
-      }).join('')}
-      <button class="btn btn-green press dg-ok">확인</button></div>`;
-    el.querySelectorAll('.dg-row').forEach(row => row.querySelectorAll('.dg-opt').forEach(b => b.onclick = () => {
-      row.querySelectorAll('.dg-opt').forEach(x => x.classList.toggle('on', x === b));
+      }).join('')}</div>`;
+    // 줄마다 맞는 쪽을 누르면 고정, 틀리면 흔들려요. 다 맞추면 자동으로 다음 (어몽어스처럼)
+    let got = 0;
+    el.querySelectorAll('.dg-row').forEach((row, k) => row.querySelectorAll('.dg-opt').forEach(b => b.onclick = () => {
+      if (row.dataset.done) return;
+      if (b.dataset.o !== C.rows[k][mode]) return api.wrong();
+      row.dataset.done = 1; b.classList.add('on'); api.good();
+      if (++got >= C.rows.length) { r++; if (r >= rounds.length) api.success(); else setTimeout(draw, 500); }
     }));
-    el.querySelector('.dg-ok').onclick = () => {
-      const ok = C.rows.every((row, k) => el.querySelector(`.dg-row[data-k="${k}"] .dg-opt.on`)?.dataset.o === row[mode]);
-      if (!ok) return api.wrong();
-      api.good(); r++;
-      if (r >= rounds.length) api.success(); else setTimeout(draw, 400);
-    };
   };
   draw();
   return () => { };
