@@ -1,0 +1,48 @@
+/* 교사 TV 화면: 멀리서도 보이게 크게 */
+body.host { overflow: auto; touch-action: auto; }
+.view { display: none; min-height: 100vh; }
+body[data-view="start"] .view-start { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; }
+body[data-view="room"] .view-room { display: flex; flex-direction: column; }
+body.host[data-phase="lobby"] .only-play, body.host[data-phase="playing"] .only-lobby { display: none !important; }
+.start-btns { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+.btn.big { font-size: 34px; padding: 18px 40px; }
+
+.h-bar { display: flex; align-items: center; gap: 24px; padding: 14px 28px; background: rgba(20, 14, 20, .88); border-bottom: 5px solid var(--ink); }
+.h-title { font-family: var(--title); font-size: 34px; color: var(--yellow); -webkit-text-stroke: 7px var(--ink); paint-order: stroke fill; }
+.h-phase { font-family: var(--title); font-size: 24px; background: var(--metal); border: 4px solid var(--ink); border-radius: 10px; padding: 4px 16px; }
+.h-code { margin-left: auto; font-family: var(--title); font-size: 26px; }
+.h-code b { font-size: 44px; color: #9fffc4; letter-spacing: 6px; margin-left: 8px; -webkit-text-stroke: 7px var(--ink); paint-order: stroke fill; }
+
+.lobby-grid { flex: 1; display: grid; grid-template-columns: minmax(360px, 34%) 1fr; gap: 26px; padding: 26px; }
+.qr-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; }
+#qr { width: min(100%, 420px); aspect-ratio: 1; background: #fff; border: 5px solid var(--ink); border-radius: 10px; image-rendering: pixelated; }
+.qr-local p { font-size: 20px; font-weight: 700; }
+.qr-code { font-family: var(--title); font-size: 110px; line-height: 1; color: #9fffc4; letter-spacing: 12px; -webkit-text-stroke: 12px var(--ink); paint-order: stroke fill; }
+.qr-url { font-size: 15px; word-break: break-all; opacity: .85; }
+.roster { display: flex; flex-direction: column; min-height: 0; }
+.roster-head { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--title); font-size: 28px; padding: 0 18px 12px; }
+.roster-head b { font-size: 40px; color: var(--yellow); }
+.roster-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; overflow: auto; align-content: start; padding: 4px; }
+.r-card { position: relative; background: #39444c; border: 4px solid var(--ink); border-radius: 12px; padding: 4px 6px 8px; display: flex; flex-direction: column; align-items: center; }
+.r-card .nm { font-family: var(--title); font-size: 22px; }
+.r-card.off { opacity: .4; }
+.r-card.bot .nm::after { content: ' 봇'; font-size: 14px; color: #ffd98a; }
+.r-kick { position: absolute; top: 4px; right: 4px; width: 30px; height: 30px; border: 3px solid var(--ink); border-radius: 8px; background: var(--red); color: #fff; font-family: var(--title); font-size: 15px; line-height: 1; cursor: pointer; opacity: .25; }
+.r-card:hover .r-kick { opacity: 1; }
+
+.play-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; padding: 30px; }
+.big-progress { width: min(1300px, 94vw); padding: 30px 40px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 26px; }
+.bp-label { font-family: var(--title); font-size: 38px; }
+.bp-track { height: 64px; background: #2e3a40; border: 5px solid var(--ink); border-radius: 12px; overflow: hidden; }
+.bp-fill { height: 100%; width: 0; background: var(--green); box-shadow: inset 0 -10px 0 rgba(0, 0, 0, .2), inset 0 6px 0 rgba(255, 255, 255, .3); transition: width .8s; }
+.bp-num { font-family: var(--title); font-size: 54px; color: var(--yellow); -webkit-text-stroke: 8px var(--ink); paint-order: stroke fill; min-width: 3.2em; text-align: right; }
+.play-stats { display: flex; gap: 26px; }
+.stat { min-width: 280px; display: flex; flex-direction: column; align-items: center; padding: 22px 30px; }
+.stat span { font-family: var(--title); font-size: 28px; }
+.stat b { font-family: var(--title); font-size: 90px; line-height: 1.1; color: #fff; -webkit-text-stroke: 10px var(--ink); paint-order: stroke fill; }
+.stat small { opacity: .6; }
+.sabotage { font-family: var(--title); font-size: 50px; background: var(--red); border: 6px solid var(--ink); border-radius: 14px; padding: 14px 40px; }
+
+.h-foot { display: flex; gap: 16px; padding: 16px 26px 22px; flex-wrap: wrap; background: rgba(20, 14, 20, .88); border-top: 5px solid var(--ink); }
+.h-foot #btn-end { margin-left: auto; }
+.h-foot .btn { font-size: 24px; }

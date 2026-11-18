@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>나노 탐사대 · 교사 화면</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/host.css">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+</head>
+<body class="host bg-body" data-view="start">
+
+<div id="mode-badge" class="mode-badge" hidden>혼자 시험 모드</div>
+
+<!-- 시작 -->
+<section class="view view-start">
+  <h1 class="logo">나노 탐사대<small>교사 화면 (TV)</small></h1>
+  <div class="start-btns">
+    <button id="btn-new" class="btn btn-yellow press big">새 방 만들기</button>
+    <button id="btn-resume" class="btn btn-gray press big" hidden></button>
+  </div>
+  <p id="start-msg" class="msg"></p>
+</section>
+
+<!-- 방 -->
+<section class="view view-room">
+  <header class="h-bar">
+    <div class="h-title">나노 탐사대</div>
+    <div class="h-phase" id="h-phase">대기 중</div>
+    <div class="h-code">방 코드 <b id="h-code">----</b></div>
+  </header>
+
+  <!-- 대기 중 -->
+  <div class="lobby-grid only-lobby">
+    <div class="qr-card metal">
+      <canvas id="qr"></canvas>
+      <div class="qr-local" id="qr-local" hidden>
+        <p>혼자 시험 모드에서는<br>이 컴퓨터의 창으로만 들어올 수 있어요.</p>
+        <button id="btn-open-student" class="btn btn-yellow press">학생 창 열기</button>
+      </div>
+      <div class="qr-code" id="qr-code">----</div>
+      <div class="qr-url" id="qr-url"></div>
+    </div>
+    <div class="roster metal">
+      <div class="roster-head"><span>접속한 탐사대원</span><b id="roster-count">0명</b></div>
+      <div id="roster" class="roster-list"></div>
+    </div>
+  </div>
+
+  <!-- 게임 중: 학생 위치는 절대 보여 주지 않아요 -->
+  <div class="play-view only-play">
+    <div class="big-progress metal">
+      <div class="bp-label">전체 미션 진행</div>
+      <div class="bp-track"><div id="bp-fill" class="bp-fill"></div></div>
+      <div class="bp-num" id="bp-num">0%</div>
+    </div>
+    <div class="play-stats">
+      <div class="stat metal"><span>접속 중</span><b id="st-online">0</b></div>
+      <div class="stat metal"><span>남은 임포스터</span><b id="st-imp">-</b><small>2단계에서 연결</small></div>
+    </div>
+    <div id="sabotage" class="sabotage" hidden></div>
+  </div>
+
+  <footer class="h-foot">
+    <button id="btn-start" class="btn btn-green press only-lobby">게임 시작</button>
+    <button id="btn-lobby" class="btn btn-gray press only-play">대기실로 되돌리기</button>
+    <button id="btn-bots" class="btn btn-gray press">봇 30명 붙이기 (시험용)</button>
+    <button id="btn-end" class="btn btn-red press">판 종료 (방 삭제)</button>
+  </footer>
+</section>
+
+<script type="module" src="js/host.js"></script>
+</body>
+</html>

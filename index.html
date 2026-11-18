@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1c1219">
+<title>나노 탐사대</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/ui.css">
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+</head>
+<body class="student" data-phase="lobby">
+
+<div id="mode-badge" class="mode-badge" hidden>혼자 시험 모드</div>
+
+<!-- 1. 방 코드 -->
+<section id="page-join" class="screen-page bg-body" hidden>
+  <div class="join-wrap">
+    <h1 class="logo">나노 탐사대<small>몸속 대작전 · 동물과 에너지</small></h1>
+    <form id="code-form" class="metal join-box">
+      <label for="code-input" class="join-label">방 코드</label>
+      <input id="code-input" class="code-input" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000">
+      <button class="btn btn-yellow press" type="submit">들어가기</button>
+      <p id="code-msg" class="msg"></p>
+    </form>
+  </div>
+</section>
+
+<!-- 2. 닉네임 (색깔 + 번호) -->
+<section id="page-pick" class="screen-page bg-body" hidden>
+  <div class="pick-wrap">
+    <div class="pick-left metal">
+      <div id="pick-preview" class="pick-preview"></div>
+      <div id="pick-name" class="pick-name"></div>
+      <button id="pick-go" class="btn btn-yellow press" disabled>이 탐사대원으로 입장</button>
+      <p id="pick-msg" class="msg"></p>
+    </div>
+    <div class="pick-right metal">
+      <h2 class="pick-h">1. 색깔</h2>
+      <div id="color-grid" class="color-grid"></div>
+      <h2 class="pick-h">2. 번호 <small>이미 고른 번호는 흐리게 보여요</small></h2>
+      <div id="num-grid" class="num-grid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 게임 -->
+<section id="page-game" class="screen-page" hidden>
+  <div id="phaser"></div>
+  <div id="hud">
+    <div class="hud-tl only-play">
+      <div class="tasks metal-dark">
+        <div class="tasks-head">미션</div>
+        <ul id="task-list"></ul>
+      </div>
+    </div>
+    <div class="hud-top">
+      <div class="pbar only-play"><span class="pbar-label">전체 미션</span><div class="pbar-track"><div id="pbar-fill" class="pbar-fill"></div></div></div>
+      <div id="lobby-banner" class="lobby-banner only-lobby"></div>
+    </div>
+    <div class="hud-tr">
+      <button id="btn-hat" class="ibtn press only-lobby"></button>
+      <button id="btn-map" class="ibtn press"></button>
+    </div>
+    <div id="joy-zone"></div>
+    <div class="hud-br only-play">
+      <button id="btn-report" class="abtn abtn-red press" disabled></button>
+      <button id="btn-use" class="abtn abtn-use press" disabled></button>
+    </div>
+    <div id="conn-banner" class="conn-banner" hidden>연결이 끊겼어요 · 다시 연결하는 중...</div>
+    <div id="toasts" class="toasts"></div>
+    <div id="debug" class="debug" hidden></div>
+  </div>
+  <div class="rotate-hint">패드를 가로로 돌리면 더 넓게 보여요</div>
+</section>
+
+<!-- 알림 -->
+<div id="notice" class="mpanel-ov" hidden>
+  <div class="sheet metal notice">
+    <div class="mpanel-title" id="notice-title"></div>
+    <p id="notice-text"></p>
+    <button id="notice-btn" class="btn btn-yellow press"></button>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

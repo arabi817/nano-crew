@@ -1,0 +1,59 @@
+{
+  "rules": {
+    "rooms": {
+      "$code": {
+        ".write": "auth != null && data.child('meta/hostUid').val() === auth.uid",
+
+        "meta": {
+          ".read": "auth != null",
+          ".write": "auth != null && (data.exists() ? data.child('hostUid').val() === auth.uid : newData.child('hostUid').val() === auth.uid)"
+        },
+
+        "players": {
+          ".read": "auth != null",
+          "$uid": {
+            ".write": "auth != null && root.child('rooms/' + $code + '/meta').exists() && (auth.uid === $uid || root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid)",
+            ".validate": "newData.hasChildren(['c', 'n'])",
+            "c": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 12" },
+            "n": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 40" },
+            "hat": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 20" },
+            "on": { ".validate": "newData.isBoolean()" },
+            "j": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+
+        "nicks": {
+          ".read": "auth != null",
+          "$key": {
+            ".write": "auth != null && root.child('rooms/' + $code + '/meta').exists() && ((!data.exists() && newData.val() === auth.uid) || data.val() === auth.uid || root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid)"
+          }
+        },
+
+        "pos": {
+          ".read": "auth != null",
+          "$zone": {
+            "$uid": {
+              ".write": "auth != null && (auth.uid === $uid || root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid)",
+              ".validate": "newData.isString() && newData.val().length < 40 && $zone.length < 12"
+            }
+          }
+        },
+
+        "done": {
+          ".read": "auth != null",
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid)"
+          }
+        },
+
+        "private": {
+          "$uid": {
+            ".read": "auth != null && (auth.uid === $uid || root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid)",
+            ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid"
+          }
+        }
+      }
+    }
+  }
+}

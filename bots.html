@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>나노 탐사대 · 봇 시험</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/ui.css">
+<style>
+  body { overflow: auto; touch-action: auto; }
+  .bots { max-width: 760px; margin: 30px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 18px; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-family: var(--title); font-size: 22px; }
+  .row input { font-family: var(--title); font-size: 26px; width: 120px; padding: 6px 10px; border: 4px solid var(--ink); border-radius: 10px; background: var(--screen); color: #9fffc4; }
+  .stats { font-size: 18px; font-weight: 700; line-height: 1.8; }
+  .stats b { color: var(--yellow); }
+  .warn { color: #ffd6d6; font-weight: 700; }
+</style>
+</head>
+<body class="bg-body">
+<div id="mode-badge" class="mode-badge" hidden>혼자 시험 모드</div>
+<div class="bots">
+  <h1 class="logo" style="font-size:54px">봇 시험<small>가짜 탐사대원을 붙여서 32명 상황을 확인해요</small></h1>
+  <div class="metal">
+    <div class="row">방 코드 <input id="room" inputmode="numeric" maxlength="4"> 봇 수 <input id="count" type="number" min="1" max="31" value="30"></div>
+    <p class="warn" id="warn"></p>
+    <div class="row">
+      <button id="btn-go" class="btn btn-green press">봇 출발</button>
+      <button id="btn-stop" class="btn btn-red press" disabled>봇 모두 빼기</button>
+    </div>
+  </div>
+  <div class="metal stats" id="stats">봇이 아직 없어요.</div>
+  <p>이 창을 닫으면 봇도 자동으로 빠져요. 교사 화면과 <b>같은 브라우저</b>에서 열어야 해요.</p>
+</div>
+<script type="module" src="js/bots.js"></script>
+</body>
+</html>
