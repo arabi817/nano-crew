@@ -364,7 +364,7 @@ function openSabFix(spotId) {
     return;
   }
   // 산소 부족: 누르고 있는 동안만 신호를 보냄
-  const other = s.side === 'lung' ? '심장실' : '폐실';
+  const other = s.side === 'lung' ? '심장실' : '허파실';
   app.panel = openPanel({
     title: '산소 공급 버튼', sub: `손바닥 칸을 누르고 있으세요. ${other}에서도 누군가 동시에 눌러야 해요.`,
     mount: el => {

@@ -10,7 +10,7 @@ export const ROOMS = [
   { id: 'large', name: '큰창자실', x: 2600, y: 200, w: 700, h: 550, floor: 0xd9b48a },
   { id: 'heart', name: '심장실', x: 2650, y: 1050, w: 700, h: 600, floor: 0xf29a9a },
   { id: 'vessel', name: '혈관 관제실', x: 1400, y: 2000, w: 700, h: 450, floor: 0xcf8f9f },
-  { id: 'lung', name: '폐실', x: 150, y: 1050, w: 700, h: 600, floor: 0x9fd6f0 },
+  { id: 'lung', name: '허파실', x: 150, y: 1050, w: 700, h: 600, floor: 0x9fd6f0 },
   { id: 'kidney', name: '콩팥실', x: 2500, y: 1950, w: 550, h: 500, floor: 0xd8a48f },
   { id: 'bladder', name: '방광 처리실', x: 3250, y: 2000, w: 450, h: 450, floor: 0xf2e38a },
   { id: 'lobby', name: '탐사정 격납고', x: 4300, y: 300, w: 1300, h: 850, floor: 0x9aa7b8, lobby: true },
@@ -56,7 +56,7 @@ export const SPOTS = {
   bloodScan: { room: 'vessel', x: 2000, y: 2200 },
   vesselCheck: { room: 'vessel', x: 1750, y: 2390 },
   wasteUreaPick: { room: 'vessel', x: 1500, y: 2390, label: '요소 받기' },
-  // 폐실
+  // 허파실
   alveoliFilter: { room: 'lung', x: 260, y: 1140 },
   breathModel: { room: 'lung', x: 400, y: 1140 },
   diaphragm: { room: 'lung', x: 780, y: 1150 },

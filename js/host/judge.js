@@ -151,7 +151,7 @@ export class Judge {
     if (!this.near(uid, 'kidneyStop')) return;
     this.endSab();
   }
-  // 산소 부족: 폐실·심장실 버튼을 서로 다른 두 사람이 동시에 누르고 있으면 해결
+  // 산소 부족: 허파실·심장실 버튼을 서로 다른 두 사람이 동시에 누르고 있으면 해결
   checkO2() {
     if (this.game.sab?.kind !== 'o2' || this.game.meeting) return;
     const h = this.sabHold || {}, by = { lung: null, heart: null };
