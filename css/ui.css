@@ -517,8 +517,9 @@ body.sab-big #phaser::after { content: ''; position: absolute; inset: 0; pointer
 /* 호흡 모형 */
 .bm { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; }
 .bm-jar { position: relative; justify-self: center; width: 220px; height: 300px; border: 6px solid var(--ink); border-bottom: none; border-radius: 80px 80px 0 0; background: rgba(191, 230, 246, .25); }
-.bm-tube { position: absolute; left: 50%; top: -30px; width: 16px; height: 120px; margin-left: -8px; background: #e6eef5; border: 4px solid var(--ink); }
-.bm-balloon { position: absolute; top: 80px; width: 64px; height: 76px; border-radius: 50%; background: #f2a6b8; border: 4px solid var(--ink); transition: transform .1s; }
+/* Y자 관: 마개를 지나 둘로 갈라져 각 풍선 입구로 (모형의 기관·기관지) */
+.bm-tube { position: absolute; left: 0; top: -40px; width: 208px; height: 126px; z-index: 1; }
+.bm-balloon { position: absolute; top: 80px; width: 64px; height: 76px; border-radius: 50%; background: #f2a6b8; border: 4px solid var(--ink); transition: transform .1s; transform-origin: 50% 0; }
 .bm-balloon.l { left: 40px; } .bm-balloon.r { right: 40px; }
 .bm-sheet { position: absolute; left: -6px; right: -6px; bottom: -10px; height: 18px; background: #e5484d; border: 4px solid var(--ink); border-radius: 8px; }
 .bm-knob { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); width: 110px; height: 46px; background: var(--yellow); border: 4px solid var(--ink); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: var(--title); font-size: 18px; color: var(--ink); touch-action: none; cursor: grab; }

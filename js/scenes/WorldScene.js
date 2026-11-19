@@ -11,6 +11,7 @@ import { NET } from '../../config.js';
 const SPEED = 270, RADIUS = 20, USE_RANGE = 115;
 export const VISION = 380; // 크루원 시야 반지름
 export const IMP_VISION = 500; // 바이러스는 시야가 더 넓어요 (명세)
+const FOG_A = 0.93; // 시야 밖 어둡기 (밝은 바닥 그림이 들어와서 0.8 → 0.93, 맵 모양만 아주 희미하게)
 
 export class WorldScene extends Phaser.Scene {
   constructor() { super('world'); }
@@ -255,8 +256,9 @@ export class WorldScene extends Phaser.Scene {
   // 시야 밖은 맵 모양이 희미하게 보일 정도로만 어둡게 해요.
   makeFog() {
     const S = 512, tex = this.textures.createCanvas('fogHole', S, S), ctx = tex.getContext();
-    const g = ctx.createRadialGradient(S / 2, S / 2, S * 0.36, S / 2, S / 2, S / 2);
-    g.addColorStop(0, 'rgba(8,4,10,0)'); g.addColorStop(1, 'rgba(8,4,10,0.8)');
+    // 가장자리로 갈수록 천천히 어두워져서 '굵은 원 테두리'가 보이지 않게 (바깥 어둠 FOG_A와 이어짐)
+    const g = ctx.createRadialGradient(S / 2, S / 2, S * 0.22, S / 2, S / 2, S / 2);
+    g.addColorStop(0, 'rgba(8,4,10,0)'); g.addColorStop(0.6, `rgba(8,4,10,${FOG_A * 0.45})`); g.addColorStop(1, `rgba(8,4,10,${FOG_A})`);
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(S / 2, S / 2, S / 2, 0, Math.PI * 2); ctx.fill(); tex.refresh(); // 원 안쪽만 (바깥은 RT가 덮음)
     this.fogImg = this.add.image(0, 0, 'fogHole').setDepth(9001);
     this.fogPoly = this.make.graphics({ add: false });
@@ -288,7 +290,7 @@ export class WorldScene extends Phaser.Scene {
     }
     const rt = this.fogRT, ox = v.x - pad, oy = v.y - pad, R = this.visionR();
     rt.setVisible(true).setPosition(ox, oy);
-    rt.clear(); rt.fill(0x08040a, 0.8);
+    rt.clear(); rt.fill(0x08040a, FOG_A);
     const poly = this.visPolygon(this.x, this.y, R).map(p => ({ x: p.x - ox, y: p.y - oy }));
     this.fogPoly.clear(); this.fogPoly.fillStyle(0xffffff, 1); this.fogPoly.fillPoints(poly, true);
     rt.erase(this.fogPoly);

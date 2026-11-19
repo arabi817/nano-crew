@@ -4,7 +4,10 @@ import { shuffle, esc } from './kit.js';
 // 호흡 모형: 고무막 당기기 → 풍선 부풂(들숨), 놓으면 날숨. 두 번 한 뒤 모형이 우리 몸의 무엇인지 고르기 (보이는 미션)
 export function breathModel(el, api, C) {
   el.innerHTML = `<div class="bm">
-    <div class="bm-jar"><div class="bm-tube"></div><div class="bm-balloon l"></div><div class="bm-balloon r"></div>
+    <div class="bm-jar"><svg class="bm-tube" viewBox="0 0 208 126" aria-hidden="true">
+      <path d="M104 0 V70 M104 70 L72 122 M104 70 L136 122" fill="none" stroke="#1a1018" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M104 0 V70 M104 70 L72 122 M104 70 L136 122" fill="none" stroke="#e6eef5" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="86" y="30" width="36" height="22" rx="5" fill="#c9925a" stroke="#1a1018" stroke-width="4"/></svg><div class="bm-balloon l"></div><div class="bm-balloon r"></div>
       <div class="bm-sheet"><div class="bm-knob">당기기</div></div></div>
     <div class="bm-side"><div class="bm-state"></div><div class="bm-count"></div><div class="bm-quiz"></div></div></div>`;
   const knob = el.querySelector('.bm-knob'), sheet = el.querySelector('.bm-sheet'), state = el.querySelector('.bm-state');

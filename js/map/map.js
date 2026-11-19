@@ -68,7 +68,7 @@ export const SPOTS = {
   powerFinal: { room: 'power', x: 560, y: 2230, label: '발전기' },
   wasteCO2Pick: { room: 'power', x: 230, y: 2230, label: '이산화탄소 받기' },
   // 콩팥실
-  nephron1: { room: 'kidney', x: 2580, y: 2040, label: '사구체 장치' },
+  nephron1: { room: 'kidney', x: 2580, y: 2040, label: '토리 장치' },
   nephron2: { room: 'kidney', x: 2970, y: 2040, label: '세뇨관 장치' },
   wasteSort: { room: 'kidney', x: 2775, y: 2410 },
   wasteUreaDrop: { room: 'kidney', x: 2580, y: 2420, label: '요소 넣기' },

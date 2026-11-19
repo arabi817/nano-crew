@@ -1,11 +1,11 @@
 // 배설 미션: 콩팥단위 필터(긴), 노폐물 분류, 요소 공장, 콩팥 정지 사보타주 퍼즐
 import { sortGame, zoneSwap, orderGame, pick, esc } from './kit.js';
 
-// 1단계 여과: 사구체 → 보먼주머니 (걸러지지 않는 물질은 그대로)
+// 1단계 여과: 토리 → 보먼주머니 (걸러지지 않는 물질은 그대로)
 export function nephronFilter(el, api, C) {
   const items = [...C.pass.map(l => ({ label: l, ok: ['보먼주머니'] })), ...C.block.map(l => ({ label: l, ok: [] }))];
   return sortGame(el, api, {
-    items, tray: '사구체 (혈액)', note: '걸러지지 않는 물질은 그대로 두세요', cls: 'neph',
+    items, tray: '토리 (혈액)', note: '걸러지지 않는 물질은 그대로 두세요', cls: 'neph',
     bins: [{ name: '보먼주머니', html: '<b>보먼주머니</b><small>여과된 물질</small>' }],
   });
 }
@@ -43,7 +43,7 @@ export function ureaFactory(el, api, C) {
 export function kidneyFix(el, api, C) {
   const items = [...pick(C.pass, 3).map(l => ({ label: l, ok: ['보먼주머니'] })), ...pick(C.block, 1).map(l => ({ label: l, ok: [] }))];
   return sortGame(el, api, {
-    items, tray: '멈춘 사구체', note: '걸러지는 물질만 보먼주머니로!', cls: 'neph',
+    items, tray: '멈춘 토리', note: '걸러지는 물질만 보먼주머니로!', cls: 'neph',
     bins: [{ name: '보먼주머니', html: '<b>보먼주머니</b>' }],
   });
 }
