@@ -3,7 +3,7 @@ import { ICON } from './icons.js';
 import { openMinimap } from './minimap.js';
 import { openSheet } from './panel.js';
 import { HATS, COLORS } from '../common/colors.js';
-import { avatarSVG } from '../player/avatarSvg.js';
+import { avatarSVG, hatAvailable } from '../player/avatarSvg.js';
 import { P } from '../net/room.js';
 import { sfx } from '../common/sfx.js';
 import { $, esc } from '../common/util.js';
@@ -14,7 +14,7 @@ export class Hud {
     $('#btn-use').innerHTML = ICON.use + '<span>사용</span>';
     $('#btn-report').innerHTML = ICON.report + '<span>신고</span>';
     $('#btn-map').innerHTML = ICON.map + '<span>지도</span>';
-    $('#btn-hat').innerHTML = ICON.hat + '<span>모자</span>';
+    $('#btn-hat').innerHTML = ICON.hat + '<span>꾸미기</span>';
     $('#btn-kill').innerHTML = ICON.kill + '<span>킬</span><b class="cd"></b>';
     $('#btn-use').onclick = () => app.useAction();
     $('#btn-report').onclick = () => app.reportAction();
@@ -64,9 +64,9 @@ export class Hud {
   openHats() {
     const a = this.app, col = COLORS[a.myPlayer.c].hex;
     openSheet({
-      title: '모자 고르기',
-      html: `<div class="hat-grid">${HATS.map(h => `<button class="hat-btn press ${(a.myPlayer.hat || 0) === h.id ? 'sel' : ''}" data-h="${h.id}">
-        ${avatarSVG(col, h.id, 76)}<span>${h.name}</span></button>`).join('')}</div>`,
+      title: '꾸미기',
+      html: `<div class="hat-grid">${HATS.filter(h => hatAvailable(h.id)).map(h => `<button class="hat-btn press ${(a.myPlayer.hat || 0) === h.id ? 'sel' : ''}" data-h="${h.id}">
+        ${avatarSVG(col, h.id, 64)}<span>${h.name}</span></button>`).join('')}</div>`,
       onMount: (ov, close) => ov.querySelectorAll('.hat-btn').forEach(b => b.onclick = () => {
         sfx('click'); a.db.update(P.player(a.code, a.uid), { hat: +b.dataset.h }); close();
       }),

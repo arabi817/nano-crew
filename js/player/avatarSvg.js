@@ -6,7 +6,8 @@ import { hasArt, artUrl } from '../common/assets.js';
 // ── 그림 파일(assets/characters) 칸 ──
 // 몸통·모자 그림은 viewBox -40 -55 80 95 와 같은 칸(320×380, 4배)에 맞춰 그려져 있어요.
 // 발 그림은 viewBox -12 -9 24 18 칸(96×72, 4배).
-export const ANTENNA_HATS = [0, 2];   // 이 모자일 때만 안테나가 보여요
+export const BEHIND_HATS = [6, 8, 10, 13];   // 머리띠류: 몸 뒤에 그려서 머리 위로 나온 부분만 보여요
+export const ANTENNA_HATS = [0, 2, 11];   // 이 장식일 때만 안테나가 보여요 (없음·리본·별 핀)
 export const bodyArt = (ci, hat = 0) => {
   const na = `characters/body_${ci}_na.png`;
   if (!ANTENNA_HATS.includes(hat) && hasArt(na)) return na;
@@ -15,6 +16,8 @@ export const bodyArt = (ci, hat = 0) => {
 };
 export const footArt = ci => hasArt(`characters/foot_${ci}.png`) ? `characters/foot_${ci}.png` : null;
 export const hatArt = h => h && hasArt(`characters/hat${h}.png`) ? `characters/hat${h}.png` : null;
+// 고를 수 있는 장식인지 (1~5번은 코드 그림이 있어서 항상, 6번부터는 그림이 있을 때만)
+export const hatAvailable = h => h <= 5 || !!hatArt(h);
 const colorIndex = hex => COLORS.findIndex(c => c.hex.toLowerCase() === String(hex).toLowerCase());
 
 const INK = '#1a1018';
@@ -86,8 +89,9 @@ export function avatarSVG(color, hat = 0, size = 80) {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size * 1.1875}" viewBox="-40 -55 80 95">
   <ellipse cx="0" cy="36" rx="24" ry="5" fill="rgba(0,0,0,.25)"/>
   ${foot(-11)}${foot(11)}
+  ${BEHIND_HATS.includes(hat) ? hatPart : ''}
   <image href="${artUrl(art)}" x="-40" y="-55" width="80" height="95"/>
-  ${hatPart}</svg>`;
+  ${BEHIND_HATS.includes(hat) ? '' : hatPart}</svg>`;
   }
   const body = bodySVG(color, hat).replace(/<svg[^>]*>|<\/svg>/g, '');
   const dark = mix(color, 0.35, '#000000');

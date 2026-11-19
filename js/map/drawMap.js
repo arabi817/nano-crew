@@ -27,6 +27,28 @@ function tube(g, pts, w, color) { // 둥근 관 (외곽선 포함)
 }
 const pt = (x, y) => ({ x, y });
 
+// 관 그림(가로로 반복되는 한 조각)을 꺾인 길을 따라 깔기. 꺾이는 곳·끝은 같은 색 동그라미로 메워요.
+// 그림이 없으면 false → 코드 관(tube)을 그려요.
+const tubeColor = {};
+function artTube(scene, pts, w, name, depth = -800) {
+  return useArt(scene, `props/${name}.png`, key => {
+    const h = w + 10, src = scene.textures.get(key).getSourceImage(), k = h / src.height;
+    if (!tubeColor[key]) {   // 관 몸통 색 (이음 동그라미용)
+      const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+      const x = c.getContext('2d'); x.drawImage(src, 0, 0);
+      const d = x.getImageData(2, Math.round(src.height * 0.62), 1, 1).data;
+      tubeColor[key] = (d[0] << 16) | (d[1] << 8) | d[2];
+    }
+    const g = gfx(scene, depth - 1);
+    pts.forEach(p => { g.fillStyle(INK, 1); g.fillCircle(p.x, p.y, h / 2); g.fillStyle(tubeColor[key], 1); g.fillCircle(p.x, p.y, h / 2 - 5); });
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1], len = Math.hypot(b.x - a.x, b.y - a.y);
+      scene.add.tileSprite((a.x + b.x) / 2, (a.y + b.y) / 2, len / k, src.height, key)
+        .setScale(k).setRotation(Math.atan2(b.y - a.y, b.x - a.x)).setDepth(depth);
+    }
+  });
+}
+
 // 미션 장소 → 장치 종류 (같은 미션의 여러 단계는 같은 장치, 같은 방에서는 되도록 다른 장치)
 const DEVICE_OF = {
   digestWireMouth: 'wire', digestWireStomach: 'wire', digestWireSmall: 'wire', heartWiring: 'wire',
@@ -280,8 +302,10 @@ const PROPS = {
   heart(scene, r) {
     const g = gfx(scene);
     const cx = r.x + r.w / 2, cy = r.y + r.h / 2 - 10;
-    tube(g, [pt(cx - 40, cy - 40), pt(cx - 40, r.y + 70), pt(r.x + 130, r.y + 70)], 34, 0x4f7bd9);
-    tube(g, [pt(cx + 30, cy - 50), pt(cx + 30, r.y + 110), pt(cx + 150, r.y + 110), pt(cx + 150, r.y + 50)], 38, 0xd6404f);
+    const vc = [pt(cx - 40, cy - 40), pt(cx - 40, r.y + 70), pt(r.x + 130, r.y + 70)];   // 대정맥 (파랑)
+    if (!artTube(scene, vc, 34, 'tube_blue')) tube(g, vc, 34, 0x4f7bd9);
+    const ao = [pt(cx + 30, cy - 50), pt(cx + 30, r.y + 110), pt(cx + 150, r.y + 110), pt(cx + 150, r.y + 50)];   // 대동맥 (빨강)
+    if (!artTube(scene, ao, 38, 'tube_red')) tube(g, ao, 38, 0xd6404f);
     const c = scene.add.container(cx, cy).setDepth(-780);
     const h = scene.add.graphics();
     if (!art(scene, 'props/heart.png', 0, 22, 236, 230, { into: c })) {
@@ -322,8 +346,10 @@ const PROPS = {
     const g = gfx(scene);
     const top = pt(r.x + 400, r.y + 230);
     const ends = [pt(r.x + 260, r.y + 430), pt(r.x + 400, r.y + 570), pt(r.x + 560, r.y + 460), pt(r.x + 620, r.y + 300)];
-    ends.forEach(e => tube(g, [top, pt((top.x + e.x) / 2, (top.y + e.y) / 2 + 30), e], 16, 0xe6eef5));
-    tube(g, [pt(top.x, r.y + 40), top], 24, 0xe6eef5);
+    // 기관 → 기관지 (연골 고리가 있는 관)
+    ends.forEach(e => { const p = [top, pt((top.x + e.x) / 2, (top.y + e.y) / 2 + 30), e]; if (!artTube(scene, p, 16, 'tube_air')) tube(g, p, 16, 0xe6eef5); });
+    const tr = [pt(top.x, r.y + 40), top];
+    if (!artTube(scene, tr, 24, 'tube_air', -799)) tube(g, tr, 24, 0xe6eef5);
     ends.forEach((e, k) => {
       const c = scene.add.container(e.x, e.y).setDepth(-780);
       const cl = scene.add.graphics();
@@ -355,7 +381,8 @@ const PROPS = {
   },
   bladder(scene, r, anims) {
     const g = gfx(scene), cx = r.x + r.w / 2 + 40, cy = r.y + r.h / 2 + 30, R = 115;
-    tube(g, [pt(r.x + 30, r.y + 120), pt(cx - 60, r.y + 120), pt(cx - 40, cy - 60)], 18, 0xe8c84a);
+    const ur = [pt(r.x + 30, r.y + 120), pt(cx - 60, r.y + 120), pt(cx - 40, cy - 60)];   // 요관 (노랑)
+    if (!artTube(scene, ur, 18, 'tube_yellow', -805)) tube(g, ur, 18, 0xe8c84a);
     g.fillStyle(INK, 1); g.fillCircle(cx, cy, R + 8);
     g.fillStyle(0xf6efc8, 1); g.fillCircle(cx, cy, R);
     const w = gfx(scene, -790);

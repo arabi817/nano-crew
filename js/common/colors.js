@@ -10,6 +10,10 @@ export const COLORS = [
 export const HATS = [
   { id: 0, name: '없음' }, { id: 1, name: '야구모자' }, { id: 2, name: '리본' },
   { id: 3, name: '왕관' }, { id: 4, name: '새싹' }, { id: 5, name: '요리사' },
+  // 6번부터: GPT 그림으로만 있는 장식 (그림이 없으면 꾸미기 창에 안 보여요). 저장 규칙상 19번까지 쓸 수 있어요.
+  { id: 6, name: '적혈구 띠' }, { id: 7, name: '미토 비니' }, { id: 8, name: '헤드램프' },
+  { id: 9, name: '보안경' }, { id: 10, name: '고양이 귀' }, { id: 11, name: '별 핀' },
+  { id: 12, name: '헤드셋' }, { id: 13, name: '토끼 귀' },
 ];
 // 닉네임: 학생이 직접 입력 (예전 방식 '색깔 + 번호'도 읽을 수 있게 남겨 둠)
 export const nickOf = p => !p ? '' : p.name || `${COLORS[p.c]?.name ?? '?'} ${p.n}`;

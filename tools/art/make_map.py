@@ -44,8 +44,31 @@ def contain(name, w, h):
     can = Image.new('RGBA', (w, h)); can.alpha_composite(im, ((w - im.width) // 2, (h - im.height) // 2))
     return np.array(can)
 
+def tube_tile(name):
+    """가로 관 그림 → 이음매 없이 반복되는 한 조각 (높이 64). 고리가 있으면 고리 한 주기만큼 잘라요."""
+    a = remove_green(np.array(Image.open(raw_file(RAW, name)).convert('RGBA')))
+    rows = np.nonzero((a[..., 3] > 0).mean(1) > 0.6)[0]
+    a = a[rows.min():rows.max() + 1]
+    w = a.shape[1]
+    mid = a[a.shape[0] // 2, :, :3].astype(int).sum(1)            # 가운데 줄 밝기 → 고리(진한 선) 위치
+    dark = np.nonzero(mid < 200)[0]
+    groups = np.split(dark, np.nonzero(np.diff(dark) > 80)[0] + 1) if len(dark) else []   # 고리 하나의 앞뒤 테두리는 한 묶음
+    rings = [g.mean() for g in groups if len(g)]
+    if len(rings) >= 4:                                            # 고리 두 개 사이 한가운데부터 한 주기
+        per = np.median(np.diff(rings[1:-1])) if len(rings) > 4 else np.diff(rings).mean()
+        x0 = int(rings[1] + per / 2); x1 = int(x0 + per)
+    else:
+        x0, x1 = int(w * 0.3), int(w * 0.7)                        # 매끈한 관: 가운데만 (끝의 둥근 하이라이트 피하기)
+    im = Image.fromarray(a[:, x0:x1])
+    k = 64 / im.height
+    return im.resize((max(8, round(im.width * k)), 64), Image.LANCZOS)
+
 def main(only=None):
     made = []
+    for name in ('tube_red', 'tube_blue', 'tube_air', 'tube_yellow'):
+        if not raw_file(RAW, name) or (only and name not in only): continue
+        tube_tile(name).save(A / 'props' / f'{name}.png', optimize=True)
+        made.append(f'props/{name}.png')
     # 미션 종류별 장치: _raw/dev_<종류> → devices/<종류>.png (화면 110×86의 2배)
     for p in sorted(RAW.glob('dev_*')):
         name = p.stem
