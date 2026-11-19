@@ -220,7 +220,7 @@ function onGame(g) {
   // 내가 쓰러짐
   if (g.dead?.[uid] && !app.wasDead) {
     app.wasDead = true;
-    if (!g.ejected?.[uid] && app.phase === 'playing') { closeOverlays(); sfx('kill'); showKilled(); }
+    if (!g.ejected?.[uid] && app.phase === 'playing') { closeOverlays(); sfx('kill'); showKilled(avatarSVG(COLORS[app.myPlayer?.c]?.hex || '#999', app.myPlayer?.hat || 0, 150)); }
   }
   if (!g.dead?.[uid]) app.wasDead = false;
   // 회의

@@ -1,4 +1,5 @@
 // 학생 화면 연출: 역할 공개, 쓰러짐, 결과 화면, 일시정지
+import { hasArt, artUrl } from '../common/assets.js';
 import { nickOf } from '../common/colors.js';
 import { avatarOf, missionName } from './shared.js';
 import { esc } from '../common/util.js';
@@ -25,10 +26,15 @@ export function showRoleReveal({ role, mates = [], players, me, impCount, ms }) 
   return new Promise(res => setTimeout(() => { ov.classList.add('out'); setTimeout(() => { ov.remove(); res(); }, 400); }, ms));
 }
 
-export function showKilled() {
-  const ov = overlay('killed', `<div class="kd-big">쓰러졌어요!</div>
+// 내가 쓰러졌을 때: 바이러스가 덮치고 → 대원이 빙글 돌며 쓰러지고 → 안내 (피·잔인한 표현 없이 '기절')
+export function showKilled(myAvatar = '') {
+  const virus = hasArt('ui/virus.png') ? `<img class="kd-virus" src="${artUrl('ui/virus.png')}" alt="">`
+    : '<div class="kd-virus kd-virus-code"></div>';
+  const ov = overlay('killed', `<div class="kd-stage">${virus}<div class="kd-me">${myAvatar}</div>
+      <div class="kd-stars"><i></i><i></i><i></i></div><div class="kd-puff"></div></div>
+    <div class="kd-big">쓰러졌어요!</div>
     <div class="kd-desc">바이러스에게 당했어요. 이제 유령이 되어 벽을 지나다니며 미션을 계속할 수 있어요.<br>유령은 회의에서 말하거나 투표할 수 없어요.</div>`);
-  setTimeout(() => { ov.classList.add('out'); setTimeout(() => ov.remove(), 400); }, 3200);
+  setTimeout(() => { ov.classList.add('out'); setTimeout(() => ov.remove(), 400); }, 4600);
 }
 
 export function showEnd({ winner, reveal, players, myId, myTasks, done }) {

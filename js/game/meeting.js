@@ -8,6 +8,8 @@ import { sfx } from '../common/sfx.js';
 import { esc } from '../common/util.js';
 import { ALARM_MS } from '../common/rules.js';
 
+const CHAT_MAX = 8;   // 한 회의에서 보낼 수 있는 말 수
+
 export class MeetingUI {
   constructor(app) {
     this.app = app; this.m = null; this.my = { ans: null, vote: null, sent: 0, lastSent: 0 };
@@ -19,6 +21,7 @@ export class MeetingUI {
       <div class="meet-main">
         <div class="meet-top"><div class="mt-title"></div><div class="mt-phase"></div><div class="mt-time"></div></div>
         <div class="meet-ox"></div>
+        <div class="meet-speak"></div>
         <div class="meet-body">
           <div class="meet-grid"></div>
           <div class="meet-side metal-dark">
@@ -64,11 +67,44 @@ export class MeetingUI {
     const left = Math.max(0, Math.ceil((this.m.endsAt - now) / 1000));
     this.$('.mt-time').textContent = this.m.phase === 'result' ? '' : `${left}초`;
     this.$('.mt-time').classList.toggle('hurry', left <= 5);
+    this.renderSpeak();
+  }
+
+  // ── 발언 순서: 지금 말하는 사람 · 자유 토론 · 손들기 ──
+  renderSpeak() {
+    const m = this.m, box = this.$('.meet-speak');
+    if (!m || (m.phase !== 'discuss' && m.phase !== 'vote')) { box.innerHTML = ''; box.dataset.k = ''; return; }
+    const now = this.app.db.now(), sp = m.speaker && now < m.speaker.until ? m.speaker : null;
+    const handMode = !!this.app.game?.handMode, uid = this.app.uid;
+    const order = Object.entries(m.hands || {}).filter(([, t]) => t).sort((a, b) => a[1] - b[1]).map(e => e[0]);
+    const myIdx = order.indexOf(uid), showHand = handMode && m.phase === 'discuss' && this.alive;
+    const k = JSON.stringify([m.phase, sp?.u, sp?.until, handMode, myIdx, showHand]);
+    if (box.dataset.k !== k) {
+      box.dataset.k = k;
+      let html = '';
+      if (sp) {
+        const p = this.app.players[sp.u], me = sp.u === uid;
+        const why = sp.first ? (m.body ? '쓰러진 대원을 발견한 사람이 먼저 말해요' : '회의를 연 사람이 먼저 말해요') : '선생님이 불렀어요';
+        html = `<div class="sp-bar ${me ? 'me' : ''}">${avatarOf(p, 40)}<div class="sp-txt"><b>${me ? '지금 내 차례! 모두에게 말해 주세요' : `${esc(nickOf(p))}의 발언 시간`}</b>
+          <small>${why}${me ? '' : ' · 다른 친구는 조용히 들어요'}</small></div><span class="sp-left"></span></div>`;
+      } else if (m.phase === 'discuss') {
+        html = handMode
+          ? `<div class="sp-bar free"><div class="sp-txt"><b>손을 들고, 선생님이 부르면 말해요</b><small>채팅은 언제든 보낼 수 있어요</small></div></div>`
+          : `<div class="sp-bar free"><div class="sp-txt"><b>자유 토론</b><small>말로 하거나 오른쪽 채팅으로 이야기해요</small></div></div>`;
+      }
+      if (showHand) html += `<button class="btn ${myIdx >= 0 ? 'btn-gray' : 'btn-hand'} press sp-hand">${myIdx >= 0 ? `손 내리기 · ${myIdx + 1}번째` : '손들기'}</button>`;
+      box.innerHTML = html;
+      box.querySelector('.sp-hand')?.addEventListener('click', () => {
+        sfx('click'); this.app.db.set(P.reqOf(this.app.code, uid), { t: 'hand', target: '', n: Date.now() });
+      });
+    }
+    const left = box.querySelector('.sp-left');
+    if (left && sp) left.textContent = `${Math.max(0, Math.ceil((sp.until - now) / 1000))}초`;
   }
 
   render() {
     const m = this.m; if (!m) return;
-    this.renderOX(); this.renderGrid(); this.renderChat(); this.renderBottom();
+    this.renderOX(); this.renderSpeak(); this.renderGrid(); this.renderChat(); this.renderBottom();
     if (m.phase === 'result' && !this.ejectShown) { this.ejectShown = true; setTimeout(() => this.showEject(), 2600); }
   }
 
@@ -122,7 +158,7 @@ export class MeetingUI {
     } else if (m.phase === 'result') {
       const c = m.result?.counts?.skip || 0;
       box.innerHTML = `<div class="mb-msg">투표 결과${c ? ` · 건너뛰기 ${c}표` : ''}</div>`;
-    } else if (m.phase === 'discuss') box.innerHTML = '<div class="mb-msg">말로 토론하거나 오른쪽에서 문장을 골라 보내세요</div>';
+    } else if (m.phase === 'discuss') box.innerHTML = '<div class="mb-msg">토론이 끝나면 투표해요</div>';
     else box.innerHTML = '';
   }
 
@@ -134,28 +170,53 @@ export class MeetingUI {
     this.render();
   }
 
-  // ── 채팅: 문장 틀 고르기 → 빈칸 고르기 → 보내기 ──
+  // ── 채팅: ① 문장 고르기 → ② 빈칸 채우기 → ③ 보내기 (처음 보는 학생도 따라 할 수 있게 단계와 미리보기를 보여 줘요) ──
   renderChat() {
     const log = this.$('.chat-log'), atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 20;
     const g = this.app.game || {}, eligible = Object.keys(this.app.privIds()).filter(id => !g.dead?.[id] && this.data.right[id]);
-    log.innerHTML = this.feed.html(this.data.chat, this.data.vote, this.app.players, eligible) || '<div class="chat-empty">아직 아무 말도 없어요</div>';
+    const open = (this.m.phase === 'discuss' || this.m.phase === 'vote') && this.alive;
+    log.innerHTML = this.feed.html(this.data.chat, this.data.vote, this.app.players, eligible)
+      || (open ? '<div class="chat-empty hint">아래에서 할 말을 골라 보내 보세요!<br>보낸 말은 모두의 화면에 나와요</div>' : '<div class="chat-empty">아직 아무 말도 없어요</div>');
     if (atBottom) log.scrollTop = log.scrollHeight;
-    const m = this.m, box = this.$('.chat-compose');
-    const open = (m.phase === 'discuss' || m.phase === 'vote') && this.alive;
-    if (!open) { box.innerHTML = this.alive ? '' : '<div class="chat-note">유령은 말할 수 없어요</div>'; this.draft = null; return; }
-    if (this.my.sent >= 8) { box.innerHTML = '<div class="chat-note">이번 회의에서는 더 보낼 수 없어요</div>'; return; }
-    if (box.dataset.state === JSON.stringify(this.draft) && box.innerHTML) return; // 고르는 중엔 다시 그리지 않음
-    box.dataset.state = JSON.stringify(this.draft);
-    if (!this.draft) {
-      box.innerHTML = `<div class="chat-h">문장 고르기</div><div class="tpl-list">${CONTENT.chat.map(t => `<button class="tpl press" data-t="${t.id}">${esc(t.text)}</button>`).join('')}</div>`;
-      box.querySelectorAll('.tpl').forEach(b => b.onclick = () => { sfx('click'); this.draft = { t: b.dataset.t, a: [] }; this.stepDraft(); });
-    } else this.stepDraft();
+    const box = this.$('.chat-compose');
+    if (!open) { box.innerHTML = this.alive ? '' : '<div class="chat-note">유령은 말할 수 없어요</div>'; this.draft = null; box.dataset.state = ''; return; }
+    if (this.my.sent >= CHAT_MAX) { box.innerHTML = '<div class="chat-note">이번 회의에서 보낼 수 있는 말을 다 썼어요</div>'; return; }
+    const state = JSON.stringify(this.draft);
+    if (box.dataset.state === state && box.innerHTML) return; // 고르는 중엔 다시 그리지 않음
+    box.dataset.state = state;
+    if (!this.draft) this.stepPick(); else this.stepDraft();
+  }
+  chatHead(step) {
+    const names = ['문장 고르기', '빈칸 채우기', '보내기'];
+    return `<div class="cc-steps">${names.map((n, i) => `<span class="${i + 1 === step ? 'on' : i + 1 < step ? 'done' : ''}"><i>${i + 1}</i>${n}</span>`).join('')}
+      <em class="cc-left">남은 말 ${CHAT_MAX - this.my.sent}</em></div>`;
+  }
+  // 문장 틀의 [빈칸]을 고른 값 또는 색칠된 빈칸으로 바꿔서 보여 주기
+  preview(tpl, a, cur = -1) {
+    let i = 0;
+    return esc(tpl.text).replace(/\[([^\]]+)\]/g, (_, label) => {
+      const k = i++, v = a[k];
+      if (v !== undefined) return `<b class="cc-fill">${esc(this.slotText(tpl.slots[k], v))}</b>`;
+      return `<span class="cc-blank ${k === cur ? 'cur' : ''}">${esc(label)}</span>`;
+    });
+  }
+  slotText(slot, v) {
+    if (slot === 'place') return PLACES.find(p => p.id === v)?.name ?? '?';
+    if (slot === 'person') return nickOf(this.app.players[v]) || '?';
+    if (slot === 'mission') return missionName(v);
+    return v;
+  }
+  stepPick() {
+    const box = this.$('.chat-compose');
+    box.innerHTML = `${this.chatHead(1)}<div class="tpl-list">${CONTENT.chat.map(t =>
+      `<button class="tpl press" data-t="${t.id}">${this.preview(t, [])}</button>`).join('')}</div>`;
+    box.querySelectorAll('.tpl').forEach(b => b.onclick = () => { sfx('click'); this.draft = { t: b.dataset.t, a: [] }; this.stepDraft(); });
   }
   stepDraft() {
     const box = this.$('.chat-compose'), tpl = CONTENT.chat.find(t => t.id === this.draft.t);
     box.dataset.state = JSON.stringify(this.draft);
     const i = this.draft.a.length;
-    if (i >= tpl.slots.length) return this.send();
+    if (i >= tpl.slots.length) return this.stepConfirm();
     const slot = tpl.slots[i], g = this.app.game || {};
     let opts = [];
     if (slot === 'place') opts = PLACES.map(p => [p.id, p.name]);
@@ -163,16 +224,29 @@ export class MeetingUI {
     if (slot === 'person') opts = Object.keys(this.app.privIds()).filter(id => this.app.players[id] && !g.dead?.[id] && id !== this.app.uid)
       .map(id => [id, nickOf(this.app.players[id])]);
     const label = { place: '장소', person: '사람', mission: '미션' }[slot];
-    box.innerHTML = `<div class="chat-h"><button class="tpl-back press">뒤로</button> ${label} 고르기</div>
-      <div class="opt-list ${slot}">${opts.map(([v, n]) => `<button class="opt press" data-v="${esc(v)}" ${slot === 'person' ? `style="--pc:${COLORS[this.app.players[v]?.c]?.hex}"` : ''}>${esc(n)}</button>`).join('')}</div>`;
-    box.querySelector('.tpl-back').onclick = () => { this.draft = null; box.dataset.state = ''; this.renderChat(); };
+    box.innerHTML = `${this.chatHead(2)}
+      <div class="cc-preview">${this.preview(tpl, this.draft.a, i)}</div>
+      <div class="cc-ask">노란 빈칸에 들어갈 <b>${label}</b>을(를) 누르세요</div>
+      <div class="opt-list ${slot}">${opts.map(([v, n]) => `<button class="opt press" data-v="${esc(v)}">${slot === 'person' ? avatarOf(this.app.players[v], 30) : ''}<span>${esc(n)}</span></button>`).join('')}</div>
+      <button class="tpl-back press">처음부터 다시</button>`;
+    box.querySelector('.tpl-back').onclick = () => { sfx('click'); this.draft = null; box.dataset.state = ''; this.renderChat(); };
     box.querySelectorAll('.opt').forEach(b => b.onclick = () => { sfx('click'); this.draft.a.push(b.dataset.v); this.stepDraft(); });
   }
+  stepConfirm() {
+    const box = this.$('.chat-compose'), tpl = CONTENT.chat.find(t => t.id === this.draft.t);
+    box.dataset.state = JSON.stringify(this.draft);
+    box.innerHTML = `${this.chatHead(3)}
+      <div class="cc-preview final">${this.preview(tpl, this.draft.a)}</div>
+      <div class="cc-btns"><button class="btn press cc-send">보내기</button><button class="btn btn-gray press cc-redo">다시 고르기</button></div>`;
+    box.querySelector('.cc-send').onclick = () => this.send();
+    box.querySelector('.cc-redo').onclick = () => { sfx('click'); this.draft = null; box.dataset.state = ''; this.renderChat(); };
+  }
   send() {
-    const now = Date.now(), d = this.draft; this.draft = null;
-    const box = this.$('.chat-compose'); box.dataset.state = '';
-    if (now - this.my.lastSent < 2500) { box.innerHTML = '<div class="chat-note">조금 있다가 다시 보내 주세요</div>'; setTimeout(() => this.renderChat(), 1500); return; }
-    this.my.lastSent = now; this.my.sent++;
+    const now = Date.now(), d = this.draft;
+    const box = this.$('.chat-compose');
+    if (now - this.my.lastSent < 2500) { box.querySelector('.cc-btns')?.insertAdjacentHTML('afterend', '<div class="chat-note">잠깐! 조금 있다가 다시 눌러 주세요</div>'); return; }
+    this.draft = null; box.dataset.state = '';
+    this.my.lastSent = now; this.my.sent++; sfx('click');
     this.app.db.push(`${P.meet(this.app.code, this.m.id)}/chat`, { u: this.app.uid, t: d.t, a: d.a });
     this.renderChat();
   }

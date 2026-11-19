@@ -54,6 +54,15 @@ def main():
         for i, hexc in enumerate(colors()):
             save(recolor(base, hexc, BODY_BASE_L), OUT / f'foot_{i}.png')
         print('foot x12')
+    if raw_file(RAW, 'down_master'):   # 쓰러진 대원 (기절): 400×256 칸 (화면 100×64의 4배) → 12색
+        im = load('down_master', 380)
+        k = min(392 / im.width, 248 / im.height)
+        im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
+        can = Image.new('RGBA', (400, 256)); can.alpha_composite(im, ((400 - im.width) // 2, (256 - im.height) // 2))
+        base = np.array(can)
+        for i, hexc in enumerate(colors()):
+            save(recolor(base, hexc), OUT / f'down_{i}.png')
+        print('down x12')
     dy = head_top() - 120
     for h, (w, cx, bottom) in HATS.items():
         if not raw_file(RAW, f'hat{h}_master'): continue

@@ -58,6 +58,8 @@ function openRoom(c) {
   $('#btn-again').onclick = () => judge.resetToLobby();
   $('#btn-pause').onclick = () => judge.togglePause();
   $('#btn-force').onclick = () => judge.forceMeeting();
+  $('#hm-hand').onclick = () => judge.setHandMode(!judge.game.handMode);
+  $('#hm-more').onclick = () => judge.extendTalk(30);
   $('#btn-people').onclick = openPeople;
   $('#btn-end').onclick = endRoom;
   $('#btn-mute').onclick = () => { setMuted(!muted); $('#btn-mute').textContent = muted ? '소리 꺼짐' : '소리 켜짐'; };
@@ -134,11 +136,34 @@ function drawMeeting(m) {
       ${dead ? '<i class="tag">유령</i>' : ''}${m.phase === 'vote' && cur.vote[id] ? '<i class="tag ok">투표함</i>' : ''}
       ${m.phase === 'result' && n ? `<i class="tag cnt">${n}표</i>` : ''}</div>`;
   }).join('') + (m.phase === 'result' ? `<div class="hm-card skip">건너뛰기 <b>${counts.skip || 0}표</b></div>` : '');
+  drawSpeak(m);
   const chat = $('#hm-chat');
   if (!hostFeed || hostFeed.id !== m.id) hostFeed = Object.assign(new MeetingFeed(), { id: m.id });
   const eligible = voters.filter(id => cur.right[id]);
   chat.innerHTML = hostFeed.html(cur.chat, cur.vote, players, eligible) || '<div class="chat-empty">패드에서 고른 문장이 여기에 나와요. 말로 토론해도 돼요.</div>';
   chat.scrollTop = chat.scrollHeight;
+}
+
+// 발언 순서: 지금 말하는 사람 + 손 든 학생 (이름을 누르면 그 학생 차례)
+function drawSpeak(m) {
+  const players = judge.players, hand = !!judge.game.handMode, now = db.now();
+  $('#hm-hand').textContent = `손들기 방식: ${hand ? '켬' : '끔'}`;
+  $('#hm-hand').classList.toggle('on', hand);
+  const talk = m.phase === 'discuss' || m.phase === 'vote';
+  $('#hm-more').style.visibility = talk ? '' : 'hidden';
+  const sp = talk && m.speaker && now < m.speaker.until ? m.speaker : null;
+  const order = Object.entries(m.hands || {}).filter(([, t]) => t).sort((a, b) => a[1] - b[1]).map(e => e[0]).filter(id => players[id]);
+  const k = JSON.stringify([m.phase, sp?.u, sp?.until, hand, order]);
+  const box = $('#hm-speak');
+  if (box.dataset.k === k) return;
+  box.dataset.k = k;
+  let html = '';
+  if (sp) html += `<div class="hs-now">${avatarOf(players[sp.u], 56)}<b>${esc(nickOf(players[sp.u]))}의 발언 시간</b><span class="hs-left" id="hs-left"></span><button class="btn btn-gray press hs-end">끝내기</button></div>`;
+  else if (m.phase === 'discuss') html += `<div class="hs-now free"><b>${hand ? '손 든 학생의 이름을 누르면 그 학생 차례예요' : '자유 토론'}</b></div>`;
+  if (hand && talk) html += `<div class="hs-hands">${order.length ? order.map((id, i) => `<button class="hs-h press" data-id="${esc(id)}"><i>${i + 1}</i>${avatarOf(players[id], 40)}<span>${esc(nickOf(players[id]))}</span></button>`).join('') : '<span class="hs-none">아직 손 든 학생이 없어요</span>'}</div>`;
+  box.innerHTML = talk ? html : '';
+  box.querySelector('.hs-end')?.addEventListener('click', () => judge.endFloor());
+  box.querySelectorAll('.hs-h').forEach(b => b.onclick = () => judge.giveFloor(b.dataset.id));
 }
 
 function showEject(m) {
@@ -175,6 +200,9 @@ function tickTime() {
     box.textContent = sab.kind === 'clot' ? `${name} · 한 방의 문이 막혔어요 · ${left}초` : `${name} ${left}초 안에 막아야 해요`;
   } else if (box) box.hidden = true;
   const m = judge?.game?.meeting; if (!m) return;
+  const sp = m.speaker, hl = document.getElementById('hs-left');
+  if (hl && sp) hl.textContent = `${Math.max(0, Math.ceil((sp.until - db.now()) / 1000))}초`;
+  if (sp && db.now() >= sp.until && $('#hm-speak').dataset.k?.includes(sp.u)) drawSpeak(m);   // 발언 시간이 끝나면 다시 그리기
   const left = Math.max(0, Math.ceil((m.endsAt - db.now()) / 1000));
   $('#hm-time').textContent = m.phase === 'result' ? '' : (db.now() < (m.startAt || 0) ? '소집 중' : `${left}초`);
 }

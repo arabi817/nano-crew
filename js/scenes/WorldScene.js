@@ -3,6 +3,7 @@ import { WORLD, walkable, SPOTS, SAB_SPOTS, VENTS, TABLE, roomAt, zoneAt, seeThr
 import { KILL_RANGE, REPORT_RANGE, EMERGENCY_RANGE } from '../common/rules.js';
 import { drawMap } from '../map/drawMap.js';
 import { Avatar, loadAvatarTextures, fitScale, avKey } from '../player/avatar.js';
+import { useArt } from '../common/assets.js';
 import { PosSender, RemoteMotion, ZoneListener, decodePos } from '../net/posSync.js';
 import { P } from '../net/room.js';
 import { nickOf } from '../common/colors.js';
@@ -233,21 +234,40 @@ export class WorldScene extends Phaser.Scene {
     });
   }
 
-  // 쓰러진 대원 (어지러운 별이 도는 모습)
+  // 쓰러진 대원 (기절: 빙글빙글 눈 + 머리 위에 도는 별). 새로 쓰러지면 그 자리에 바이러스 연기가 '펑' 퍼져요.
   setBodies(obj) {
     obj = obj || {};
+    const fresh = this.bodiesReady;   // 처음 들어왔을 때 이미 있던 대원은 연기 없이
+    this.bodiesReady = true;
     for (const [uid, b] of this.bodies) if (!obj[uid]) { b.root.destroy(); this.bodies.delete(uid); }
     for (const [uid, v] of Object.entries(obj)) {
       if (this.bodies.has(uid)) continue;
       const p = decodePos(v), pl = this.app.players[uid]; if (!p || !pl) continue;
       const root = this.add.container(p.x, p.y).setDepth(p.y - 5);
-      root.add(this.add.ellipse(0, 22, 76, 18, 0x000000, 0.3));
-      root.add(this.add.image(0, 10, avKey(this, pl.c, 0)).setScale(fitScale(this, avKey(this, pl.c, 0), 80)).setRotation(-Math.PI / 2).setTint(0xcccccc));
-      const stars = this.add.container(-4, -18);
-      for (let i = 0; i < 3; i++) stars.add(this.add.star(Math.cos(i * 2.09) * 18, Math.sin(i * 2.09) * 7, 5, 4, 9, 0xffe14d).setStrokeStyle(2, 0x1a1018));
+      root.add(this.add.ellipse(0, 22, 92, 20, 0x000000, 0.3));
+      const k0 = avKey(this, pl.c, 0);
+      const fallback = this.add.image(0, 10, k0).setScale(fitScale(this, k0, 80)).setRotation(-Math.PI / 2).setTint(0xcccccc);
+      root.add(fallback);
+      useArt(this, `characters/down_${pl.c}.png`, key => {
+        if (!root.active) return;
+        fallback.destroy(); root.addAt(this.add.image(0, 6, key).setDisplaySize(104, 67), 1);
+      });
+      const stars = this.add.container(-4, -30);
+      for (let i = 0; i < 3; i++) stars.add(this.add.star(Math.cos(i * 2.09) * 20, Math.sin(i * 2.09) * 7, 5, 4, 9, 0xffe14d).setStrokeStyle(2, 0x1a1018));
       root.add(stars);
       this.tweens.add({ targets: stars, angle: 360, duration: 2400, repeat: -1 });
+      if (fresh && this.app.phase === 'playing') this.puff(p.x, p.y);
       this.bodies.set(uid, { root, x: p.x, y: p.y });
+    }
+  }
+  // 바이러스 연기 '펑' (보라 구름이 퍼졌다 사라짐). 시야 밖이면 어둠에 가려서 안 보여요.
+  puff(x, y) {
+    const d = y + 20;
+    const flash = this.add.circle(x, y, 30, 0xffffff, 0.9).setDepth(d);
+    this.tweens.add({ targets: flash, scale: 2.6, alpha: 0, duration: 380, onComplete: () => flash.destroy() });
+    for (let i = 0; i < 9; i++) {
+      const a = i / 9 * Math.PI * 2, c = this.add.circle(x, y, 16 + (i % 3) * 5, i % 2 ? 0x8a4fc4 : 0xb07be0).setStrokeStyle(4, 0x1a1018).setDepth(d);
+      this.tweens.add({ targets: c, x: x + Math.cos(a) * 80, y: y + Math.sin(a) * 60 - 20, scale: 1.6, alpha: 0, duration: 900, ease: 'Cubic.easeOut', onComplete: () => c.destroy() });
     }
   }
 

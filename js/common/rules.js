@@ -20,6 +20,8 @@ export const EMERGENCY_RANGE = TABLE.r + 110; // 긴급 회의 버튼 사용 거
 export const REVEAL_MS = 4500;      // 역할 공개 연출 시간
 export const ALARM_MS = 2600;       // 회의 소집 경보 시간
 export const RESULT_MS = 8000;      // 투표 결과 + 추방 연출 시간
+export const FIRST_SPEAK_MS = 15000;  // 토론 시작: 신고한 사람이 먼저 말하는 시간
+export const PICK_SPEAK_MS = 20000;   // 손들기 방식: 선생님이 지명한 학생이 말하는 시간
 
 export const isAlive = (game, id) => !game?.dead?.[id];
 

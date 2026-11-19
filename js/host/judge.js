@@ -7,7 +7,7 @@ import { TABLE, SAB_SPOTS } from '../map/map.js';
 import { OX } from '../../data/ox.js';
 import { assignTasks, stepCount } from '../missions/index.js';
 import { CONTENT } from '../../data/content.js';
-import { settingsOf, KILL_RANGE, REPORT_RANGE, EMERGENCY_RANGE, REVEAL_MS, ALARM_MS, RESULT_MS } from '../common/rules.js';
+import { settingsOf, KILL_RANGE, REPORT_RANGE, EMERGENCY_RANGE, REVEAL_MS, ALARM_MS, RESULT_MS, FIRST_SPEAK_MS, PICK_SPEAK_MS } from '../common/rules.js';
 import { shuffle } from '../common/util.js';
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -86,6 +86,7 @@ export class Judge {
   // ── 학생 요청 처리 ──
   onReq(uid, r) {
     this.db.remove(P.reqOf(this.code, uid));
+    if (r?.t === 'hand') return this.toggleHand(uid);   // 회의 중 손들기 (손들기 방식일 때만)
     if (!r || this.meta?.state !== 'playing' || this.meta.paused || this.game.meeting) return;
     if (!this.priv[uid]) return;
     if (this.db.now() < (this.game.revealUntil || 0)) return;
@@ -220,6 +221,8 @@ export class Judge {
       this.db.update(this.R, {
         [`${base}/right`]: right,
         'game/meeting/phase': 'discuss', 'game/meeting/qa': ans || '', 'game/meeting/endsAt': now + s.discussSec * 1000,
+        // 신고한 사람·긴급 회의를 연 사람이 먼저 말해요 (선생님이 연 회의는 바로 자유 토론)
+        'game/meeting/speaker': m.caller && m.caller !== 'teacher' && this.alive(m.caller) ? { u: m.caller, until: now + FIRST_SPEAK_MS, first: true } : null,
       });
     } else if (phase === 'discuss') {
       this.db.update(this.R, { 'game/meeting/phase': 'vote', 'game/meeting/endsAt': now + s.voteSec * 1000 });
@@ -285,11 +288,36 @@ export class Judge {
 
   // ── 교사 버튼 ──
   forceMeeting() { this.startMeeting('teacher', ''); }
+
+  // ── 발언 순서 ──
+  // 기본: 토론이 시작되면 처음 FIRST_SPEAK_MS 동안 신고한 사람(긴급 회의를 연 사람)이 먼저 말해요.
+  // 손들기 방식(선생님이 켬): 학생이 손을 들고, 선생님이 TV에서 이름을 누르면 PICK_SPEAK_MS 동안 그 학생 차례.
+  toggleHand(uid) {
+    const m = this.game.meeting;
+    if (!m || m.phase !== 'discuss' || !this.game.handMode || !this.priv[uid] || !this.alive(uid)) return;
+    const on = !m.hands?.[uid];
+    (m.hands ||= {})[uid] = on ? this.db.now() : null;
+    this.db.set(`${this.R}/game/meeting/hands/${uid}`, on ? this.db.now() : null);
+  }
+  setHandMode(on) { this.db.set(`${this.R}/game/handMode`, !!on); }
+  giveFloor(uid) {
+    const m = this.game.meeting; if (!m || (m.phase !== 'discuss' && m.phase !== 'vote')) return;
+    this.db.update(this.R, {
+      'game/meeting/speaker': { u: uid, until: this.db.now() + PICK_SPEAK_MS },
+      [`game/meeting/hands/${uid}`]: null,
+    });
+  }
+  endFloor() { if (this.game.meeting) this.db.set(`${this.R}/game/meeting/speaker`, null); }
+  extendTalk(sec = 30) {
+    const m = this.game.meeting; if (!m || (m.phase !== 'discuss' && m.phase !== 'vote')) return;
+    this.db.set(`${this.R}/game/meeting/endsAt`, m.endsAt + sec * 1000);
+  }
   togglePause() {
     const now = this.db.now();
     if (!this.meta?.paused) { this.pausedAt = now; this.db.update(this.R, { 'meta/paused': true, 'meta/pausedAt': now }); return; }
     const gap = now - (this.meta.pausedAt || now), upd = { 'meta/paused': false };
     if (this.game.sab) upd['game/sab/endsAt'] = this.game.sab.endsAt + gap;
+    if (this.game.meeting?.speaker) upd['game/meeting/speaker/until'] = this.game.meeting.speaker.until + gap;
     if (this.game.meeting) { upd['game/meeting/endsAt'] = this.game.meeting.endsAt + gap; if (this.game.meeting.startAt) upd['game/meeting/startAt'] = this.game.meeting.startAt + gap; }
     for (const id of this.ids()) if (this.roleOf(id) === 'imp' && this.priv[id].killReadyAt) upd[`private/${id}/killReadyAt`] = this.priv[id].killReadyAt + gap;
     this.db.update(this.R, upd);
