@@ -75,8 +75,8 @@ body.lab { background: var(--bg); }
 .dv-mito.on { animation: dvGlow .7s ease-in-out 2; }
 @keyframes dvGlow { 50% { box-shadow: 0 0 0 8px #ffcc33; transform: scale(1.08); } }
 .dv-energy { position: relative; height: 26px; border: 3px solid var(--ink); border-radius: 8px; background: #3a4449; overflow: hidden; }
-.dv-energy i { position: absolute; inset: 0; width: 0; background: var(--yellow); transition: width .8s; }
-.dv-energy.full i { width: 100%; }
+.dv-energy i { position: absolute; inset: 0; background: var(--yellow); transform: scaleX(0); transform-origin: left; transition: transform .8s; }
+.dv-energy.full i { transform: scaleX(1); }
 .dv-energy span { position: relative; display: block; text-align: center; font-family: var(--title); font-size: 15px; }
 .dv-ctrl { display: flex; gap: 10px; justify-content: center; } .dv-ctrl:empty { display: none; }
 .dv-ctrl .btn { font-size: 20px; padding: 6px 18px; }
@@ -96,7 +96,7 @@ body.lab { background: var(--bg); }
 .hr-out.pulse { animation: hrOut .7s ease-out; }
 @keyframes hrOut { 40% { box-shadow: 0 0 0 6px #ffcc33; } }
 .hr-ch { position: relative; border: 4px solid var(--ink); border-radius: 18px; background: #f3d6d9; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-.hr-ch i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; transition: height .55s ease-in-out; }
+.hr-ch i { position: absolute; inset: 0; transform: scaleY(0); transform-origin: bottom; transition: transform .55s ease-in-out; }
 .hr-ch.ra i, .hr-ch.rv i { background: #8a2f3a; } .hr-ch.la i, .hr-ch.lv i { background: #ff4b4b; }
 .hr-ch span { position: relative; font-family: var(--title); font-size: 18px; color: #fff; -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
 .hr-ch.ra { grid-column: 2; grid-row: 2; } .hr-ch.la { grid-column: 3; grid-row: 2; }

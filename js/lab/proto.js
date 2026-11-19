@@ -142,7 +142,7 @@ function rhythm(el, api) {
       <div class="hr-note">그림의 왼쪽이 몸의 오른쪽(우심방·우심실)이에요. 색은 산소가 적은 피(어두운 붉은색), 많은 피(밝은 붉은색).</div></div>
     <div class="px-msg"></div></div>`;
   const $ = s => el.querySelector(s), msg = $('.px-msg');
-  const fill = (c, k) => el.querySelector(`.hr-ch.${c} i`).style.height = `${k * 100}%`;
+  const fill = (c, k) => el.querySelector(`.hr-ch.${c} i`).style.transform = `scaleY(${k})`;
   let state = 'atria', beats = 0, busy = false, alive = true;   // atria: 심방에 피가 차 있음, ventricles: 심실에 피가 차 있음
   // 시작: 정맥에서 들어온 혈액으로 심방은 가득, 심실도 이미 절반쯤 차 있음 (심방-심실 사이 판막은 열려 있음)
   ['ra', 'la'].forEach(c => fill(c, 1)); ['rv', 'lv'].forEach(c => fill(c, 0.55));
