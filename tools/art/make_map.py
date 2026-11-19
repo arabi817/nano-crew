@@ -19,7 +19,7 @@ ROOMS = {'meeting': (900, 700), 'power': (700, 500), 'digest': (700, 550), 'smal
 CUTOUTS = {'table': ('props', 720, 720), 'mitochondria': ('props', 432, 248), 'mouth': ('props', 432, 312),
            'stomach': ('props', 600, 460), 'colon': ('props', 1020, 720), 'heart': ('props', 472, 460),
            'alveoli': ('props', 260, 260), 'kidney': ('props', 340, 460), 'glomerulus': ('props', 200, 200),
-           'crate': ('props', 240, 240), 'task': ('devices', 200, 152), 'sab_o2': ('devices', 176, 160),
+           'crate': ('props', 240, 240), 'vessels': ('props', 680, 380), 'task': ('devices', 200, 152), 'sab_o2': ('devices', 176, 160),
            'sab_kidney': ('devices', 176, 160), 'vent': ('devices', 184, 116), 'clot': ('devices', 124, 124),
            'logo': ('ui', 1200, 400)}
 

@@ -69,6 +69,7 @@ export const LIST = [
   'props/mouth.png',
   'props/stomach.png',
   'props/table.png',
+  'props/vessels.png',
   // devices
   'devices/clot.png',
   'devices/sab_kidney.png',

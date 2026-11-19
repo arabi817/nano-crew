@@ -281,8 +281,11 @@ const PROPS = {
   },
   vessel(scene, r, anims) {
     const g = gfx(scene);
-    tube(g, [pt(r.x + 80, r.y + r.h - 90), pt(r.x + 300, r.y + r.h - 160), pt(r.x + 520, r.y + r.h - 90)], 22, 0xd6404f);
-    tube(g, [pt(r.x + 140, r.y + r.h - 50), pt(r.x + 360, r.y + r.h - 110), pt(r.x + 620, r.y + r.h - 60)], 18, 0x4f7bd9);
+    // 동맥 → 모세혈관 → 정맥 그림 (미션 장치들 사이 빈자리). 없으면 코드 관 2개
+    if (!art(scene, 'props/vessels.png', r.x + r.w / 2, r.y + 245, 340, 190)) {
+      tube(g, [pt(r.x + 80, r.y + r.h - 90), pt(r.x + 300, r.y + r.h - 160), pt(r.x + 520, r.y + r.h - 90)], 22, 0xd6404f);
+      tube(g, [pt(r.x + 140, r.y + r.h - 50), pt(r.x + 360, r.y + r.h - 110), pt(r.x + 620, r.y + r.h - 60)], 18, 0x4f7bd9);
+    }
     const mons = [r.x + 40, r.x + 510];
     mons.forEach(mx => { g.fillStyle(INK, 1); g.fillRoundedRect(mx - 6, r.y + 24, 162, 98, 10); g.fillStyle(0x1f2a30, 1); g.fillRoundedRect(mx, r.y + 30, 150, 86, 8); });
     const e = gfx(scene, -790);
