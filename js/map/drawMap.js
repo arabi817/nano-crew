@@ -208,8 +208,8 @@ function drawWalls(scene) {
 const PROPS = {
   meeting(scene, r) {
     const g = gfx(scene), { x, y } = TABLE;
+    if (art(scene, 'props/table.png', x, y + 6, 360, 360)) return;   // 바닥 그림에 둥근 무늬가 있어서 둘레 원은 코드 그림일 때만
     g.lineStyle(12, 0x7a8e95, 1); g.strokeCircle(x, y, 300);
-    if (art(scene, 'props/table.png', x, y + 6, 360, 360)) return;
     g.fillStyle(INK, 1); g.fillCircle(x, y + 12, TABLE.r + 8);
     g.fillStyle(0x4f6169, 1); g.fillCircle(x, y, TABLE.r);
     g.lineStyle(8, INK, 1); g.strokeCircle(x, y, TABLE.r);

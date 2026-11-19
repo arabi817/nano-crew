@@ -11,6 +11,7 @@ import { NET } from '../../config.js';
 const SPEED = 270, RADIUS = 20, USE_RANGE = 115;
 export const VISION = 380; // 크루원 시야 반지름
 export const IMP_VISION = 500; // 바이러스는 시야가 더 넓어요 (명세)
+const FOG_STEPS = 32;   // 시야 가장자리 부드럽게 지우는 겹 수
 const FOG_A = 0.93; // 시야 밖 어둡기 (밝은 바닥 그림이 들어와서 0.8 → 0.93, 맵 모양만 아주 희미하게)
 
 export class WorldScene extends Phaser.Scene {
@@ -255,17 +256,12 @@ export class WorldScene extends Phaser.Scene {
   // 시야: 내 자리에서 사방으로 시선을 쏴서 벽에 막히는 곳까지만 밝게 (어몽어스처럼).
   // 시야 밖은 맵 모양이 희미하게 보일 정도로만 어둡게 해요.
   makeFog() {
-    const S = 512, tex = this.textures.createCanvas('fogHole', S, S), ctx = tex.getContext();
-    // 가장자리로 갈수록 천천히 어두워져서 '굵은 원 테두리'가 보이지 않게 (바깥 어둠 FOG_A와 이어짐)
-    const g = ctx.createRadialGradient(S / 2, S / 2, S * 0.22, S / 2, S / 2, S / 2);
-    g.addColorStop(0, 'rgba(8,4,10,0)'); g.addColorStop(0.6, `rgba(8,4,10,${FOG_A * 0.45})`); g.addColorStop(1, `rgba(8,4,10,${FOG_A})`);
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(S / 2, S / 2, S / 2, 0, Math.PI * 2); ctx.fill(); tex.refresh(); // 원 안쪽만 (바깥은 RT가 덮음)
-    this.fogImg = this.add.image(0, 0, 'fogHole').setDepth(9001);
     this.fogPoly = this.make.graphics({ add: false });
     this.rays = 140;
   }
-  visPolygon(x, y, R) {
-    const pts = [], n = this.rays, step = 14;
+  // 방향마다 시선이 닿는 거리 (벽에 막히면 벽 앞면이 살짝 보이는 곳까지)
+  visDists(x, y, R) {
+    const out = [], n = this.rays, step = 14;
     for (let i = 0; i < n; i++) {
       const an = i / n * Math.PI * 2, c = Math.cos(an), s = Math.sin(an);
       let d = step;
@@ -273,14 +269,13 @@ export class WorldScene extends Phaser.Scene {
       if (d < R) { // 벽 경계를 조금 더 정확히
         let lo = d - step, hi = d;
         for (let k = 0; k < 3; k++) { const mid = (lo + hi) / 2; if (seeThrough(x + c * mid, y + s * mid)) lo = mid; else hi = mid; }
-        d = Math.min(R, hi + 26); // 벽 앞면이 살짝 보이게
+        d = Math.min(R, hi + 26);
       }
-      pts.push({ x: x + c * d, y: y + s * d });
+      out.push({ c, s, d: Math.min(d, R) });
     }
-    return pts;
+    return out;
   }
   updateFog(on) {
-    this.fogImg.setVisible(on);
     if (!on) { this.fogRT?.setVisible(false); return; }
     const cam = this.cameras.main, v = cam.worldView, pad = 60;
     const W = Math.ceil(v.width + pad * 2), H = Math.ceil(v.height + pad * 2);
@@ -291,10 +286,19 @@ export class WorldScene extends Phaser.Scene {
     const rt = this.fogRT, ox = v.x - pad, oy = v.y - pad, R = this.visionR();
     rt.setVisible(true).setPosition(ox, oy);
     rt.clear(); rt.fill(0x08040a, FOG_A);
-    const poly = this.visPolygon(this.x, this.y, R).map(p => ({ x: p.x - ox, y: p.y - oy }));
-    this.fogPoly.clear(); this.fogPoly.fillStyle(0xffffff, 1); this.fogPoly.fillPoints(poly, true);
-    rt.erase(this.fogPoly);
-    this.fogImg.setPosition(this.x, this.y).setDisplaySize(R * 2, R * 2);
+    // 시야 모양을 바깥(R)부터 안쪽으로 여러 겹 조금씩 지워요 → 가장자리가 부드럽게 어두워지고, 따로 겹치는 그림이 없어서 원 테두리 선이 안 생겨요
+    const rays = this.visDists(this.x, this.y, R), N = FOG_STEPS, inner = 0.3;
+    const poly = r => rays.map(q => { const d = Math.min(q.d, r); return { x: this.x + q.c * d - ox, y: this.y + q.s * d - oy }; });
+    const shade = t => FOG_A * t * t * (3 - 2 * t);   // t: 0(안쪽) → 1(R), 부드러운 곡선
+    let cur = FOG_A;
+    for (let k = 0; k <= N; k++) {
+      const rk = R * (1 - (1 - inner) * k / N);
+      const want = k === N ? 0 : shade(((rk - R * (1 - inner) / N / 2) / R - inner) / (1 - inner));
+      const e = cur > 0 ? 1 - want / cur : 1;
+      if (e <= 0.001) continue;
+      this.fogPoly.clear(); this.fogPoly.fillStyle(0xffffff, e); this.fogPoly.fillPoints(poly(rk), true);
+      rt.erase(this.fogPoly); cur = want;
+    }
   }
 
 }
