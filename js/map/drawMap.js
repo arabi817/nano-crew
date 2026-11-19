@@ -27,6 +27,17 @@ function tube(g, pts, w, color) { // 둥근 관 (외곽선 포함)
 }
 const pt = (x, y) => ({ x, y });
 
+// 미션 장소 → 장치 종류 (같은 미션의 여러 단계는 같은 장치, 같은 방에서는 되도록 다른 장치)
+const DEVICE_OF = {
+  digestWireMouth: 'wire', digestWireStomach: 'wire', digestWireSmall: 'wire', heartWiring: 'wire',
+  powerGlucose: 'capsule', powerO2: 'capsule', powerO2b: 'capsule', powerFinal: 'generator',
+  wasteCO2Pick: 'hatch', wasteCO2Out: 'hatch', wasteUreaPick: 'hatch', wasteUreaDrop: 'hatch',
+  nutrientTest: 'testtube', villi: 'microscope', gutAssembly: 'assembly', wasteSort: 'sortbin',
+  bloodScan: 'scanpad', heartbeat: 'monitor', vesselCheck: 'toolbench', rbcCard: 'cardreader',
+  nephron1: 'filter', nephron2: 'filter', alveoliFilter: 'filter',
+  breathModel: 'belljar', diaphragm: 'lever', airPath: 'airvalve', colon: 'colonlever', ureaFactory: 'factory',
+};
+
 // 그림 파일 한 장 놓기: (x, y) = 그림 가운데, w×h = 화면 크기. into(컨테이너)를 주면 그 안에 넣어요.
 // 그림이 목록에 없으면 false → 코드 그림을 그려요.
 function art(scene, path, x, y, w, h, { depth = -800, rot = 0, flip = false, into = null, onImage } = {}) {
@@ -73,7 +84,10 @@ export function drawMap(scene) {
   // 미션 장치
   const spots = {};
   for (const [id, s] of Object.entries(TASK_SPOTS)) {
-    if (!art(scene, 'devices/task.png', s.x, s.y, 100, 76, { depth: -600 })) {
+    // 미션 종류별 장치 그림 → 없으면 공통 장치 그림 → 없으면 코드 그림
+    const kind = DEVICE_OF[id], kindArt = kind && hasArt(`devices/${kind}.png`);
+    if (!(kindArt ? art(scene, `devices/${kind}.png`, s.x, s.y, 110, 86, { depth: -600 })
+      : art(scene, 'devices/task.png', s.x, s.y, 100, 76, { depth: -600 }))) {
       const g = gfx(scene, -600);
       g.fillStyle(INK, 1); g.fillRoundedRect(s.x - 50, s.y - 38, 100, 76, 12);
       g.fillStyle(0x56656e, 1); g.fillRoundedRect(s.x - 44, s.y - 32, 88, 64, 9);

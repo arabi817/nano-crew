@@ -46,6 +46,12 @@ def contain(name, w, h):
 
 def main(only=None):
     made = []
+    # 미션 종류별 장치: _raw/dev_<종류> → devices/<종류>.png (화면 110×86의 2배)
+    for p in sorted(RAW.glob('dev_*')):
+        name = p.stem
+        if only and name not in only: continue
+        save(contain(name, 220, 172), A / 'devices' / f'{name[4:]}.png')
+        made.append(f'devices/{name[4:]}.png')
     for rid, (w, h) in ROOMS.items():
         src = raw_file(RAW, f'floor_{rid}')
         if not src or (only and f'floor_{rid}' not in only): continue
