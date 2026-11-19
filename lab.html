@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1c1219">
+<title>미션 실험실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/lab.css">
+</head>
+<body class="lab">
+<!-- 선생님 전용 시험 페이지: 게임과 연결되어 있지 않아요. 미션 미니게임을 하나씩 해 보고, 분석·개선안을 봐요. -->
+<header class="lab-head">
+  <h1>미션 실험실 <small>게임과 연결되지 않은 선생님용 시험 페이지</small></h1>
+  <nav class="lab-tabs">
+    <button class="lab-tab press on" data-tab="now">지금 미션 해 보기</button>
+    <button class="lab-tab press" data-tab="review">분석</button>
+    <button class="lab-tab press" data-tab="proto">개선안 맛보기</button>
+  </nav>
+</header>
+<main>
+  <section class="lab-page" data-page="now"></section>
+  <section class="lab-page" data-page="review" hidden></section>
+  <section class="lab-page" data-page="proto" hidden></section>
+</main>
+<script type="module" src="js/lab/lab.js"></script>
+</body>
+</html>
