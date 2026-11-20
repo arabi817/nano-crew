@@ -140,9 +140,9 @@ export const CONTENT = {
 
     // ═══════════ 짧은 미션 · 호흡 ═══════════
     alveoliFilter: {
-      title: '폐포 필터', unit: 'resp', type: 'short',
-      guide: '폐포와 모세혈관 사이에서 기체가 이동하는 방향으로 입자를 손가락으로 밀어 옮기세요.',
-      topName: '폐포', bottomName: '모세혈관',
+      title: '허파꽈리 필터', unit: 'resp', type: 'short',
+      guide: '허파꽈리와 모세혈관 사이에서 기체가 이동하는 방향으로 입자를 손가락으로 밀어 옮기세요.',
+      topName: '허파꽈리', bottomName: '모세혈관',
       toBottom: 'O2', toTop: 'CO2',
       move: [3, 4], stay: [1, 2],
     },
@@ -168,7 +168,7 @@ export const CONTENT = {
     airPath: {
       title: '공기 경로', unit: 'resp', type: 'short',
       guide: '공기가 지나가는 순서대로 점을 손가락으로 이어 그리세요.',
-      path: ['코', '기관', '기관지', '폐(폐포)'],
+      path: ['코', '숨관', '숨관가지', '폐(허파꽈리)'],
     },
 
     // ═══════════ 짧은 미션 · 배설 ═══════════

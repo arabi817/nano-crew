@@ -33,8 +33,8 @@ function delivery(el, api) {
 
   // 1) 허파실: O₂를 적혈구의 헤모글로빈 자리에 싣기
   const lung = () => {
-    setRoute(0); stage.innerHTML = '<b>① 허파실</b> 폐포의 산소(O₂)를 혈액에 실어요';
-    $('.dv-src-h').textContent = '폐포'; const box = $('.dv-src-in'); box.innerHTML = '';
+    setRoute(0); stage.innerHTML = '<b>① 허파실</b> 허파꽈리의 산소(O₂)를 혈액에 실어요';
+    $('.dv-src-h').textContent = '허파꽈리'; const box = $('.dv-src-in'); box.innerHTML = '';
     say(msg, 'O₂를 끌어서 <b>혈액</b>에 실어 보세요. 어디에 실어야 멀리까지 갈까요?');
     let n = 0;
     for (let i = 0; i < 4; i++) {
@@ -181,9 +181,9 @@ function rhythm(el, api) {
   return () => { alive = false; };
 }
 
-// ───────── 3. 폐포 기체 교환 (폐포 필터 개선안) ─────────
+// ───────── 3. 허파꽈리 기체 교환 (허파꽈리 필터 개선안) ─────────
 const ROUNDS = [
-  { name: '허파: 폐포 ↔ 폐 모세혈관', top: '폐포 (들이마신 공기)', bot: '폐 모세혈관 (온몸에서 돌아온 혈액)', o2: [9, 2], co2: [1, 8] },
+  { name: '허파: 허파꽈리 ↔ 폐 모세혈관', top: '허파꽈리 (들이마신 공기)', bot: '폐 모세혈관 (온몸에서 돌아온 혈액)', o2: [9, 2], co2: [1, 8] },
   { name: '온몸: 모세혈관 ↔ 조직 세포', top: '온몸 모세혈관 (폐에서 온 혈액)', bot: '조직 세포 (호흡해서 산소를 씀)', o2: [9, 2], co2: [2, 9] },
 ];
 function gas(el, api) {
@@ -237,7 +237,7 @@ function gas(el, api) {
         bad.forEach(x => { const n = el.querySelector(`.gx-gate[data-g="${x}"]`); n.classList.remove('shake'); void n.offsetWidth; n.classList.add('shake'); });
         return;
       }
-      say(msg, r === 0 ? '폐포의 O₂는 혈액으로, 혈액의 CO₂는 폐포로 확산했어요. 이제 이 혈액이 온몸으로 가요.'
+      say(msg, r === 0 ? '허파꽈리의 O₂는 혈액으로, 혈액의 CO₂는 허파꽈리로 확산했어요. 이제 이 혈액이 온몸으로 가요.'
         : '<b>정리</b> 허파에서도 온몸에서도 기체는 농도가 높은 곳에서 낮은 곳으로 확산해요. "걸러 내는 필터"가 아니에요.', r === 0 ? 'ok' : 'sum');
       await sleep(2200); if (!alive) return;
       if (++r >= ROUNDS.length) api.success(); else draw();
@@ -265,10 +265,10 @@ export const PROTOS = {
     wrong: '순서가 틀리면 "심실이 비어 있어요 / 이미 가득해요"처럼 지금 심장 상태로 이유를 알려 줘요.',
   },
   gas: {
-    title: '폐포 기체 교환', compare: 'alveoliFilter', mount: gas,
+    title: '허파꽈리 기체 교환', compare: 'alveoliFilter', mount: gas,
     sub: '양쪽의 기체 개수를 보고 확산 방향을 예상해 통로를 여세요.',
-    from: '폐포 필터',
-    how: '폐포·혈액의 O₂·CO₂ 개수(농도계)를 보고 두 통로의 방향(↑/↓)을 고른 뒤 [통로 열기]. 맞으면 입자가 저절로 퍼져 개수가 비슷해져요. 허파와 온몸 조직 두 판.',
+    from: '허파꽈리 필터',
+    how: '허파꽈리·혈액의 O₂·CO₂ 개수(농도계)를 보고 두 통로의 방향(↑/↓)을 고른 뒤 [통로 열기]. 맞으면 입자가 저절로 퍼져 개수가 비슷해져요. 허파와 온몸 조직 두 판.',
     learn: '기체 교환은 농도 차에 따른 확산 (필터·여과가 아님). 허파와 온몸 조직에서 방향이 반대.',
     wrong: '방향이 틀리면 통로를 열어도 아무것도 안 움직이고, "많은 쪽에서 적은 쪽으로만 퍼져요"가 떠요.',
   },

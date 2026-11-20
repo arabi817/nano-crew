@@ -346,7 +346,7 @@ const PROPS = {
     const g = gfx(scene);
     const top = pt(r.x + 400, r.y + 230);
     const ends = [pt(r.x + 260, r.y + 430), pt(r.x + 400, r.y + 570), pt(r.x + 560, r.y + 460), pt(r.x + 620, r.y + 300)];
-    // 기관 → 기관지 (연골 고리가 있는 관)
+    // 숨관 → 숨관가지 (연골 고리가 있는 관)
     ends.forEach(e => { const p = [top, pt((top.x + e.x) / 2, (top.y + e.y) / 2 + 30), e]; if (!artTube(scene, p, 16, 'tube_air')) tube(g, p, 16, 0xe6eef5); });
     const tr = [pt(top.x, r.y + 40), top];
     if (!artTube(scene, tr, 24, 'tube_air', -799)) tube(g, tr, 24, 0xe6eef5);
