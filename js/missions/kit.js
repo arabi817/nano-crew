@@ -58,7 +58,7 @@ export function sortGame(el, api, { items, bins, tray = '물질', note = '', cls
 
 // 두 구역 사이 옮기기. items: [{label, from:'A', to:'B'}]  (from === to 이면 그대로 두기)
 export function zoneSwap(el, api, { zones, items, cls = '' }) {
-  el.innerHTML = `<div class="zs ${cls}">${zones.map(z => `<div class="zs-zone" data-z="${esc(z.name)}"><div class="zs-h">${esc(z.name)}</div><div class="zs-in"></div></div>`).join('<div class="zs-wall"></div>')}</div>`;
+  el.innerHTML = `<div class="zs ${cls}">${zones.map(z => `<div class="zs-zone" data-z="${esc(z.name)}"><div class="zs-h">${esc(z.name)}${z.sub ? `<small>${esc(z.sub)}</small>` : ''}</div><div class="zs-in"></div></div>`).join('<div class="zs-wall"></div>')}</div>`;
   const zoneEl = name => el.querySelector(`.zs-zone[data-z="${CSS.escape(name)}"] .zs-in`);
   const need = items.filter(i => i.from !== i.to).length; let got = 0;
   for (const it of shuffle(items)) {
