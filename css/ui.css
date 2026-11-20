@@ -544,6 +544,14 @@ body.sab-big #phaser::after { content: ''; position: absolute; inset: 0; pointer
 .ga-body { position: relative; max-width: 380px; }
 .ga-outline { position: absolute; inset: 0; width: 100%; height: 100%; }
 .ga-body.img { max-width: none; height: 100%; aspect-ratio: 2 / 3; justify-self: center; }
+/* 소화 기관 이름 붙이기: 그림 가운데, 양옆 빈칸, 지시선 */
+.ga.gl { grid-template-columns: minmax(300px, 58%) 1fr; }
+.gl-fig { position: relative; height: 100%; aspect-ratio: 10 / 9; max-width: 100%; justify-self: center; }
+.gl-img { position: absolute; left: 20%; top: 0; width: 60%; height: 100%; pointer-events: none; user-select: none; }
+.gl-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.gl-lines line { stroke: var(--yellow); stroke-width: .6; } .gl-lines circle { fill: var(--yellow); stroke: var(--ink); stroke-width: .3; }
+.gl-slot { width: 19%; height: 7%; min-width: 0; background: rgba(255, 255, 255, .8); border-color: var(--yellow); }
+.gl-tip { margin-top: 12px; font-weight: 900; font-size: 15px; opacity: .85; }
 .ga-body.img .ga-slot { width: 27%; height: 6.5%; min-width: 0; }
 .ga-img { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; user-select: none; }
 .ga-slot { position: absolute; transform: translate(-50%, -50%); width: 82px; height: 32px; border: 3px dashed var(--ink); border-radius: 10px; background: rgba(255, 255, 255, .65); display: flex; align-items: center; justify-content: center; }
@@ -617,14 +625,23 @@ body.sab-big #phaser::after { content: ''; position: absolute; inset: 0; pointer
 .ap-msg { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font-weight: 900; pointer-events: none; }
 /* 운반 (세포 발전소·노폐물) */
 .cy { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 30px; }
-.cy-src, .cy-dst { width: 230px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #2b3439; border: 4px solid var(--ink); border-radius: 14px; padding: 10px; }
+.cy-src, .cy-dst { position: relative; overflow: hidden; width: 230px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #2b3439; border: 4px solid var(--ink); border-radius: 14px; padding: 10px; }
 .cy-cap { font-family: var(--title); font-size: 20px; background: var(--cc); color: var(--ink); border: 4px solid var(--ink); border-radius: 30px; padding: 12px 20px; touch-action: none; cursor: grab; box-shadow: 0 4px 0 var(--ink); }
 .cy-slot { width: 160px; height: 90px; border: 4px dashed #9aa7ad; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+/* 칸 뒤 그림 (폐·콩팥·작은창자·세포·혈관): 글자와 캡슐은 그 위에 */
+.cy-bg { position: absolute; inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px); object-fit: contain; opacity: .55; pointer-events: none; }
+.cy-src > :not(.cy-bg), .cy-dst > :not(.cy-bg) { position: relative; }
+.cy-src .sg-h, .cy-dst .sg-h { -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
+.cy-slot { background: rgba(20, 14, 20, .35); }
+.cy-exit-up { animation: cyUp 1s .25s ease-in forwards; } .cy-exit-down { animation: cyDown 1s .25s ease-in forwards; }
+@keyframes cyUp { to { transform: translateY(-150px) scale(.6); opacity: 0; } }
+@keyframes cyDown { to { transform: translateY(120px) scale(.6); opacity: 0; } }
+.cy-note { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: max-content; max-width: 90%; font-weight: 900; font-size: 17px; background: #1f5a33; border: 3px solid var(--ink); border-radius: 10px; padding: 6px 12px; text-align: center; }
 .cy-arrow { width: 40px; height: 40px; border-top: 8px solid var(--yellow); border-right: 8px solid var(--yellow); transform: rotate(45deg); }
 .pw { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1.4fr; grid-template-rows: 1fr auto; gap: 10px; padding: 12px; }
 .pw-bag { display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; background: #2b3439; border: 4px solid var(--ink); border-radius: 14px; }
 .pw-machine { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; background: #56656e; border: 4px solid var(--ink); border-radius: 14px; padding: 10px; }
-.pw-hopper { grid-column: 1 / -1; min-height: 70px; border: 4px dashed #c9d1d8; border-radius: 12px; display: flex; gap: 8px; align-items: center; justify-content: center; font-weight: 900; }
+.pw-hopper { position: relative; overflow: hidden; grid-column: 1 / -1; min-height: 120px; border: 4px dashed #c9d1d8; border-radius: 12px; display: flex; gap: 8px; align-items: center; justify-content: center; font-weight: 900; }
 .pw-gauge { position: relative; height: 34px; background: #2b3439; border: 4px solid var(--ink); border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .pw-fill { position: absolute; left: 0; bottom: 0; top: 0; width: 0; background: var(--yellow); transition: width 1s; }
 .pw-gauge span { position: relative; font-family: var(--title); }
@@ -632,6 +649,9 @@ body.sab-big #phaser::after { content: ''; position: absolute; inset: 0; pointer
 .pw-lever { font-family: var(--title); font-size: 18px; background: var(--red); color: #fff; border: 4px solid var(--ink); border-radius: 10px; padding: 8px 12px; box-shadow: 0 4px 0 var(--ink); }
 .pw-lever:disabled { filter: grayscale(1); }
 .pw-out { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: center; min-height: 30px; }
+.pw-hopper > :not(.cy-bg) { position: relative; } .pw-hopper .cy-bg { opacity: .6; }
+.pw-hl { font-family: var(--title); font-size: 15px; -webkit-text-stroke: 4px var(--ink); paint-order: stroke fill; }
+.pw-q { font-weight: 900; font-size: 14px; align-self: center; }
 .pw-o { font-family: var(--title); background: #9aa7ad; border: 3px solid var(--ink); border-radius: 20px; padding: 4px 12px; animation: pop .4s; }
 .pw-eq { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .pw-line { font-family: var(--title); font-size: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; }

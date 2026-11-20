@@ -375,7 +375,7 @@ function openSabFix(spotId) {
   app.sabPanel = true;
   if (s.kind === 'kidney') {
     app.panel = openPanel({
-      title: '콩팥 정지 해결', sub: '걸러지는 물질만 보먼주머니로 보내 콩팥을 다시 움직이세요.', mount: SAB_FIX.kidney,
+      title: '콩팥 정지 해결', sub: '여과: 토리의 혈액에서 보먼주머니로 빠져나가는 물질만 끌어 보내 콩팥을 다시 움직이세요.', mount: SAB_FIX.kidney,
       onSuccess: () => request('fix', 'kidney'), onClose: () => { app.panel = null; },
     });
     return;

@@ -119,7 +119,12 @@ export const LIST = [
   'devices/vent.png',
   'devices/wire.png',
   // ui
+  'ui/cell.png',
   'ui/logo.png',
+  'ui/lungs.png',
+  'ui/smallint.png',
   'ui/torso.png',
+  'ui/torso_organs.png',
+  'ui/urinary.png',
   'ui/virus.png',
 ];

@@ -13,7 +13,7 @@ function nephronFrame(el, step) {
 export function nephronFilter(el, api, C) {
   const items = [...C.pass.map(l => ({ label: l, ok: ['보먼주머니'] })), ...C.block.map(l => ({ label: l, ok: [] }))];
   return sortGame(nephronFrame(el, 0), api, {
-    items, tray: '토리 (혈액)', note: '걸러지지 않는 물질은 그대로 두세요', cls: 'neph',
+    items, tray: '토리 (혈액)', note: '여과되지 않는 물질은 토리(혈액)에 그대로 두세요', cls: 'neph',
     bins: [{ name: '보먼주머니', html: '<b>보먼주머니</b><small>여과된 물질</small>' }],
   });
 }
@@ -59,7 +59,7 @@ export function ureaFactory(el, api, C) {
 export function kidneyFix(el, api, C) {
   const items = [...pick(C.pass, 3).map(l => ({ label: l, ok: ['보먼주머니'] })), ...pick(C.block, 1).map(l => ({ label: l, ok: [] }))];
   return sortGame(el, api, {
-    items, tray: '멈춘 토리', note: '걸러지는 물질만 보먼주머니로!', cls: 'neph',
+    items, tray: '멈춘 토리 (혈액)', note: '여과되지 않는 물질은 토리(혈액)에 그대로 두세요', cls: 'neph',
     bins: [{ name: '보먼주머니', html: '<b>보먼주머니</b>' }],
   });
 }

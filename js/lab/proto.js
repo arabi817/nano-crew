@@ -75,7 +75,7 @@ function delivery(el, api) {
     say(msg, '산소를 실은 혈액을 <b>온몸</b>으로 내보내는 방은 어디일까요? 눌러서 수축시키세요.');
     ctrl.innerHTML = shuffle(['우심실', '좌심실']).map(v => `<button class="btn press" data-v="${v}">${v} 수축</button>`).join('');
     ctrl.querySelectorAll('button').forEach(b => b.onclick = () => {
-      if (b.dataset.v === '우심실') { api.wrong(); say(msg, '우심실은 혈액을 <b>폐</b>로 보내요(폐순환). 온몸으로 보내는 건 벽이 더 두꺼운 <b>좌심실</b>이에요.', 'bad'); return; }
+      if (b.dataset.v === '우심실') { api.wrong(); say(msg, '우심실은 혈액을 <b>폐</b>로 보내요(허파순환). 온몸으로 보내는 건 벽이 더 두꺼운 <b>좌심실</b>이에요.', 'bad'); return; }
       ctrl.innerHTML = ''; api.good();
       say(msg, '좌심실이 수축해 혈액이 <b>대동맥 → 온몸의 모세혈관</b>으로 가요.', 'ok');
       el.querySelector('.dv-blood').classList.add('flow');

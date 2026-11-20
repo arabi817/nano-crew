@@ -1,16 +1,24 @@
 // 세포 발전소(공통)와 노폐물 배출(긴): 받기 → 옮기기 → 넣기
 import { draggable, shuffle, esc } from './kit.js';
+import { hasArt, artUrl } from '../common/assets.js';
+
+// 칸 뒤에 까는 그림 (그림 파일이 없으면 그냥 빈 칸)
+const bg = path => hasArt(path) ? `<img class="cy-bg" src="${artUrl(path)}" alt="" draggable="false">` : '';
 
 // 캡슐을 운반통(가방)에 넣는 간단한 단계
-function carry(el, api, { item, from, to, color }) {
-  el.innerHTML = `<div class="cy"><div class="cy-src"><div class="sg-h">${esc(from)}</div>
+// srcArt/dstArt: 칸 뒤 그림, exit: 넣은 뒤 캡슐이 빠져나가는 방향('up' 날숨, 'down' 오줌), note: 넣은 뒤 한 줄 설명
+function carry(el, api, { item, from, to, color, srcArt, dstArt, exit, note }) {
+  el.innerHTML = `<div class="cy"><div class="cy-src">${bg(srcArt)}<div class="sg-h">${esc(from)}</div>
       <div class="cy-cap" style="--cc:${color}">${esc(item)}</div></div>
     <div class="cy-arrow"></div>
-    <div class="cy-dst"><div class="sg-h">${esc(to)}</div><div class="cy-slot"></div></div></div>`;
+    <div class="cy-dst">${bg(dstArt)}<div class="sg-h">${esc(to)}</div><div class="cy-slot"></div></div>
+    ${note ? `<div class="cy-note" hidden>${esc(note)}</div>` : ''}</div>`;
   draggable(el.querySelector('.cy-cap'), {
     onDrop: under => {
       const s = under?.closest?.('.cy-slot'); if (!s) return false;
       const cap = el.querySelector('.cy-cap'); cap.style.transform = ''; cap.dataset.locked = 1; s.append(cap);
+      if (exit) cap.classList.add(`cy-exit-${exit}`);
+      const n = el.querySelector('.cy-note'); if (n) n.hidden = false;
       api.success(); return true;
     },
   });
@@ -19,6 +27,7 @@ function carry(el, api, { item, from, to, color }) {
 
 export const powerPick = idx => (el, api, C) => carry(el, api, {
   item: `${C.inputs[idx]} 캡슐`, from: idx === 0 ? '작은창자에서 흡수한 영양소' : '폐에서 받은 기체', to: '내 가방', color: idx === 0 ? '#ffcc33' : '#9fdcf5',
+  srcArt: idx === 0 ? 'ui/smallint.png' : 'ui/lungs.png',
 });
 
 // 발전기: 캡슐 두 개 넣기 → 레버 → 식 완성
@@ -26,7 +35,7 @@ export function powerFinal(el, api, C) {
   const [a, b, p1, p2, e] = C.equation;
   el.innerHTML = `<div class="pw">
     <div class="pw-bag"><div class="sg-h">내 가방</div>${C.inputs.map((n, i) => `<div class="cy-cap pw-in" data-n="${esc(n)}" style="--cc:${i ? '#9fdcf5' : '#ffcc33'}">${esc(n)}</div>`).join('')}</div>
-    <div class="pw-machine"><div class="pw-hopper">넣는 곳</div><div class="pw-gauge"><div class="pw-fill"></div><span>에너지</span></div>
+    <div class="pw-machine"><div class="pw-hopper">${bg('ui/cell.png')}<span class="pw-hl">세포 (넣는 곳)</span></div><div class="pw-gauge"><div class="pw-fill"></div><span>에너지</span></div>
       <button class="pw-lever press" disabled>레버 당기기</button><div class="pw-out"></div></div>
     <div class="pw-eq" hidden></div></div>`;
   let fed = 0;
@@ -41,7 +50,7 @@ export function powerFinal(el, api, C) {
   }));
   lever.onclick = () => {
     lever.disabled = true; el.querySelector('.pw-fill').style.width = '100%';
-    el.querySelector('.pw-out').innerHTML = C.outputs.map(o => `<span class="pw-o">${esc(o)}</span>`).join('');
+    el.querySelector('.pw-out').innerHTML = C.outputs.map(() => `<span class="pw-o">?</span>`).join('') + '<span class="pw-q">무엇이 생겼을까요? 아래 식을 완성하세요</span>';
     setTimeout(equation, 1100);
   };
   const equation = () => {
@@ -55,7 +64,9 @@ export function powerFinal(el, api, C) {
         const s = under?.closest?.('.pw-blank'); if (!s || s.classList.contains('ok')) return false;
         if (!blanks.includes(ch.dataset.n) || box.querySelector(`.pw-blank.ok[data-n="${CSS.escape(ch.dataset.n)}"]`)) { api.wrong(); return false; }
         ch.style.transform = ''; ch.dataset.locked = 1; s.classList.add('ok'); s.dataset.n = ch.dataset.n; s.append(ch);
-        api.good(); if (++got >= 2) api.success(); return true;
+        api.good();
+        if (++got >= 2) { el.querySelectorAll('.pw-o').forEach((o, i) => o.textContent = C.outputs[i]); el.querySelector('.pw-q')?.remove(); api.success(); }
+        return true;
       },
     }));
   };
@@ -64,8 +75,8 @@ export function powerFinal(el, api, C) {
 
 // 노폐물 배출: 0 이산화탄소 받기, 1 폐 배출구로, 2 요소 받기, 3 콩팥으로
 export const wasteStep = step => (el, api) => carry(el, api, [
-  { item: '이산화탄소', from: '세포 발전소 배출구', to: '운반통', color: '#9aa7ad' },
-  { item: '이산화탄소', from: '운반통', to: '폐 배출구 (날숨)', color: '#9aa7ad' },
-  { item: '요소', from: '혈액', to: '운반통', color: '#f2e38a' },
-  { item: '요소', from: '운반통', to: '콩팥', color: '#f2e38a' },
+  { item: '이산화탄소', from: '세포 발전소 배출구', to: '운반통', color: '#9aa7ad', srcArt: 'ui/cell.png' },
+  { item: '이산화탄소', from: '운반통', to: '폐 배출구 (날숨)', color: '#9aa7ad', dstArt: 'ui/lungs.png', exit: 'up', note: '이산화탄소가 숨관을 지나 날숨으로 몸 밖에 나가요' },
+  { item: '요소', from: '혈액', to: '운반통', color: '#f2e38a', srcArt: 'props/vessels.png' },
+  { item: '요소', from: '운반통', to: '콩팥', color: '#f2e38a', dstArt: 'ui/urinary.png', exit: 'down', note: '콩팥에서 걸러진 요소가 오줌관을 지나 방광에 모였다가 오줌으로 나가요' },
 ][step]);

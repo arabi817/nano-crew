@@ -21,7 +21,7 @@ CUTOUTS = {'table': ('props', 720, 720), 'mitochondria': ('props', 432, 248), 'm
            'alveoli': ('props', 260, 260), 'kidney': ('props', 340, 460), 'glomerulus': ('props', 200, 200),
            'crate': ('props', 240, 240), 'vessels': ('props', 680, 380), 'task': ('devices', 200, 152), 'sab_o2': ('devices', 176, 160),
            'sab_kidney': ('devices', 176, 160), 'vent': ('devices', 184, 116), 'clot': ('devices', 124, 124),
-           'logo': ('ui', 1200, 400), 'virus': ('ui', 600, 600), 'torso': ('ui', 600, 900)}
+           'logo': ('ui', 1200, 400), 'virus': ('ui', 600, 600), 'torso': ('ui', 600, 900), 'lungs': ('ui', 460, 460), 'urinary': ('ui', 400, 480), 'smallint': ('ui', 560, 320), 'cell': ('ui', 460, 460), 'torso_organs': ('ui', 600, 900)}
 
 def cover(im, w, h):
     """가운데를 기준으로 잘라서 w×h를 꽉 채우기"""

@@ -88,12 +88,45 @@ export function gutAssembly(el, api, C) {
     '입': [50, 28.5], '식도': [50, 40], '간': [34, 53], '위': [66, 53], '쓸개': [34, 62], '이자': [66, 62],
     '작은창자': [50, 74], '큰창자': [50, 85], '항문': [50, 95],
   });
+  // 소화 기관이 그려진 그림이 있으면: 기관마다 지시선 → 몸 옆 빈칸에 이름 붙이기 (교과서 방식)
+  if (hasArt('ui/torso_organs.png')) return gutLabel(el, api, parts);
   el.innerHTML = `<div class="ga">
     <div class="ga-body ${torso ? 'img' : ''}">${torso ? `<img class="ga-img" src="${artUrl('ui/torso.png')}" alt="" draggable="false">` : `<svg viewBox="0 0 100 100" preserveAspectRatio="none" class="ga-outline">
       <path d="M50 2 C70 2 74 14 66 20 C82 24 84 40 82 60 C82 82 72 98 50 98 C28 98 18 82 18 60 C16 40 18 24 34 20 C26 14 30 2 50 2Z" fill="#f3c9b8" stroke="#1a1018" stroke-width="1.2"/></svg>`}
       ${Object.entries(slots).map(([n, [x, y]]) => `<div class="ga-slot ${C.organs.includes(n) ? 'organ' : ''}" data-n="${esc(n)}" style="left:${x}%;top:${y}%"></div>`).join('')}
     </div>
     <div class="ga-parts"><div class="sg-h">부품</div><div class="ga-tray">${shuffle(parts).map(n => `<div class="sg-item ga-part" data-n="${esc(n)}">${esc(n)}</div>`).join('')}</div></div></div>`;
+  let got = 0;
+  el.querySelectorAll('.ga-part').forEach(p => draggable(p, {
+    onDrop: under => {
+      const s = under?.closest?.('.ga-slot'); if (!s || s.classList.contains('ok')) return false;
+      if (s.dataset.n !== p.dataset.n) { api.wrong(); return false; }
+      p.style.transform = ''; p.dataset.locked = 1; s.classList.add('ok'); s.append(p);
+      api.good(); if (++got >= parts.length) api.success(); return true;
+    },
+  }));
+  return () => { };
+}
+
+// 소화 기관 이름 붙이기: 그림(가운데 60%) 속 기관 위치 [x, y](그림 기준 %)와 빈칸 자리(왼쪽 L / 오른쪽 R, 높이 %)
+const ORGANS = {
+  '입': { at: [50, 28.3], side: 'L', y: 26 }, '간': { at: [36, 56], side: 'L', y: 50 },
+  '쓸개': { at: [36, 64.5], side: 'L', y: 63 }, '큰창자': { at: [31, 82], side: 'L', y: 80 },
+  '식도': { at: [50.5, 46], side: 'R', y: 38 }, '위': { at: [66, 57], side: 'R', y: 51 },
+  '이자': { at: [57, 67.5], side: 'R', y: 64 }, '작은창자': { at: [52, 79], side: 'R', y: 77 }, '항문': { at: [48.5, 97], side: 'R', y: 92 },
+};
+function gutLabel(el, api, parts) {
+  const fx = x => 20 + x * 0.6;                       // 그림 % → 전체 칸 % (그림은 가운데 60%)
+  const sx = side => side === 'L' ? 10 : 90, edge = side => side === 'L' ? 19.5 : 80.5;
+  const lines = Object.entries(ORGANS).map(([, o]) => {
+    const x2 = fx(o.at[0]), y2 = o.at[1];
+    return `<line x1="${edge(o.side)}" y1="${o.y}" x2="${x2}" y2="${y2}"/><circle cx="${x2}" cy="${y2}" r="1.1"/>`;
+  }).join('');
+  el.innerHTML = `<div class="ga gl">
+    <div class="gl-fig"><img class="gl-img" src="${artUrl('ui/torso_organs.png')}" alt="" draggable="false">
+      <svg class="gl-lines" viewBox="0 0 100 100" preserveAspectRatio="none">${lines}</svg>
+      ${Object.entries(ORGANS).map(([n, o]) => `<div class="ga-slot gl-slot" data-n="${esc(n)}" style="left:${sx(o.side)}%;top:${o.y}%"></div>`).join('')}</div>
+    <div class="ga-parts"><div class="sg-h">이름표</div><div class="ga-tray">${shuffle(parts).map(n => `<div class="sg-item ga-part" data-n="${esc(n)}">${esc(n)}</div>`).join('')}</div></div></div>`;
   let got = 0;
   el.querySelectorAll('.ga-part').forEach(p => draggable(p, {
     onDrop: under => {
