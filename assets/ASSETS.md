@@ -121,7 +121,7 @@
 | `cardreader.png` | 카드 리더기 | 적혈구 카드 |
 | `filter.png` | 여과 기계 | 콩팥단위 필터 2단계, 폐포 필터 |
 | `belljar.png` | 호흡 운동 모형(유리종·Y자관·풍선·고무막) | 호흡 모형 (GPT 점검 통과) |
-| `lever.png` | 레버 조종판 | 가로막 조종 |
+| `lever.png` | 레버 조종판 | 호흡 운동 조절 |
 | `airvalve.png` | 공기관 밸브판 | 공기 경로 |
 | `colonlever.png` | 배출 탱크 | 큰창자 비우기 |
 | `factory.png` | 공장 기계 | 요소 공장 |

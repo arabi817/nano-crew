@@ -1,4 +1,4 @@
-// 호흡 미션: 호흡 모형, 가로막 조종, 공기 경로 (폐포 필터는 alveoliFilter.js)
+// 호흡 미션: 호흡 모형, 호흡 운동 조절, 공기 경로 (폐포 필터는 alveoliFilter.js)
 import { shuffle, esc } from './kit.js';
 
 // 호흡 모형: 고무막 당기기 → 풍선 부풂(들숨), 놓으면 날숨. 두 번 한 뒤 모형이 우리 몸의 무엇인지 고르기 (보이는 미션)
@@ -48,7 +48,7 @@ export function breathModel(el, api, C) {
   return () => { };
 }
 
-// 가로막 조종: 들숨/날숨에 맞게 스위치 맞추기
+// 호흡 운동 조절: 들숨/날숨에 맞게 스위치 맞추기
 export function diaphragm(el, api, C) {
   const rounds = shuffle(['in', 'out']);
   let r = 0;

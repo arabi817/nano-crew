@@ -155,7 +155,7 @@ export const CONTENT = {
       cycles: 2,
     },
     diaphragm: {
-      title: '가로막 조종', unit: 'resp', type: 'short',
+      title: '호흡 운동 조절', unit: 'resp', type: 'short',
       guide: '들숨과 날숨에 맞게 줄마다 알맞은 쪽을 누르세요.',
       rows: [
         { name: '갈비뼈', in: '올라감', out: '내려감' },
