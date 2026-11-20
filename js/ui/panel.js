@@ -3,7 +3,10 @@ import { ICON } from './icons.js';
 import { sfx } from '../common/sfx.js';
 import { esc } from '../common/util.js';
 
-export function openPanel({ title, sub = '', mount, onSuccess, onClose }) {
+// 안내 문구: {장소}는 노란색, *흐름*은 굵게 (글자는 먼저 안전하게 바꾼 뒤 표시만 입혀요)
+const richSub = t => esc(t).replace(/\{([^}]+)\}/g, '<b class="g-place">$1</b>').replace(/\*([^*]+)\*/g, '<b class="g-flow">$1</b>');
+
+export function openPanel({ title, sub = '', note = '', big = false, mount, onSuccess, onClose }) {
   const ov = document.createElement('div');
   ov.className = 'mpanel-ov';
   ov.innerHTML = `
@@ -12,7 +15,7 @@ export function openPanel({ title, sub = '', mount, onSuccess, onClose }) {
         <div class="mpanel-title">${esc(title)}</div>
         <button class="mpanel-x press" aria-label="닫기">${ICON.close}</button>
       </div>
-      <div class="mpanel-sub">${esc(sub)}</div>
+      <div class="mpanel-sub ${big ? 'big' : ''}">${richSub(sub)}</div>${note ? `<div class="mpanel-note">${esc(note)}</div>` : ''}
       <div class="mpanel-body screen"></div>
       <div class="mpanel-done">${ICON.check}<div>완료!</div></div>
     </div>`;

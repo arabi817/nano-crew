@@ -1,11 +1,22 @@
 // 소화 미션: 소화효소 배선(긴), 영양소 검출, 융털 흡수, 소화관 조립, 큰창자 비우기
 import { draggable, sortGame, wireGame, pick, shuffle, esc } from './kit.js';
+import { hasArt, artUrl } from '../common/assets.js';
 
 // 소화효소 배선: 단계(0 입, 1 위, 2 작은창자)마다 패널 하나
 export const digestWire = step => (el, api, C) => {
   const p = C.panels[step];
   return wireGame(el, api, { cols: C.cols, chains: p.right, extra: p.extra });
 };
+
+// 시약병 그림: 스포이트 뚜껑 + 병 속 시약 본래 색 + 이름표
+const bottleSVG = g => `<svg class="nt-svg" viewBox="0 0 60 92" aria-hidden="true">
+  <rect x="24" y="2" width="12" height="16" rx="6" fill="#3a3a3a" stroke="#1a1018" stroke-width="3"/>
+  <rect x="18" y="16" width="24" height="10" rx="3" fill="#2b2b2b" stroke="#1a1018" stroke-width="3"/>
+  <path d="M14 28 h32 a8 8 0 0 1 8 8 v44 a8 8 0 0 1 -8 8 h-32 a8 8 0 0 1 -8 -8 v-44 a8 8 0 0 1 8 -8z" fill="#e8f2f7" stroke="#1a1018" stroke-width="3.5"/>
+  <path d="M9 50 h42 v30 a6 6 0 0 1 -6 6 h-30 a6 6 0 0 1 -6 -6z" fill="${g.before || '#cfe6f3'}"/>
+  <rect x="12" y="38" width="36" height="16" rx="3" fill="#ffffff" stroke="#1a1018" stroke-width="2"/>
+  <text x="30" y="50" text-anchor="middle" font-size="9" font-weight="900" fill="#1a1018">${esc(g.short)}</text>
+  <path d="M14 34 v40" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity=".7"/></svg>`;
 
 // 영양소 검출: 시약을 시험관에 넣으면 색이 변함 → 들어 있는 영양소 고르기
 export function nutrientTest(el, api, C) {
@@ -14,9 +25,9 @@ export function nutrientTest(el, api, C) {
   const draw = () => {
     const R = rounds[r];
     el.innerHTML = `<div class="nt">
-      <div class="nt-shelf">${shuffle(C.reagents).map(g => `<div class="nt-bottle ${g === R ? 'use' : 'off'}" data-n="${esc(g.short)}"><i></i><span>${esc(g.name)}</span></div>`).join('')}</div>
+      <div class="nt-shelf">${shuffle(C.reagents).map(g => `<div class="nt-bottle ${g === R ? 'use' : 'off'}" data-n="${esc(g.short)}">${bottleSVG(g)}<span>${esc(g.name)}</span></div>`).join('')}</div>
       <div class="nt-bench">
-        <div class="nt-tube"><div class="nt-liquid"></div></div>
+        <div class="nt-tube"><div class="nt-liquid"></div><i class="nt-glass"></i></div><div class="nt-tag">음식물 시료</div>
         ${R.heat ? '<button class="nt-heat press" disabled>가열하기</button>' : ''}
         <div class="nt-msg">${r + 1}번째 시험관 · 반짝이는 시약 병을 시험관에 끌어 넣으세요</div>
       </div>
@@ -36,7 +47,7 @@ export function nutrientTest(el, api, C) {
       onDrop: under => {
         if (!under?.closest?.('.nt-tube')) return false;
         el.querySelector('.nt-bottle.use').style.visibility = 'hidden';
-        liquid.style.background = '#cfe6f3'; liquid.classList.add('drop');
+        liquid.style.background = R.before || '#cfe6f3'; liquid.classList.add('drop');   // 먼저 시약 본래 색이 섞여 보여요
         if (R.heat) {
           msg.textContent = '이 시약은 가열해야 색이 변해요';
           const h = el.querySelector('.nt-heat'); h.disabled = false;
@@ -71,9 +82,15 @@ export function gutAssembly(el, api, C) {
     '간': [27, 36], '쓸개': [30, 51], '이자': [70, 51],
   };
   const parts = [...C.tube, ...C.organs];
+  // 사람 상반신 그림(GPT)이 있으면 그 위의 실제 장기 자리에 칸을 둬요 (그림 왼쪽 = 몸의 오른쪽: 간·쓸개)
+  const torso = hasArt('ui/torso.png');
+  if (torso) Object.assign(slots, {
+    '입': [50, 28.5], '식도': [50, 40], '간': [34, 53], '위': [66, 53], '쓸개': [34, 62], '이자': [66, 62],
+    '작은창자': [50, 74], '큰창자': [50, 85], '항문': [50, 95],
+  });
   el.innerHTML = `<div class="ga">
-    <div class="ga-body"><svg viewBox="0 0 100 100" preserveAspectRatio="none" class="ga-outline">
-      <path d="M50 2 C70 2 74 14 66 20 C82 24 84 40 82 60 C82 82 72 98 50 98 C28 98 18 82 18 60 C16 40 18 24 34 20 C26 14 30 2 50 2Z" fill="#f3c9b8" stroke="#1a1018" stroke-width="1.2"/></svg>
+    <div class="ga-body ${torso ? 'img' : ''}">${torso ? `<img class="ga-img" src="${artUrl('ui/torso.png')}" alt="" draggable="false">` : `<svg viewBox="0 0 100 100" preserveAspectRatio="none" class="ga-outline">
+      <path d="M50 2 C70 2 74 14 66 20 C82 24 84 40 82 60 C82 82 72 98 50 98 C28 98 18 82 18 60 C16 40 18 24 34 20 C26 14 30 2 50 2Z" fill="#f3c9b8" stroke="#1a1018" stroke-width="1.2"/></svg>`}
       ${Object.entries(slots).map(([n, [x, y]]) => `<div class="ga-slot ${C.organs.includes(n) ? 'organ' : ''}" data-n="${esc(n)}" style="left:${x}%;top:${y}%"></div>`).join('')}
     </div>
     <div class="ga-parts"><div class="sg-h">부품</div><div class="ga-tray">${shuffle(parts).map(n => `<div class="sg-item ga-part" data-n="${esc(n)}">${esc(n)}</div>`).join('')}</div></div></div>`;

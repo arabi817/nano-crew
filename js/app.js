@@ -347,7 +347,7 @@ app.useAction = () => {
     const visible = M.visible && !app.amDead();
     if (visible) { app.db.set(visPath(), id); app.db.onDisconnectRemove(visPath()); }
     app.panel = openPanel({
-      title: M.title + (t.n > 1 ? ` (${step + 1}/${t.n})` : ''), sub: S.sub, mount: S.mount,
+      title: M.title + (t.n > 1 ? ` (${step + 1}/${t.n})` : ''), sub: S.sub, note: S.note, big: S.big, mount: S.mount,
       onSuccess: () => {
         app.db.set(P.doneOf(app.code, app.uid) + '/' + id, step + 1);
         app.hud.toast(step + 1 >= t.n ? `${M.title} 완료!` : `${M.title} ${step + 1}/${t.n} · 다음은 ${roomName(SPOTS[M.steps[step + 1].spot].room)}`);

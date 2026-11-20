@@ -2,7 +2,8 @@
 // 이미 제자리에 있는 입자를 건드리면 틀림 → 그냥 다 옮기면 안 되게 함.
 import { rint } from '../common/util.js';
 
-const LABEL = { O2: 'O<sub>2</sub>', CO2: 'CO<sub>2</sub>' };
+// 글자를 한 덩어리(span)로 묶어 입자 정중앙에 한 줄로, 2는 아래첨자로 붙여요
+const LABEL = { O2: '<span class="af-lb">O<sub>2</sub></span>', CO2: '<span class="af-lb">CO<sub>2</sub></span>' };
 const MID = 0.5, TOP_MAX = 0.42, BOT_MIN = 0.6;
 
 export function mount(el, api, C) {

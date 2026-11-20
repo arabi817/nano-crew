@@ -54,6 +54,8 @@ export const MISSIONS = Object.fromEntries(Object.entries(DEF).map(([id, steps])
       spots: [s.spot, ...(s.alt || [])],
       sub: Array.isArray(c.guide) ? c.guide[i] : c.guide,
       name: c.steps?.[i] || '',
+      note: (Array.isArray(c.notes) ? c.notes[i] : c.note) || '',
+      big: !!c.bigGuide,
       mount: (el, api) => s.fn(el, api, c),
     })),
     // 예전 코드와 맞추기 (한 단계짜리)

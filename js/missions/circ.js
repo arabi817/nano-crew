@@ -79,7 +79,7 @@ export function bloodScan(el, api, C) {
 // 혈관 정비: 나온 혈관에 맞는 특징만 켜기
 export function vesselCheck(el, api, C) {
   const names = pick(Object.keys(C.vessels), C.rounds);
-  const allFeats = Object.values(C.vessels).flat();
+  const allFeats = [...new Set(Object.values(C.vessels).flat())];   // 여러 혈관에 같은 특징이 있어도 칸은 한 번만
   let r = 0;
   const draw = () => {
     const v = names[r], right = C.vessels[v];

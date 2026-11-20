@@ -24,9 +24,12 @@ export const CONTENT = {
     digestWire: {
       title: '소화효소 배선', unit: 'digest', type: 'long',
       steps: ['입 패널', '위 패널', '작은창자 패널'],
-      guide: ['입에서 일어나는 소화를 영양소 → 소화효소 → 산물로 이으세요.',
-        '위에서 일어나는 소화를 영양소 → 소화효소 → 산물로 이으세요.',
-        '작은창자에서 일어나는 소화를 영양소 → 소화효소 → 최종 산물로 이으세요.'],
+      // {장소}는 노란색, *흐름*은 굵게 보여요. 다른 장소의 줄은 함정이에요(잇지 않음).
+      guide: ['{입}에서 일어나는 소화를 *영양소 → 소화효소 → 산물*로 이으세요.',
+        '{위}에서 일어나는 소화를 *영양소 → 소화효소 → 산물*로 이으세요.',
+        '{작은창자}에서 일어나는 소화를 *영양소 → 소화효소 → 최종 산물*로 이으세요.'],
+      notes: ['(입에서 일어나지 않는 줄은 잇지 마세요.)', '(위에서 일어나지 않는 줄은 잇지 마세요.)', ''],
+      bigGuide: true,
       cols: ['영양소', '소화효소', '산물'],
       panels: [
         { right: [['녹말', '아밀레이스(침)', '엿당']], extra: [['단백질', '펩신(위액)', '중간 산물']] },
@@ -65,10 +68,10 @@ export const CONTENT = {
       title: '영양소 검출', unit: 'digest', type: 'short',
       guide: '시약 병을 시험관에 끌어 넣고, 색 변화를 보고 들어 있는 영양소를 고르세요.',
       reagents: [
-        { name: '아이오딘-아이오딘화 칼륨 용액', short: '아이오딘', nutrient: '녹말', color: '#2c3e8f', colorName: '청람색' },
-        { name: '베네딕트 용액', short: '베네딕트', nutrient: '당', color: '#d9541e', colorName: '황적색', heat: true },
-        { name: '뷰렛 용액', short: '뷰렛', nutrient: '단백질', color: '#7d3bb0', colorName: '보라색' },
-        { name: '수단 Ⅲ 용액', short: '수단 Ⅲ', nutrient: '지방', color: '#e0233c', colorName: '선홍색' },
+        { name: '아이오딘-아이오딘화 칼륨 용액', short: '아이오딘', nutrient: '녹말', color: '#2c3e8f', colorName: '청람색', before: '#9a5a1c' },   // before: 시약 본래 색
+        { name: '베네딕트 용액', short: '베네딕트', nutrient: '당', color: '#d9541e', colorName: '황적색', heat: true, before: '#2f6fd0' },
+        { name: '뷰렛 용액', short: '뷰렛', nutrient: '단백질', color: '#7d3bb0', colorName: '보라색', before: '#8cc3ec' },
+        { name: '수단 Ⅲ 용액', short: '수단 Ⅲ', nutrient: '지방', color: '#e0233c', colorName: '선홍색', before: '#b8322c' },
       ],
       rounds: 2,
     },
@@ -110,6 +113,7 @@ export const CONTENT = {
     heartbeat: {
       title: '심장 박동', unit: 'circ', type: 'short',
       guide: '깜빡이는 순서를 기억했다가 똑같이 누르세요. 단계마다 길어져요.',
+      note: '(우리 몸에서 일어나는 현상과는 관련이 없어요.)',   // 설명 아래 작은 흐린 글씨
       pads: ['우심방', '좌심방', '우심실', '좌심실'],
       lengths: [3, 4, 5],
     },
@@ -129,7 +133,7 @@ export const CONTENT = {
       vessels: {
         '동맥': ['벽 두껍고 탄력 있음', '혈압 높음'],
         '정맥': ['벽 얇음', '판막 있음'],
-        '모세혈관': ['벽이 한 겹 세포', '물질 교환'],
+        '모세혈관': ['벽 얇음', '벽이 한 겹의 세포', '물질 교환'],   // 벽 얇음은 정맥·모세혈관 둘 다 정답
       },
       rounds: 2,
     },

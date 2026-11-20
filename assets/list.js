@@ -120,5 +120,6 @@ export const LIST = [
   'devices/wire.png',
   // ui
   'ui/logo.png',
+  'ui/torso.png',
   'ui/virus.png',
 ];

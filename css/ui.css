@@ -193,7 +193,11 @@ body[data-phase="lobby"] .only-play, body[data-phase="playing"] .only-lobby { di
 .mpanel-title { font-family: var(--title); font-size: 32px; color: var(--yellow); -webkit-text-stroke: 7px var(--ink); paint-order: stroke fill; }
 .mpanel-x { width: 58px; height: 58px; border: 4px solid var(--ink); border-radius: 12px; background: var(--red); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 0 var(--ink); }
 .mpanel-x .ico { width: 34px; height: 34px; }
-.mpanel-sub { font-size: 17px; font-weight: 700; padding: 0 18px; }
+.mpanel-sub { font-size: 23px; font-weight: 900; line-height: 1.35; padding: 0 18px; color: #fff; -webkit-text-stroke: 5px var(--ink); paint-order: stroke fill; }
+.mpanel-sub.big { font-size: clamp(16px, 2.75vw, 26px); white-space: nowrap; margin-top: 10px; }   /* 소화효소 배선: 한 줄, 판에 가깝게 */
+.mpanel-sub .g-place { color: var(--yellow); }
+.mpanel-sub .g-flow { font-weight: 900; color: #fff; background: rgba(255, 204, 51, .22); border-radius: 6px; padding: 0 4px; }
+.mpanel-note { font-size: 14px; font-weight: 500; padding: 0 18px; margin-top: -6px; opacity: .6; }
 .mpanel-body { flex: 1; position: relative; overflow: hidden; touch-action: none; }
 .mpanel-done { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: rgba(20, 40, 24, .55); border-radius: 8px; font-family: var(--title); font-size: 44px; -webkit-text-stroke: 8px var(--ink); paint-order: stroke fill; }
 .mpanel-done .ico { width: 150px; height: 150px; animation: pop .4s cubic-bezier(.3, 1.6, .5, 1); }
@@ -244,7 +248,9 @@ body[data-phase="lobby"] .only-play, body[data-phase="playing"] .only-lobby { di
   box-shadow: inset 0 -7px 0 rgba(0, 0, 0, .18), 0 4px 0 rgba(0, 0, 0, .35);
 }
 .af-p sub { font-size: .6em; vertical-align: -2px; }
-.af-p.o2 { background: #ffffff; color: #2456c7; }
+.af-lb { white-space: nowrap; line-height: 1; }
+.af-lb sub { font-size: .6em; vertical-align: baseline; position: relative; top: .3em; line-height: 0; }   /* O 바로 오른쪽 아래, 기준선 아래로 살짝 */
+.af-p.o2 { background: #ffffff; color: #1e3a8a; }
 .af-p.co2 { background: #5b6166; color: #fff; width: 80px; height: 80px; }
 .af-p.grab { transform-origin: center; z-index: 5; outline: 5px solid var(--yellow); }
 .af-p.moved { border-color: #1d7a37; box-shadow: 0 0 0 5px var(--green); cursor: default; }
@@ -503,13 +509,19 @@ body.sab-big #phaser::after { content: ''; position: absolute; inset: 0; pointer
 .nt { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr auto; gap: 10px; padding: 12px; }
 .nt-shelf { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: center; }
 .nt-bottle { display: flex; flex-direction: column; align-items: center; font-weight: 900; font-size: 13px; text-align: center; }
-.nt-bottle i { width: 46px; height: 64px; border: 4px solid var(--ink); border-radius: 8px 8px 12px 12px; background: #cfe6f3; }
+.nt-svg { width: 58px; height: 88px; display: block; }
 .nt-bottle.off { opacity: .35; }
-.nt-bottle.use i { background: #fff3c4; box-shadow: 0 0 0 5px var(--yellow); animation: pulse 1s infinite; cursor: grab; }
+.nt-bottle.use { cursor: grab; }
+.nt-bottle.use .nt-svg { filter: drop-shadow(0 0 0 var(--yellow)) drop-shadow(0 0 6px var(--yellow)); animation: pulse 1s infinite; }
 .nt-bench { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
-.nt-tube { width: 70px; height: 180px; border: 5px solid var(--ink); border-top: none; border-radius: 0 0 36px 36px; background: rgba(255, 255, 255, .15); display: flex; align-items: flex-end; overflow: hidden; }
-.nt-liquid { width: 100%; height: 45%; background: #e9e2c8; transition: background 1s, height .6s; }
-.nt-liquid.drop { height: 60%; }
+/* 시험관: 입구 테두리 + 유리 반사 */
+.nt-tube { position: relative; width: 66px; height: 190px; border: 5px solid var(--ink); border-top: none; border-radius: 0 0 34px 34px; background: rgba(220, 238, 246, .28); display: flex; align-items: flex-end; overflow: hidden; margin-top: 8px; }
+.nt-tube::before { content: ''; position: absolute; left: -9px; right: -9px; top: -8px; height: 10px; border: 5px solid var(--ink); border-radius: 8px; background: #d9eaf2; }
+.nt-tube { overflow: visible; } .nt-tube .nt-liquid { border-radius: 0 0 29px 29px; }
+.nt-glass { position: absolute; left: 10px; top: 14px; bottom: 26px; width: 7px; border-radius: 4px; background: rgba(255, 255, 255, .55); }
+.nt-liquid { width: 100%; height: 40%; background: #f4f1e2; opacity: .9; transition: background 1s, height .6s; }   /* 반응 전: 거의 투명한 음식물 시료 */
+.nt-liquid.drop { height: 58%; }
+.nt-tag { font-size: 13px; font-weight: 900; opacity: .8; margin-top: -4px; }
 .nt-heat { font-family: var(--title); font-size: 18px; background: #ff7a1a; border: 4px solid var(--ink); border-radius: 10px; padding: 6px 14px; box-shadow: 0 4px 0 var(--ink); }
 .nt-heat.on { background: var(--red); }
 .nt-msg { font-weight: 900; text-align: center; }
@@ -518,6 +530,9 @@ body.sab-big #phaser::after { content: ''; position: absolute; inset: 0; pointer
 .ga { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(260px, 52%) 1fr; gap: 14px; padding: 12px; }
 .ga-body { position: relative; max-width: 380px; }
 .ga-outline { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ga-body.img { max-width: none; height: 100%; aspect-ratio: 2 / 3; justify-self: center; }
+.ga-body.img .ga-slot { width: 27%; height: 6.5%; min-width: 0; }
+.ga-img { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; user-select: none; }
 .ga-slot { position: absolute; transform: translate(-50%, -50%); width: 82px; height: 32px; border: 3px dashed var(--ink); border-radius: 10px; background: rgba(255, 255, 255, .65); display: flex; align-items: center; justify-content: center; }
 .ga-slot.organ { border-color: #7a2b38; background: rgba(255, 220, 200, .8); }
 .ga-slot .sg-item { font-size: 15px; padding: 2px 6px; }

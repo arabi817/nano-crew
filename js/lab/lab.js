@@ -14,10 +14,10 @@ const roomName = spot => ROOMS.find(r => r.id === SPOTS[spot]?.room)?.name ?? ''
 const results = {};   // 미션·단계별 마지막 결과
 
 // 미션 창을 열고 시간·틀린 횟수를 재요
-function play({ key, title, sub, mount, onDone }) {
+function play({ key, title, sub, note, big, mount, onDone }) {
   const t0 = performance.now(); let wrong = 0;
   openPanel({
-    title, sub,
+    title, sub, note, big,
     mount: (el, api) => mount(el, { ...api, wrong() { wrong++; api.wrong(); } }),
     onSuccess: () => { results[key] = { sec: (performance.now() - t0) / 1000, wrong }; onDone?.(); renderNow(); },
   });
@@ -41,7 +41,7 @@ function renderNow() {
         <div class="lc-steps"><button class="lc-step press" data-sab="kidney">해 보기</button>${resultChip('sab:kidney')}</div></div></div>`;
   document.querySelectorAll('.lc-step[data-m]').forEach(b => b.onclick = () => {
     const m = MISSIONS[b.dataset.m], i = +b.dataset.i, s = m.steps[i];
-    play({ key: `${m.id}:${i}`, title: m.title + (m.steps.length > 1 ? ` (${i + 1}/${m.steps.length})` : ''), sub: s.sub, mount: s.mount });
+    play({ key: `${m.id}:${i}`, title: m.title + (m.steps.length > 1 ? ` (${i + 1}/${m.steps.length})` : ''), sub: s.sub, note: s.note, big: s.big, mount: s.mount });
   });
   document.querySelectorAll('.lc-all').forEach(b => b.onclick = () => {
     const m = MISSIONS[b.dataset.m];
