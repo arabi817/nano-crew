@@ -11,6 +11,7 @@ export const DEFAULT_SETTINGS = {
   progress: 'meeting',  // 진행 바: always / meeting / hidden
   revealOnEject: true,  // 추방 시 역할 공개
   unit: 'all',          // 단원 선택
+  chat: 'template',     // 회의 채팅: template(정해진 문장만) / free(자유 입력 + 정해진 문장)
 };
 export const settingsOf = meta => ({ ...DEFAULT_SETTINGS, ...(meta?.settings || {}) });
 
@@ -40,6 +41,7 @@ export function settingsRows(meta) {
     ['진행 바', PROGRESS_NAME[s.progress] || s.progress],
     ['추방 시 역할 공개', s.revealOnEject ? '켜기' : '끄기'],
     ['단원', UNIT_NAME[s.unit] || s.unit],
+    ['채팅', s.chat === 'free' ? '자유 입력' : '정해진 문장'],
   ];
 }
 export const settingsHTML = meta => `<div class="set-h">방 설정</div><table class="set-tb">${settingsRows(meta).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</table>`;

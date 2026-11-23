@@ -17,7 +17,8 @@ body[data-hv="ended"] :is(.hv-lobby, .hv-play, .hv-meet):not(.hv-ended) { displa
 .hm-title { font-family: var(--title); font-size: 52px; color: var(--yellow); -webkit-text-stroke: 9px var(--ink); paint-order: stroke fill; }
 .hm-phase { font-family: var(--title); font-size: 34px; background: var(--metal); border: 5px solid var(--ink); border-radius: 12px; padding: 4px 22px; }
 .hm-time { margin-left: auto; font-family: var(--title); font-size: 72px; -webkit-text-stroke: 10px var(--ink); paint-order: stroke fill; }
-.hm-who { font-size: 26px; font-weight: 900; }
+.hm-who { font-size: 34px; font-weight: 900; color: var(--yellow); -webkit-text-stroke: 6px var(--ink); paint-order: stroke fill; }
+#btn-chatmode { margin-top: 10px; font-size: 20px; padding: 8px 16px; } #btn-chatmode.on { background: var(--yellow); }
 .hm-ctrl { display: flex; align-items: center; gap: 12px; }
 .hm-ctrl .hm-who { flex: 1; }
 .hm-ctrl .btn { font-size: 20px; padding: 8px 16px; }

@@ -347,7 +347,7 @@ body:not([data-role="imp"]) .only-imp, body.ghost .only-imp, body.ghost #btn-rep
 .meet.alarming .meet-alarm { display: flex; }
 @keyframes flash { 50% { background: #e5484d; } }
 .ma-big { font-family: var(--title); font-size: clamp(56px, 12vw, 120px); color: #fff; -webkit-text-stroke: 12px var(--ink); paint-order: stroke fill; }
-.ma-who { font-size: 24px; font-weight: 900; }
+.ma-who { margin-top: 18px; font-family: var(--title); font-size: clamp(26px, 4.6vw, 44px); color: var(--yellow); -webkit-text-stroke: 7px var(--ink); paint-order: stroke fill; background: rgba(20, 8, 12, .55); border: 4px solid var(--ink); border-radius: 16px; padding: 8px 22px; text-align: center; }
 .meet-top { display: flex; align-items: center; gap: 14px; }
 .mt-title { font-family: var(--title); font-size: 30px; color: var(--yellow); -webkit-text-stroke: 7px var(--ink); paint-order: stroke fill; }
 .mt-phase { font-family: var(--title); font-size: 22px; background: var(--metal); border: 4px solid var(--ink); border-radius: 10px; padding: 2px 14px; }
@@ -404,6 +404,11 @@ body:not([data-role="imp"]) .only-imp, body.ghost .only-imp, body.ghost #btn-rep
 .opt-list.person .opt svg { width: 28px; height: auto; }
 /* 채팅 단계 안내 · 미리보기 */
 .chat-empty.hint { opacity: 1; background: #2b3439; border: 3px dashed var(--yellow); border-radius: 10px; text-align: center; font-size: 15px; line-height: 1.5; }
+.cc-free { display: flex; gap: 6px; margin-bottom: 4px; }
+.cc-in { flex: 1; min-width: 0; font-size: 16px; font-weight: 700; padding: 6px 10px; border: 3px solid var(--ink); border-radius: 10px; background: #e9edf0; color: var(--ink); }
+.cc-fsend { font-size: 17px; padding: 4px 14px; }
+.cc-fmsg { font-size: 13px; font-weight: 900; color: #ffb3b3; min-height: 0; }
+.cc-or { font-size: 12px; font-weight: 900; opacity: .7; margin: 6px 0 4px; }
 .cc-steps { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; font-size: 12px; font-weight: 900; flex-wrap: wrap; }
 .cc-steps span { display: inline-flex; align-items: center; gap: 3px; opacity: .5; }
 .cc-steps span.on { opacity: 1; color: var(--yellow); } .cc-steps span.done { opacity: .8; }

@@ -59,6 +59,7 @@ function openRoom(c) {
   $('#btn-pause').onclick = () => judge.togglePause();
   $('#btn-force').onclick = () => judge.forceMeeting();
   $('#hm-hand').onclick = () => judge.setHandMode(!judge.game.handMode);
+  $('#btn-chatmode').onclick = () => judge.setChatMode(settingsOf(judge.meta).chat === 'free' ? 'template' : 'free');
   $('#hm-more').onclick = () => judge.extendTalk(30);
   $('#btn-people').onclick = openPeople;
   $('#btn-end').onclick = endRoom;
@@ -87,6 +88,9 @@ function draw() {
 function drawRoster() {
   const players = judge.players;
   $('#host-settings').innerHTML = settingsHTML(judge.meta);
+  const free = settingsOf(judge.meta).chat === 'free';
+  $('#btn-chatmode').textContent = `채팅: ${free ? '자유 입력' : '정해진 문장'}`;
+  $('#btn-chatmode').classList.toggle('on', free);
   const list = Object.entries(players).sort((a, b) => byNick(a[1], b[1]));
   const real = list.filter(([id]) => !isBot(id)), bots = list.length - real.length;
   $('#roster-count').textContent = `${real.length}명` + (bots ? ` + 봇 ${bots}` : '');

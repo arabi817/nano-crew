@@ -12,6 +12,7 @@ export const missionName = id => MISSIONS[id]?.title ?? '?';
 
 // 채팅 한 줄: { u: 보낸 사람, t: 문장 틀 id, a: [고른 값들] } → 화면 글자
 export function chatText(msg, players) {
+  if (msg.t === 'free') return String(msg.a?.[0] ?? '').slice(0, 40);   // 자유 입력
   const tpl = CONTENT.chat.find(c => c.id === msg.t); if (!tpl) return '';
   let i = 0;
   return tpl.text.replace(/\[[^\]]+\]/g, () => {

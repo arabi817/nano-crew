@@ -6,9 +6,11 @@ import { MISSIONS } from '../missions/index.js';
 import { PLACES, callerText, avatarOf, PHASE_NAME, missionName, MEGAPHONE, MeetingFeed } from './shared.js';
 import { sfx } from '../common/sfx.js';
 import { esc } from '../common/util.js';
-import { ALARM_MS } from '../common/rules.js';
+import { ALARM_MS, settingsOf } from '../common/rules.js';
+import { BANNED } from '../../data/names.js';
 
 const CHAT_MAX = 8;   // 한 회의에서 보낼 수 있는 말 수
+const FREE_MAX = 40;  // 자유 입력 글자 수
 
 export class MeetingUI {
   constructor(app) {
@@ -184,6 +186,16 @@ export class MeetingUI {
     const state = JSON.stringify(this.draft);
     if (box.dataset.state === state && box.innerHTML) return; // 고르는 중엔 다시 그리지 않음
     box.dataset.state = state;
+    // 자유 입력 방식: 위에 글 입력칸, 아래에 정해진 문장 고르기
+    if (settingsOf(this.app.meta).chat === 'free') {
+      if (!box.querySelector('.cc-free')) {
+        box.innerHTML = `<div class="cc-free"><input class="cc-in" maxlength="${FREE_MAX}" placeholder="직접 써서 보내기 (${FREE_MAX}자까지)"><button class="btn press cc-fsend">보내기</button></div>
+          <div class="cc-fmsg"></div><div class="cc-or">또는 정해진 문장 고르기</div><div class="cc-tpl"></div>`;
+        const inp = box.querySelector('.cc-in'), go = () => this.sendFree(inp);
+        box.querySelector('.cc-fsend').onclick = go;
+        inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+      }
+    } else box.querySelector('.cc-free') && (box.innerHTML = '');
     if (!this.draft) this.stepPick(); else this.stepDraft();
   }
   chatHead(step) {
@@ -206,14 +218,15 @@ export class MeetingUI {
     if (slot === 'mission') return missionName(v);
     return v;
   }
+  ccBox() { return this.$('.cc-tpl') || this.$('.chat-compose'); }
   stepPick() {
-    const box = this.$('.chat-compose');
+    const box = this.ccBox();
     box.innerHTML = `${this.chatHead(1)}<div class="tpl-list">${CONTENT.chat.map(t =>
       `<button class="tpl press" data-t="${t.id}">${this.preview(t, [])}</button>`).join('')}</div>`;
     box.querySelectorAll('.tpl').forEach(b => b.onclick = () => { sfx('click'); this.draft = { t: b.dataset.t, a: [] }; this.stepDraft(); });
   }
   stepDraft() {
-    const box = this.$('.chat-compose'), tpl = CONTENT.chat.find(t => t.id === this.draft.t);
+    const box = this.ccBox(), tpl = CONTENT.chat.find(t => t.id === this.draft.t);
     box.dataset.state = JSON.stringify(this.draft);
     const i = this.draft.a.length;
     if (i >= tpl.slots.length) return this.stepConfirm();
@@ -233,13 +246,25 @@ export class MeetingUI {
     box.querySelectorAll('.opt').forEach(b => b.onclick = () => { sfx('click'); this.draft.a.push(b.dataset.v); this.stepDraft(); });
   }
   stepConfirm() {
-    const box = this.$('.chat-compose'), tpl = CONTENT.chat.find(t => t.id === this.draft.t);
+    const box = this.ccBox(), tpl = CONTENT.chat.find(t => t.id === this.draft.t);
     box.dataset.state = JSON.stringify(this.draft);
     box.innerHTML = `${this.chatHead(3)}
       <div class="cc-preview final">${this.preview(tpl, this.draft.a)}</div>
       <div class="cc-btns"><button class="btn press cc-send">보내기</button><button class="btn btn-gray press cc-redo">다시 고르기</button></div>`;
     box.querySelector('.cc-send').onclick = () => this.send();
     box.querySelector('.cc-redo').onclick = () => { sfx('click'); this.draft = null; box.dataset.state = ''; this.renderChat(); };
+  }
+  // 자유 입력 보내기: 금지어 거르기 + 글자 수·간격 제한
+  sendFree(inp) {
+    const msg = this.$('.cc-fmsg'), text = inp.value.replace(/\s+/g, ' ').trim().slice(0, FREE_MAX), now = Date.now();
+    if (!text) return;
+    const plain = text.toLowerCase().replace(/[\s0-9]/g, '');
+    if (BANNED.some(w => plain.includes(String(w).toLowerCase()))) { msg.textContent = '쓸 수 없는 말이 들어 있어요. 고쳐서 다시 보내 주세요'; return; }
+    if (now - this.my.lastSent < 2500) { msg.textContent = '잠깐! 조금 있다가 다시 보내 주세요'; return; }
+    if (this.my.sent >= CHAT_MAX) return;
+    this.my.lastSent = now; this.my.sent++; sfx('click'); inp.value = ''; msg.textContent = '';
+    this.app.db.push(`${P.meet(this.app.code, this.m.id)}/chat`, { u: this.app.uid, t: 'free', a: [text] });
+    this.$('.chat-compose').dataset.state = ''; this.renderChat();   // '남은 말' 숫자 새로 그리기 (입력칸은 그대로)
   }
   send() {
     const now = Date.now(), d = this.draft;

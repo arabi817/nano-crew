@@ -300,6 +300,8 @@ export class Judge {
     this.db.set(`${this.R}/game/meeting/hands/${uid}`, on ? this.db.now() : null);
   }
   setHandMode(on) { this.db.set(`${this.R}/game/handMode`, !!on); }
+  // 회의 채팅 방식 (대기실에서 고름. 게임 중에 바꿔도 다음 화면부터 적용)
+  setChatMode(mode) { this.db.set(`${this.R}/meta/settings/chat`, mode === 'free' ? 'free' : 'template'); }
   giveFloor(uid) {
     const m = this.game.meeting; if (!m || (m.phase !== 'discuss' && m.phase !== 'vote')) return;
     this.db.update(this.R, {
