@@ -308,7 +308,7 @@ function onSab(sab) {
   if (!sab) {
     box.hidden = true; $('#sab-line').hidden = true;
     if (app.sabPanel) { app.panel?.close(); app.sabPanel = false; }
-    if (app.lastSabAt && app.phase === 'playing' && !app.game?.meeting && !app.game?.winner) app.hud?.toast('사보타주를 막았어요!');
+    if (app.lastSabAt && app.phase === 'playing' && !app.game?.meeting && !app.game?.winner) app.hud?.toast('몸속 비상사태를 막았어요!');
     return;
   }
   if (sab.at !== app.lastSabAt) { app.lastSabAt = sab.at; sfx('alarm'); }
@@ -438,12 +438,12 @@ app.ventAction = () => {
 app.sabAction = () => {
   if (blocked() || app.priv?.role !== 'imp') return;
   const g = app.game || {};
-  if (g.sab) return app.hud.toast('이미 사보타주가 진행 중이에요');
+  if (g.sab) return app.hud.toast('이미 몸속 비상사태가 진행 중이에요');
   const wait = Math.ceil(((g.sabReadyAt || 0) - app.db.now()) / 1000);
   if (wait > 0) return app.hud.toast(`${wait}초 뒤에 쓸 수 있어요`);
   const S = CONTENT.sabotage;
   app.sheet = openSheet({
-    title: '사보타주',
+    title: '인체 고장 내기',
     html: `<div class="sab-menu">
       <button class="sab-opt press" data-k="o2"><b>${S.o2.name}</b><small>${S.o2.sec}초 안에 못 막으면 승리</small></button>
       <button class="sab-opt press" data-k="kidney"><b>${S.kidney.name}</b><small>${S.kidney.sec}초 안에 못 막으면 승리</small></button>

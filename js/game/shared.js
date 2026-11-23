@@ -1,12 +1,12 @@
 // 학생 화면과 교사 화면이 같이 쓰는 회의 도우미
 import { CONTENT } from '../../data/content.js';
-import { ROOMS } from '../map/map.js';
+import { PLACES } from '../map/map.js';
 import { MISSIONS } from '../missions/index.js';
 import { COLORS, nickOf } from '../common/colors.js';
 import { avatarSVG } from '../player/avatarSvg.js';
 import { esc } from '../common/util.js';
 
-export const PLACES = ROOMS.filter(r => !r.lobby).map(r => ({ id: r.id, name: r.name.replace(/ \(.*\)/, '') }));
+export { PLACES };   // 지금 맵의 방 목록 (맵이 바뀌면 내용도 바뀜, js/map/map.js)
 export const placeName = id => PLACES.find(p => p.id === id)?.name ?? '?';
 export const missionName = id => MISSIONS[id]?.title ?? '?';
 

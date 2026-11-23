@@ -39,8 +39,8 @@ function renderNow() {
     <p class="lab-lead">미션 이름 아래 <b>단계 버튼</b>을 누르면 게임과 똑같은 미션 창이 열려요. 끝나면 걸린 시간과 틀린 횟수가 남아요.
       <b>진단 보기</b>를 누르면 문제점과 개선안 요약이 나와요.</p>
     ${units.map(u => `<h2 class="lab-unit">${esc(UNIT[u])}</h2><div class="lab-grid">${byUnit(u).map(card).join('')}</div>`).join('')}
-    <h2 class="lab-unit">사보타주</h2><div class="lab-grid">
-      <div class="lab-card"><div class="lc-top"><b>콩팥 정지 해결</b><span class="badge sab">사보타주</span></div>
+    <h2 class="lab-unit">몸속 비상사태</h2><div class="lab-grid">
+      <div class="lab-card"><div class="lc-top"><b>콩팥 정지 해결</b><span class="badge sab">몸속 비상사태</span></div>
         <div class="lc-steps"><button class="lc-step press" data-sab="kidney">해 보기</button>${resultChip('sab:kidney')}</div></div></div>`;
   document.querySelectorAll('.lc-step[data-m]').forEach(b => b.onclick = () => {
     const m = MISSIONS[b.dataset.m], i = +b.dataset.i, s = m.steps[i];
@@ -156,7 +156,7 @@ function renderMap2() {
       <tbody>${ROOMS2.map(r => `<tr><td>${esc(r.name)}</td><td>${r.isNew ? '<b style="color:#b8860b">새로</b>' : '지금 있음'}</td><td>${esc(r.note)}</td></tr>`).join('')}</tbody></table>
     <h2 class="lab-unit">실제로 넓히려면 할 일</h2>
     <table class="lab-table"><thead><tr><th>할 일</th><th>내용</th></tr></thead><tbody>
-      <tr><td>맵 데이터</td><td>방·복도 좌표, 미션 장소 28곳 + 새 방 자리, 혈관 통로(벤트) 다시 잇기, 사보타주 장치 위치</td></tr>
+      <tr><td>맵 데이터</td><td>방·복도 좌표, 미션 장소 28곳 + 새 방 자리, 혈관 통로(벤트) 다시 잇기, 몸속 비상사태 장치 위치</td></tr>
       <tr><td>그림 (GPT)</td><td>새 방 바닥 4~6장, 간·이자·근육 소품, 기존 방 크기 바뀐 것 바닥 다시 맞추기</td></tr>
       <tr><td>새 미션 (선생님 확인 필요)</td><td>이자실(이자액), 간실(쓸개즙) 같은 새 내용은 문제·보기를 먼저 확인받고 만들어요</td></tr>
       <tr><td>시험</td><td>봇 30명으로 길 막힘·몰림·통신량 확인</td></tr></tbody></table>`;

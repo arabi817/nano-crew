@@ -202,6 +202,7 @@ export const MAP_NAME = { small: '작은 맵', big: '넓은 맵' };
 // ── 지금 쓰는 맵 (그릇) ──
 export const WORLD = {}, TABLE = {}, LOBBY = {}, SPOTS = {}, SAB_SPOTS = {}, VENTS = {};
 export const ROOMS = [], HALLS = [], BLOCKS = [];
+export const PLACES = [];   // 대기실 뺀 방 {id, name} (회의 채팅 [장소], 혈관 막힘 고르기)
 export const TASK_SPOTS = SPOTS; // 예전 이름
 export let MAP_ID = '';
 const AREAS = [];
@@ -220,6 +221,7 @@ export function useMap(id) {
   relist(ROOMS, rooms); relist(HALLS, structuredClone(M.HALLS));
   relist(BLOCKS, [{ x: TABLE.x, y: TABLE.y, r: TABLE.r }]);
   relist(AREAS, [...ROOMS, ...HALLS]);
+  relist(PLACES, ROOMS.filter(r => !r.lobby).map(r => ({ id: r.id, name: r.name.replace(/ \(.*\)/, '') })));
   blockedDoors = [];
   // 구역(방·복도) 이웃, 봇 길 찾기 그래프
   HALLS.forEach((h, i) => { h.zone = 'h' + i; });

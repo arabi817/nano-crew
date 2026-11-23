@@ -233,7 +233,7 @@ function tickTime() {
     const left = Math.max(0, Math.ceil((sab.endsAt - db.now()) / 1000));
     const name = { o2: '산소 부족!', kidney: '콩팥 정지!', clot: '혈관 막힘' }[sab.kind] || '';
     box.hidden = false; box.classList.toggle('small', sab.kind === 'clot');
-    box.textContent = sab.kind === 'clot' ? `${name} · 한 방의 문이 막혔어요 · ${left}초` : `${name} ${left}초 안에 막아야 해요`;
+    box.textContent = sab.kind === 'clot' ? `몸속 비상사태 · ${name} · 한 방의 문이 막혔어요 · ${left}초` : `몸속 비상사태 · ${name} ${left}초 안에 막아야 해요`;
   } else if (box) box.hidden = true;
   const m = judge?.game?.meeting; if (!m) return;
   const sp = m.speaker, hl = document.getElementById('hs-left');
