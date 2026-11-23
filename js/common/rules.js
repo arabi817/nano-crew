@@ -2,7 +2,7 @@
 import { TABLE } from '../map/map.js';
 
 export const DEFAULT_SETTINGS = {
-  imps: 3,              // 바이러스 수 (1~4)
+  imps: 3,              // 바이러스 수 (1~10, 시작할 때 참가자 절반 미만으로 줄어요)
   npc: false,           // 컴퓨터 세균 (구조만 준비)
   killCd: 30,           // 킬 쿨타임(초)
   oxSec: 10,            // OX 시간(초)

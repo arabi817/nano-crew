@@ -18,6 +18,10 @@ body[data-hv="ended"] :is(.hv-lobby, .hv-play, .hv-meet):not(.hv-ended) { displa
 .hm-phase { font-family: var(--title); font-size: 34px; background: var(--metal); border: 5px solid var(--ink); border-radius: 12px; padding: 4px 22px; }
 .hm-time { margin-left: auto; font-family: var(--title); font-size: 72px; -webkit-text-stroke: 10px var(--ink); paint-order: stroke fill; }
 .hm-who { font-size: 34px; font-weight: 900; color: var(--yellow); -webkit-text-stroke: 6px var(--ink); paint-order: stroke fill; }
+.imp-ctrl { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-family: var(--title); font-size: 22px; }
+.imp-ctrl .btn { font-size: 24px; padding: 2px 16px; } .imp-ctrl .btn:disabled { opacity: .4; }
+.imp-ctrl b { font-weight: 400; font-size: 26px; color: var(--yellow); min-width: 50px; text-align: center; }
+.imp-note { font-size: 13px; opacity: .75; margin-top: 2px; }
 #btn-chatmode { margin-top: 10px; font-size: 20px; padding: 8px 16px; } #btn-chatmode.on { background: var(--yellow); }
 .hm-ctrl { display: flex; align-items: center; gap: 12px; }
 .hm-ctrl .hm-who { flex: 1; }
