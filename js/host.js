@@ -94,7 +94,9 @@ function draw() {
 const STEPS = [
   { k: 'imps', name: '바이러스', unit: '명', min: 1, max: 10, step: 1 },
   { k: 'killCd', name: '킬 쿨타임', unit: '초', min: 10, max: 60, step: 5 },
+  { k: 'oxSec', name: 'OX 시간', unit: '초', min: 5, max: 30, step: 5 },
   { k: 'discussSec', name: '토론 시간', unit: '초', min: 15, max: 180, step: 15 },
+  { k: 'voteSec', name: '투표 시간', unit: '초', min: 15, max: 180, step: 15 },
 ];
 function drawSteps() {
   const s = settingsOf(judge.meta);

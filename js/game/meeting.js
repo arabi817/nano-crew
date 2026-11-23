@@ -117,7 +117,7 @@ export class MeetingUI {
       const me = this.my.ans;
       box.innerHTML = `<div class="ox-q metal">${esc(m.q.text)}</div>
         ${this.alive ? `<div class="ox-btns"><button class="ox-b o press ${me === 'O' ? 'sel' : ''}" data-a="O">O</button><button class="ox-b x press ${me === 'X' ? 'sel' : ''}" data-a="X">X</button></div>
-          <div class="ox-tip">${me ? '답을 골랐어요. 시간이 끝나면 정답이 나와요' : '10초 안에 맞히면 이번 회의에서 투표할 수 있어요'}</div>`
+          <div class="ox-tip">${me ? '답을 골랐어요. 시간이 끝나면 정답이 나와요' : `${settingsOf(this.app.meta).oxSec}초 안에 맞히면 이번 회의에서 투표할 수 있어요`}</div>`
           : '<div class="ox-tip">유령은 이번 회의를 지켜만 봐요</div>'}`;
       box.querySelectorAll('.ox-b').forEach(b => b.onclick = () => {
         if (this.my.ans) return;

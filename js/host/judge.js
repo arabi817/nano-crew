@@ -300,9 +300,9 @@ export class Judge {
     this.db.set(`${this.R}/game/meeting/hands/${uid}`, on ? this.db.now() : null);
   }
   setHandMode(on) { this.db.set(`${this.R}/game/handMode`, !!on); }
-  // 대기실 숫자 설정: 바이러스 수 1~10(시작할 때 참가자 절반 미만으로 자동 조절), 킬 쿨타임 10~60초, 토론 시간 15~180초
+  // 대기실 숫자 설정: 바이러스 수 1~10(시작할 때 참가자 절반 미만으로 자동 조절), 킬 쿨타임 10~60초, OX 5~30초, 토론·투표 15~180초
   setSetting(k, v) {
-    const R = { imps: [1, 10], killCd: [10, 60], discussSec: [15, 180] }[k]; if (!R) return;
+    const R = { imps: [1, 10], killCd: [10, 60], oxSec: [5, 30], discussSec: [15, 180], voteSec: [15, 180] }[k]; if (!R) return;
     this.db.set(`${this.R}/meta/settings/${k}`, Math.max(R[0], Math.min(R[1], Math.round(v))));
   }
   // 회의 채팅 방식 (대기실에서 고름. 게임 중에 바꿔도 다음 화면부터 적용)
