@@ -221,7 +221,7 @@ export class MeetingUI {
   ccBox() { return this.$('.cc-tpl') || this.$('.chat-compose'); }
   stepPick() {
     const box = this.ccBox();
-    box.innerHTML = `${this.chatHead(1)}<div class="tpl-list">${CONTENT.chat.map(t =>
+    box.innerHTML = `${this.chatHead(1)}<div class="tpl-list">${[...CONTENT.chat].sort((a, b) => a.slots.length - b.slots.length).map(t =>
       `<button class="tpl press" data-t="${t.id}">${this.preview(t, [])}</button>`).join('')}</div>`;
     box.querySelectorAll('.tpl').forEach(b => b.onclick = () => { sfx('click'); this.draft = { t: b.dataset.t, a: [] }; this.stepDraft(); });
   }
