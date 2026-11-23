@@ -59,8 +59,11 @@ function openRoom(c) {
   $('#btn-pause').onclick = () => judge.togglePause();
   $('#btn-force').onclick = () => judge.forceMeeting();
   $('#hm-hand').onclick = () => judge.setHandMode(!judge.game.handMode);
-  $('#btn-imp-dn').onclick = () => judge.setImps(settingsOf(judge.meta).imps - 1);
-  $('#btn-imp-up').onclick = () => judge.setImps(settingsOf(judge.meta).imps + 1);
+  $('#set-steps').onclick = e => {
+    const b = e.target.closest('[data-k]'); if (!b) return;
+    const st = STEPS.find(x => x.k === b.dataset.k), v = settingsOf(judge.meta)[st.k] + (+b.dataset.d) * st.step;
+    judge.setSetting(st.k, Math.max(st.min, Math.min(st.max, v)));
+  };
   $('#btn-chatmode').onclick = () => judge.setChatMode(settingsOf(judge.meta).chat === 'free' ? 'template' : 'free');
   $('#hm-more').onclick = () => judge.extendTalk(30);
   $('#btn-people').onclick = openPeople;
@@ -87,12 +90,24 @@ function draw() {
   if (hv === 'ended') drawEnd();
 }
 
+// 대기실에서 바꾸는 숫자 설정 (− 값 +)
+const STEPS = [
+  { k: 'imps', name: '바이러스', unit: '명', min: 1, max: 10, step: 1 },
+  { k: 'killCd', name: '킬 쿨타임', unit: '초', min: 10, max: 60, step: 5 },
+  { k: 'discussSec', name: '토론 시간', unit: '초', min: 15, max: 180, step: 15 },
+];
+function drawSteps() {
+  const s = settingsOf(judge.meta);
+  $('#set-steps').innerHTML = STEPS.map(st => `<div class="imp-ctrl"><span>${st.name}</span>
+    <button class="btn btn-gray press" data-k="${st.k}" data-d="-1" ${s[st.k] <= st.min ? 'disabled' : ''}>−</button>
+    <b>${s[st.k]}${st.unit}</b>
+    <button class="btn btn-gray press" data-k="${st.k}" data-d="1" ${s[st.k] >= st.max ? 'disabled' : ''}>+</button></div>`).join('');
+}
+
 function drawRoster() {
   const players = judge.players;
   $('#host-settings').innerHTML = settingsHTML(judge.meta);
-  const imps = settingsOf(judge.meta).imps;
-  $('#imp-n').textContent = `${imps}명`;
-  $('#btn-imp-dn').disabled = imps <= 1; $('#btn-imp-up').disabled = imps >= 10;
+  drawSteps();
   const free = settingsOf(judge.meta).chat === 'free';
   $('#btn-chatmode').textContent = `채팅: ${free ? '자유 입력' : '정해진 문장'}`;
   $('#btn-chatmode').classList.toggle('on', free);

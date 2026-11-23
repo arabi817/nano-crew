@@ -18,9 +18,10 @@ body[data-hv="ended"] :is(.hv-lobby, .hv-play, .hv-meet):not(.hv-ended) { displa
 .hm-phase { font-family: var(--title); font-size: 34px; background: var(--metal); border: 5px solid var(--ink); border-radius: 12px; padding: 4px 22px; }
 .hm-time { margin-left: auto; font-family: var(--title); font-size: 72px; -webkit-text-stroke: 10px var(--ink); paint-order: stroke fill; }
 .hm-who { font-size: 34px; font-weight: 900; color: var(--yellow); -webkit-text-stroke: 6px var(--ink); paint-order: stroke fill; }
-.imp-ctrl { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-family: var(--title); font-size: 22px; }
+.imp-ctrl { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-family: var(--title); font-size: 22px; }
 .imp-ctrl .btn { font-size: 24px; padding: 2px 16px; } .imp-ctrl .btn:disabled { opacity: .4; }
-.imp-ctrl b { font-weight: 400; font-size: 26px; color: var(--yellow); min-width: 50px; text-align: center; }
+.imp-ctrl span { min-width: 100px; }
+.imp-ctrl b { font-weight: 400; font-size: 26px; color: var(--yellow); min-width: 64px; text-align: center; }
 .imp-note { font-size: 13px; opacity: .75; margin-top: 2px; }
 #btn-chatmode { margin-top: 10px; font-size: 20px; padding: 8px 16px; } #btn-chatmode.on { background: var(--yellow); }
 .hm-ctrl { display: flex; align-items: center; gap: 12px; }
@@ -80,7 +81,7 @@ body[data-hv="ended"] :is(.hv-lobby, .hv-play, .hv-meet):not(.hv-ended) { displa
 .h-code b { font-size: 44px; color: #9fffc4; letter-spacing: 6px; margin-left: 8px; -webkit-text-stroke: 7px var(--ink); paint-order: stroke fill; }
 
 .lobby-grid { flex: 1; display: grid; grid-template-columns: minmax(360px, 34%) 1fr; gap: 26px; padding: 26px; }
-.qr-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; }
+.qr-card { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 12px; text-align: center; overflow-y: auto; max-height: calc(100vh - 110px); }   /* 낮은 화면에서도 아래 설정 버튼까지 넘겨 볼 수 있게 */
 #qr { width: min(100%, 420px); aspect-ratio: 1; background: #fff; border: 5px solid var(--ink); border-radius: 10px; image-rendering: pixelated; }
 .qr-local p { font-size: 20px; font-weight: 700; }
 .qr-code { font-family: var(--title); font-size: 110px; line-height: 1; color: #9fffc4; letter-spacing: 12px; -webkit-text-stroke: 12px var(--ink); paint-order: stroke fill; }
