@@ -155,6 +155,7 @@ export class WorldScene extends Phaser.Scene {
       if (fog && al > 0 && !lineOfSight(this.x, this.y, m.x, m.y)) al = 0; // 벽 너머는 안 보여요
       if (!av.online) al *= 0.35;
       if (playing && dead[uid]) al = ghost ? al * 0.5 : 0; // 유령은 유령끼리만 보여요
+      if (playing && a.game?.members && !a.game.members[uid]) al = 0; // 늦게 들어온 구경꾼은 아무에게도 안 보여요
       av.setAlpha(al); if (al > 0) visible++;
       av.label.setColor(mates.includes(uid) ? '#ff6b6b' : '#ffffff');
       av.dist = d;

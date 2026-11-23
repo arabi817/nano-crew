@@ -273,6 +273,7 @@ function refreshTasks() {
   });
   app.hud?.setTasks(app.tasks, { fake, dead: app.amDead() });
   app.hud?.setRole(app.priv?.role, app.amDead());
+  showSpectate(app.isSpectator());
   if (app.scene?.ready) {
     // 바이러스도 가짜 미션 장치가 빛나요 (그 앞에서 하는 척하며 섞이도록)
     const on = new Set(app.phase === 'playing' ? app.tasks.filter(t => !t.done).flatMap(t => t.spots) : []);
@@ -317,7 +318,9 @@ function onSab(sab) {
 }
 
 // ───── 버튼 ─────
-app.amDead = () => !!app.game?.dead?.[app.uid];
+// 구경꾼: 게임이 시작된 뒤에 들어와 역할·미션을 받지 못한 학생 (다음 판부터 참가)
+app.isSpectator = () => app.phase === 'playing' && !!app.game?.members && !app.game.members[app.uid];
+app.amDead = () => !!app.game?.dead?.[app.uid] || app.isSpectator();   // 구경꾼은 유령처럼 다녀요
 app.privIds = () => app.game?.members || app.players;
 app.isFrozen = () => !!app.panel || !!app.minimap || !!app.sheet || !$('#notice').hidden || !!app.meeting
   || !!app.revealing || !!app.meta?.paused || app.phase === 'ended' || !!app.faking;
@@ -331,6 +334,15 @@ app.setNear = n => {
   app.hud?.setVent(!!n.vent);
   app.hud?.setSab(app.game?.sab ? -1 : (app.game?.sabReadyAt || 0) - app.db.now());
 };
+// 구경꾼 안내 띠 (화면 위쪽 가운데)
+function showSpectate(on) {
+  let el = document.getElementById('spectate');
+  if (!on) { el?.remove(); return; }
+  if (el) return;
+  el = document.createElement('div'); el.id = 'spectate'; el.className = 'spectate';
+  el.innerHTML = '<b>게임이 이미 시작됐어요</b>이번 판은 구경만 할 수 있어요. 다음 판부터 함께해요!';
+  document.body.appendChild(el);
+}
 function blocked() { return app.phase !== 'playing' || app.isFrozen() || app.db.now() < (app.game?.revealUntil || 0); }
 function request(t, target = '') { app.db.set(P.reqOf(app.code, app.uid), { t, target, n: Date.now() }); }
 const visPath = () => `rooms/${app.code}/vis/${app.uid}`;

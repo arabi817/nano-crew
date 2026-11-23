@@ -38,7 +38,8 @@ export class MeetingUI {
     this.timer = setInterval(() => this.tickTime(), 200);
     sfx('alarm');
   }
-  get alive() { return !this.app.game?.dead?.[this.app.uid]; }
+  get alive() { return !this.app.game?.dead?.[this.app.uid] && !this.app.isSpectator?.(); }   // 구경꾼은 말·투표 없이 지켜보기만
+  get who() { return this.app.isSpectator?.() ? '구경 중에는' : '유령은'; }
   get canVote() { return this.alive && !!this.data.right[this.app.uid]; }
 
   update(m) {
@@ -118,7 +119,7 @@ export class MeetingUI {
       box.innerHTML = `<div class="ox-q metal">${esc(m.q.text)}</div>
         ${this.alive ? `<div class="ox-btns"><button class="ox-b o press ${me === 'O' ? 'sel' : ''}" data-a="O">O</button><button class="ox-b x press ${me === 'X' ? 'sel' : ''}" data-a="X">X</button></div>
           <div class="ox-tip">${me ? '답을 골랐어요. 시간이 끝나면 정답이 나와요' : `${settingsOf(this.app.meta).oxSec}초 안에 맞히면 이번 회의에서 투표할 수 있어요`}</div>`
-          : '<div class="ox-tip">유령은 이번 회의를 지켜만 봐요</div>'}`;
+          : `<div class="ox-tip">${this.who} 이번 회의를 지켜만 봐요</div>`}`;
       box.querySelectorAll('.ox-b').forEach(b => b.onclick = () => {
         if (this.my.ans) return;
         this.my.ans = b.dataset.a; sfx('click');
@@ -155,7 +156,7 @@ export class MeetingUI {
       box.innerHTML = this.canVote
         ? (this.my.vote ? `<div class="mb-msg">투표했어요: ${this.my.vote === 'skip' ? '건너뛰기' : esc(nickOf(this.app.players[this.my.vote]))}</div>`
           : `<div class="mb-msg">의심되는 대원을 누르거나</div><button class="btn btn-gray press mb-skip">건너뛰기</button>`)
-        : `<div class="mb-msg no">${this.alive ? '이번 회의 투표권 없음' : '유령은 투표할 수 없어요'}</div>`;
+        : `<div class="mb-msg no">${this.alive ? '이번 회의 투표권 없음' : `${this.who} 투표할 수 없어요`}</div>`;
       box.querySelector('.mb-skip')?.addEventListener('click', () => this.vote('skip'));
     } else if (m.phase === 'result') {
       const c = m.result?.counts?.skip || 0;
@@ -181,7 +182,7 @@ export class MeetingUI {
       || (open ? '<div class="chat-empty hint">아래에서 할 말을 골라 보내 보세요!<br>보낸 말은 모두의 화면에 나와요</div>' : '<div class="chat-empty">아직 아무 말도 없어요</div>');
     if (atBottom) log.scrollTop = log.scrollHeight;
     const box = this.$('.chat-compose');
-    if (!open) { box.innerHTML = this.alive ? '' : '<div class="chat-note">유령은 말할 수 없어요</div>'; this.draft = null; box.dataset.state = ''; return; }
+    if (!open) { box.innerHTML = this.alive ? '' : `<div class="chat-note">${this.who} 말할 수 없어요</div>`; this.draft = null; box.dataset.state = ''; return; }
     if (this.my.sent >= CHAT_MAX) { box.innerHTML = '<div class="chat-note">이번 회의에서 보낼 수 있는 말을 다 썼어요</div>'; return; }
     const state = JSON.stringify(this.draft);
     if (box.dataset.state === state && box.innerHTML) return; // 고르는 중엔 다시 그리지 않음
