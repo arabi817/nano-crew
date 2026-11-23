@@ -711,5 +711,9 @@ body.sab-comms #task-list { display: none; }
 .fx-c { stroke: #ffcc33; } .fx-c.ok { stroke: #6dfc9c; }
 .fx-dial { width: min(420px, 90%); height: 44px; accent-color: var(--yellow); touch-action: pan-x; }
 .fx .og-btn.ok { background: #48c774; color: var(--ink); }   /* 고른 정답은 초록으로 남기기 */
-/* 제작자 표시 (첫 화면 오른쪽 아래, 아주 작게) */
-.credit { position: fixed; right: 10px; bottom: 6px; margin: 0; font-family: var(--body); font-size: 11px; font-weight: 500; color: #fff; opacity: .5; pointer-events: none; }
+/* 제작 정보: 첫 화면 오른쪽 아래 흐린 '정보' 글자, 누르면 작은 창 (눈에 안 띄게) */
+.credit { position: fixed; right: 8px; bottom: 6px; margin: 0; font-family: var(--body); font-size: 11px; font-weight: 500; color: #fff; text-align: right; }
+.credit summary { list-style: none; cursor: pointer; opacity: .35; padding: 4px 6px; }
+.credit summary::-webkit-details-marker { display: none; }
+.credit[open] summary { opacity: .7; }
+.credit p { position: absolute; right: 0; bottom: 24px; margin: 0; white-space: nowrap; line-height: 1.6; background: #140c12; border: 2px solid #4a3d48; border-radius: 8px; padding: 6px 10px; opacity: .9; }
