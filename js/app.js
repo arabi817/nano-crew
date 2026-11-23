@@ -321,7 +321,7 @@ function onSab(sab) {
       : `<b>${esc(S.name)}!</b> ${esc(MAP_ID === 'big' && S.guideBig || S.guide)} <span class="sab-time">${left}초</span>`;
     // 미션 목록 아래에도 빨간 항목으로 (어몽어스처럼)
     const line = $('#sab-line'); line.hidden = false;
-    line.innerHTML = sab.kind === 'o2' ? `<b>허파실·심장실</b> 산소 공급 버튼 동시에 누르기 (${left}초)`
+    line.innerHTML = sab.kind === 'o2' ? `<b>${MAP_ID === 'big' ? '오른쪽·왼쪽 허파실' : '허파실·심장실'}</b> 산소 공급 버튼 동시에 누르기 (${left}초)`
       : sab.kind === 'kidney' ? `<b>콩팥실</b> 콩팥 정지 고치기 (${left}초)`
       : `<b>${esc(roomName(sab.room))}</b> 혈관 막힘 · 문 열릴 때까지 ${left}초`;
   };
