@@ -305,6 +305,7 @@ export class Judge {
     const R = { imps: [1, 10], killCd: [10, 60], oxSec: [5, 30], discussSec: [15, 180], voteSec: [15, 180] }[k]; if (!R) return;
     this.db.set(`${this.R}/meta/settings/${k}`, Math.max(R[0], Math.min(R[1], Math.round(v))));
   }
+  setVision(v) { if (['wide', 'normal', 'narrow'].includes(v)) this.db.set(`${this.R}/meta/settings/vision`, v); }
   // 회의 채팅 방식 (대기실에서 고름. 게임 중에 바꿔도 다음 화면부터 적용)
   setChatMode(mode) { this.db.set(`${this.R}/meta/settings/chat`, mode === 'free' ? 'free' : 'template'); }
   giveFloor(uid) {

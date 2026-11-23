@@ -1,6 +1,6 @@
 // 게임 세계 화면: 맵 그리기, 내 캐릭터 이동, 다른 친구 위치 받기, 시야(안개)
 import { WORLD, walkable, SPOTS, SAB_SPOTS, VENTS, TABLE, roomAt, zoneAt, seeThrough, lineOfSight } from '../map/map.js';
-import { KILL_RANGE, REPORT_RANGE, EMERGENCY_RANGE } from '../common/rules.js';
+import { KILL_RANGE, REPORT_RANGE, EMERGENCY_RANGE, VISION_R, settingsOf } from '../common/rules.js';
 import { drawMap } from '../map/drawMap.js';
 import { Avatar, loadAvatarTextures, fitScale, avKey } from '../player/avatar.js';
 import { useArt } from '../common/assets.js';
@@ -272,7 +272,10 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  visionR() { return this.app.priv?.role === 'imp' && !this.app.amDead?.() ? IMP_VISION : VISION; }
+  visionR() {   // 교사 설정(넓게·보통·좁게)에 따라. 바이러스는 크루원보다 조금 넓게
+    const [crew, imp] = VISION_R[settingsOf(this.app.meta).vision] || [VISION, IMP_VISION];
+    return this.app.priv?.role === 'imp' && !this.app.amDead?.() ? imp : crew;
+  }
 
   // 시야: 내 자리에서 사방으로 시선을 쏴서 벽에 막히는 곳까지만 밝게 (어몽어스처럼).
   // 시야 밖은 맵 모양이 희미하게 보일 정도로만 어둡게 해요.

@@ -23,6 +23,7 @@ body[data-hv="ended"] :is(.hv-lobby, .hv-play, .hv-meet):not(.hv-ended) { displa
 .imp-ctrl span { min-width: 100px; }
 .imp-ctrl b { font-weight: 400; font-size: 26px; color: var(--yellow); min-width: 64px; text-align: center; }
 .imp-note { font-size: 13px; opacity: .75; margin-top: 2px; }
+#btn-vision { margin-top: 10px; font-size: 20px; padding: 8px 16px; }
 #btn-chatmode { margin-top: 10px; font-size: 20px; padding: 8px 16px; } #btn-chatmode.on { background: var(--yellow); }
 .hm-ctrl { display: flex; align-items: center; gap: 12px; }
 .hm-ctrl .hm-who { flex: 1; }

@@ -7,7 +7,7 @@ import { avatarSVG } from './player/avatarSvg.js';
 import { applyLogo } from './common/assets.js';
 import { findPos } from './net/posSync.js';
 import { Judge } from './host/judge.js';
-import { settingsOf, settingsHTML } from './common/rules.js';
+import { settingsOf, settingsHTML, VISION_R, VISION_NAME } from './common/rules.js';
 import { callerText, avatarOf, PHASE_NAME, MEGAPHONE, MeetingFeed } from './game/shared.js';
 import { openSheet } from './ui/panel.js';
 import { sfx, setMuted, muted } from './common/sfx.js';
@@ -64,6 +64,10 @@ function openRoom(c) {
     const st = STEPS.find(x => x.k === b.dataset.k), v = settingsOf(judge.meta)[st.k] + (+b.dataset.d) * st.step;
     judge.setSetting(st.k, Math.max(st.min, Math.min(st.max, v)));
   };
+  $('#btn-vision').onclick = () => {   // 넓게 → 보통 → 좁게 → 넓게
+    const order = ['wide', 'normal', 'narrow'], cur = order.indexOf(settingsOf(judge.meta).vision);
+    judge.setVision(order[(cur + 1) % order.length]);
+  };
   $('#btn-chatmode').onclick = () => judge.setChatMode(settingsOf(judge.meta).chat === 'free' ? 'template' : 'free');
   $('#hm-more').onclick = () => judge.extendTalk(30);
   $('#btn-people').onclick = openPeople;
@@ -110,6 +114,8 @@ function drawRoster() {
   const players = judge.players;
   $('#host-settings').innerHTML = settingsHTML(judge.meta);
   drawSteps();
+  const vis = settingsOf(judge.meta).vision;
+  $('#btn-vision').textContent = `시야: ${VISION_NAME[vis] || '넓게'} (${(VISION_R[vis] || VISION_R.wide)[0]})`;
   const free = settingsOf(judge.meta).chat === 'free';
   $('#btn-chatmode').textContent = `채팅: ${free ? '자유 입력' : '정해진 문장'}`;
   $('#btn-chatmode').classList.toggle('on', free);

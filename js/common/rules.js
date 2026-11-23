@@ -11,8 +11,12 @@ export const DEFAULT_SETTINGS = {
   progress: 'meeting',  // 진행 바: always / meeting / hidden
   revealOnEject: true,  // 추방 시 역할 공개
   unit: 'all',          // 단원 선택
+  vision: 'wide',       // 시야: wide 넓게 / normal 보통 / narrow 좁게 (VISION_R)
   chat: 'template',     // 회의 채팅: template(정해진 문장만) / free(자유 입력 + 정해진 문장)
 };
+// 시야 반지름 [크루원, 바이러스]. 32명처럼 인원이 많으면 좁혀야 숨을 곳이 생겨요
+export const VISION_R = { wide: [380, 500], normal: [300, 395], narrow: [280, 370] };
+export const VISION_NAME = { wide: '넓게', normal: '보통', narrow: '좁게' };
 export const settingsOf = meta => ({ ...DEFAULT_SETTINGS, ...(meta?.settings || {}) });
 
 export const KILL_RANGE = 115;      // 킬 가능 거리
@@ -41,6 +45,7 @@ export function settingsRows(meta) {
     ['진행 바', PROGRESS_NAME[s.progress] || s.progress],
     ['추방 시 역할 공개', s.revealOnEject ? '켜기' : '끄기'],
     ['단원', UNIT_NAME[s.unit] || s.unit],
+    ['시야', VISION_NAME[s.vision] || '넓게'],
     ['채팅', s.chat === 'free' ? '자유 입력' : '정해진 문장'],
   ];
 }
