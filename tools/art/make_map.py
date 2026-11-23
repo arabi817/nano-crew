@@ -13,7 +13,10 @@ EDGE = 3        # 덧댄 바깥 테두리 (저장 그림 기준 px)
 # 방 바닥: 방 크기 그대로 (js/map/map.js ROOMS)
 ROOMS = {'meeting': (900, 700), 'power': (700, 500), 'digest': (700, 550), 'small': (800, 600),
          'large': (700, 550), 'heart': (700, 600), 'vessel': (700, 450), 'lung': (800, 800),
-         'kidney': (550, 500), 'bladder': (450, 450), 'lobby': (1300, 850)}
+         'kidney': (550, 500), 'bladder': (450, 450), 'lobby': (1300, 850),
+         # 넓은 맵에만 있는 방 (같은 이름 방은 넓은 맵에서도 같은 그림을 늘려 써요)
+         'mouth': (800, 650), 'stomach': (800, 650), 'liver': (900, 650), 'pancreas': (800, 650),
+         'lungR': (800, 800), 'lungL': (800, 800), 'muscle': (800, 650)}
 
 # 투명 그림: 저장 폴더, 저장 크기(화면 크기의 2배, 로고는 그대로)
 CUTOUTS = {'table': ('props', 720, 720), 'mitochondria': ('props', 432, 248), 'mouth': ('props', 432, 312),
@@ -21,7 +24,8 @@ CUTOUTS = {'table': ('props', 720, 720), 'mitochondria': ('props', 432, 248), 'm
            'alveoli': ('props', 260, 260), 'kidney': ('props', 340, 460), 'glomerulus': ('props', 200, 200),
            'crate': ('props', 240, 240), 'vessels': ('props', 680, 380), 'task': ('devices', 200, 152), 'sab_o2': ('devices', 176, 160),
            'sab_kidney': ('devices', 176, 160), 'vent': ('devices', 184, 116), 'clot': ('devices', 124, 124),
-           'logo': ('ui', 1200, 400), 'virus': ('ui', 600, 600), 'torso': ('ui', 600, 900), 'lungs': ('ui', 460, 460), 'urinary': ('ui', 400, 480), 'smallint': ('ui', 560, 320), 'cell': ('ui', 460, 460), 'torso_organs': ('ui', 600, 900)}
+           'logo': ('ui', 1200, 400), 'virus': ('ui', 600, 600), 'torso': ('ui', 600, 900), 'lungs': ('ui', 460, 460), 'urinary': ('ui', 400, 480), 'smallint': ('ui', 560, 320), 'cell': ('ui', 460, 460), 'torso_organs': ('ui', 600, 900),
+           'liver': ('props', 640, 440), 'pancreas': ('props', 640, 300)}
 
 def cover(im, w, h):
     """가운데를 기준으로 잘라서 w×h를 꽉 채우기"""

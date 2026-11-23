@@ -2,7 +2,11 @@
 import { ROOMS, HALLS, SPOTS, SAB_SPOTS, VENTS } from '../map/map.js';
 import { ICON } from './icons.js';
 
-const MAP = { x: 100, y: 100, w: 3700, h: 2420 }; // 대기실 제외한 본 맵 범위
+// 대기실 제외한 본 맵 범위 (맵마다 달라서 그릴 때 계산)
+function bounds() {
+  const rs = ROOMS.filter(r => !r.lobby), x = Math.min(...rs.map(r => r.x)) - 100, y = Math.min(...rs.map(r => r.y)) - 100;
+  return { x, y, w: Math.max(...rs.map(r => r.x + r.w)) + 100 - x, h: Math.max(...rs.map(r => r.y + r.h)) + 100 - y };
+}
 
 export function openMinimap(app) {
   const ov = document.createElement('div');
@@ -17,6 +21,7 @@ export function openMinimap(app) {
     const dpr = Math.min(2, devicePixelRatio || 1), W = cv.clientWidth, H = cv.clientHeight;
     if (cv.width !== W * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    const MAP = bounds();
     const s = Math.min(W / MAP.w, H / MAP.h), ox = (W - MAP.w * s) / 2 - MAP.x * s, oy = (H - MAP.h * s) / 2 - MAP.y * s;
     const X = x => ox + x * s, Y = y => oy + y * s;
     ctx.fillStyle = '#1a1018';

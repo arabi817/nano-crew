@@ -3,7 +3,7 @@
 // 상태는 모두 Firebase에 있어서, 교사 화면을 새로고침해도 이어서 판정해요.
 import { P, isBot } from '../net/room.js';
 import { decodePos } from '../net/posSync.js';
-import { TABLE, SAB_SPOTS } from '../map/map.js';
+import { TABLE, SAB_SPOTS, useMap } from '../map/map.js';
 import { OX } from '../../data/ox.js';
 import { assignTasks, stepCount } from '../missions/index.js';
 import { CONTENT } from '../../data/content.js';
@@ -25,7 +25,7 @@ export class Judge {
   start() {
     const { db, code } = this, ch = () => this.onChange?.();
     this.unsubs.push(
-      db.onValue(P.meta(code), m => { this.meta = m; ch(); }),
+      db.onValue(P.meta(code), m => { this.meta = m; useMap(settingsOf(m).map); ch(); }),
       db.onValue(P.players(code), v => { this.players = v || {}; ch(); }),
       db.onValue(P.priv(code), v => { this.priv = v || {}; ch(); }),
       db.onValue(P.game(code), v => { this.game = v || {}; this.watchMeeting(); this.publishProgress(); ch(); }),
@@ -68,7 +68,7 @@ export class Judge {
     const priv = {};
     for (const id of ids) {
       const isImp = imps.includes(id);
-      priv[id] = { role: isImp ? 'imp' : 'crew', tasks: assignTasks({ unit: s.unit, exclude: s.exclude || [] }) };
+      priv[id] = { role: isImp ? 'imp' : 'crew', tasks: assignTasks({ unit: s.unit, exclude: s.exclude || [], map: s.map }) };
       if (isImp) { priv[id].mates = imps.filter(x => x !== id); priv[id].killReadyAt = now + REVEAL_MS + s.killCd * 1000; }
     }
     const crewTasks = ids.filter(id => !imps.includes(id)).reduce((n, id) => n + priv[id].tasks.length, 0);
@@ -307,6 +307,8 @@ export class Judge {
   }
   setVision(v) { if (['wide', 'normal', 'narrow'].includes(v)) this.db.set(`${this.R}/meta/settings/vision`, v); }
   // 회의 채팅 방식 (대기실에서 고름. 게임 중에 바꿔도 다음 화면부터 적용)
+  // 맵은 대기실에서만 바꿀 수 있어요 (게임 중에 바꾸면 모두의 위치가 어긋나요)
+  setMap(id) { if (this.meta?.state === 'lobby' && ['small', 'big'].includes(id)) this.db.set(`${this.R}/meta/settings/map`, id); }
   setChatMode(mode) { this.db.set(`${this.R}/meta/settings/chat`, mode === 'free' ? 'free' : 'template'); }
   giveFloor(uid) {
     const m = this.game.meeting; if (!m || (m.phase !== 'discuss' && m.phase !== 'vote')) return;

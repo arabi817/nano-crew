@@ -66,7 +66,8 @@ export class WorldScene extends Phaser.Scene {
     // 보이는 미션: 누가 어떤 미션을 하는 중인지
     this.vis = {};
     this.unsubVis = a.db.onValue(`rooms/${a.code}/vis`, v => { this.vis = v || {}; });
-    this.events.once('shutdown', () => { this.zl?.stop(); this.unsubVis?.(); });
+    const bye = () => { this.zl?.stop(); this.unsubVis?.(); this.zl = null; this.unsubVis = null; };
+    this.events.once('shutdown', bye); this.events.once('destroy', bye);   // 맵 바꿀 때는 게임째 지워져요(destroy)
     this.ready = true;
     a.onSceneReady();
   }

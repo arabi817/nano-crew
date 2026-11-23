@@ -4,14 +4,14 @@ import { createDB } from './net/db.js';
 import { P, spawnOrder } from './net/room.js';
 import { PosSender } from './net/posSync.js';
 import { COLORS, nickKey } from './common/colors.js';
-import { ROOMS, LOBBY, randomPointIn, spawnPoint, route, nearestRoomId, zoneAt, nearZones } from './map/map.js';
+import { ROOMS, LOBBY, useMap, randomPointIn, spawnPoint, route, nearestRoomId, zoneAt, nearZones } from './map/map.js';
 import { NET } from '../config.js';
 import { $ } from './common/util.js';
 import { OX } from '../data/ox.js';
 
 const SPEED = 270;
 let db, code, bots = [], phase = 'lobby', players = {}, timer = 0, unsubs = [];
-const rooms = ROOMS.filter(r => !r.lobby).map(r => r.id);
+const rooms = () => ROOMS.filter(r => !r.lobby).map(r => r.id);   // 맵마다 달라요
 
 class Bot {
   constructor(id, c, n) {
@@ -23,7 +23,7 @@ class Bot {
   plan() {
     if (phase === 'lobby') this.path = [randomPointIn(LOBBY, 120)];
     else {
-      let to; do { to = rooms[Math.floor(Math.random() * rooms.length)]; } while (rooms.length > 1 && to === nearestRoomId(this.x, this.y));
+      let to; do { to = rooms()[Math.floor(Math.random() * rooms().length)]; } while (rooms().length > 1 && to === nearestRoomId(this.x, this.y));
       this.path = route(nearestRoomId(this.x, this.y), to);
     }
   }
@@ -57,7 +57,7 @@ async function start() {
   if (!meta) return $('#warn').textContent = '그런 방이 없어요.';
   if (db.mode === 'firebase' && meta.hostUid !== db.uid) return $('#warn').textContent = '교사 화면을 연 브라우저에서 이 창을 열어 주세요 (보안 규칙 때문이에요).';
   $('#warn').textContent = ''; $('#btn-go').disabled = true; $('#btn-stop').disabled = false;
-  phase = meta.state;
+  phase = meta.state; useMap(meta.settings?.map);
   const taken = (await db.get(P.nicks(code))) || {};
   const upd = {}; let i = 0;
   for (let t = 1; bots.length < want && t < 200; t++) {
@@ -75,7 +75,8 @@ async function start() {
   placeAll();
   unsubs.push(db.onValue(P.meta(code), m => {
     if (!m) return stop(true);
-    if (m.state !== phase) { phase = m.state; if (phase !== 'ended') placeAll(); }
+    const moved = useMap(m.settings?.map);   // 맵이 바뀌면 새 대기실로
+    if (m.state !== phase || moved) { phase = m.state; if (phase !== 'ended') placeAll(); }
   }));
   unsubs.push(db.onValue(P.game(code), g => onBotGame(g || {})));
   // 창이 뒤에 가려져도 느려지지 않게 '워커' 시계를 씀 (일반 타이머는 숨은 탭에서 1초에 1번으로 느려짐)

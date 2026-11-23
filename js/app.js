@@ -10,7 +10,7 @@ import { Hud } from './ui/hud.js';
 import { Joystick } from './ui/joystick.js';
 import { openPanel, openSheet } from './ui/panel.js';
 import { MISSIONS, SAB_FIX } from './missions/index.js';
-import { SPOTS, SAB_SPOTS, VENTS, spawnPoint, lobbySpawn, roomAt, roomName, doorsOf, setBlockedDoors } from './map/map.js';
+import { SPOTS, SAB_SPOTS, VENTS, useMap, MAP_ID, spawnPoint, lobbySpawn, roomAt, roomName, doorsOf, setBlockedDoors } from './map/map.js';
 import { CONTENT } from '../data/content.js';
 import { PLACES } from './game/shared.js';
 import { sfx, unlockAudio } from './common/sfx.js';
@@ -138,6 +138,7 @@ async function enterGame(rejoin) {
   localStorage.setItem('nc_last_room', code);
 
   app.meta = meta;
+  useMap(settingsOf(meta).map);
   [app.game, app.priv] = await Promise.all([db.get(P.game(code)), db.get(P.privOf(code, uid))]);
   app.game = app.game || {};
 
@@ -182,7 +183,16 @@ function startPhaser() {
     input: { keyboard: true, mouse: false, touch: false }, banner: false,
   });
   app.game_.scene.add('world', WorldScene, true, { app }); // 장면이 켜지면 app.scene이 채워져요
-  addEventListener('resize', () => app.game_.scale.resize(el.clientWidth * dpr, el.clientHeight * dpr));
+  if (!app.onResize) addEventListener('resize', app.onResize = () => app.game_?.scale.resize(el.clientWidth * app.dpr, el.clientHeight * app.dpr));
+}
+// 선생님이 대기실에서 맵을 바꾸면: 게임 화면을 새 맵으로 다시 만들어요 (새 대기실에서 시작)
+function restartWorld() {
+  if (!app.game_) return;
+  app.minimap?.close(); closeOverlays();
+  app.scene = null; app.startPos = null;
+  app.game_.destroy(true); app.game_ = null;
+  startPhaser();
+  app.hud.toast(`맵이 바뀌었어요: ${settingsOf(app.meta).map === 'big' ? '넓은 맵' : '작은 맵'}`);
 }
 
 app.onSceneReady = () => { refreshTasks(); app.scene.setBodies(app.game.bodies); onSab(app.game.sab); maybeReveal(); };
@@ -196,6 +206,7 @@ function spawnTeleport() {
 function onMeta(m) {
   if (!m) return ended();
   app.meta = m;
+  if (useMap(settingsOf(m).map)) restartWorld();
   $('#lobby-settings').innerHTML = settingsHTML(m);
   setPaused(!!m.paused && m.state === 'playing');
   const prev = app.phase; app.phase = m.state;
@@ -307,7 +318,7 @@ function onSab(sab) {
     const left = Math.max(0, Math.ceil((sab.endsAt - app.db.now()) / 1000));
     box.innerHTML = sab.kind === 'clot'
       ? `<b>혈관 막힘</b> ${esc(roomName(sab.room))} 문이 막혔어요 · ${left}초`
-      : `<b>${esc(S.name)}!</b> ${esc(S.guide)} <span class="sab-time">${left}초</span>`;
+      : `<b>${esc(S.name)}!</b> ${esc(MAP_ID === 'big' && S.guideBig || S.guide)} <span class="sab-time">${left}초</span>`;
     // 미션 목록 아래에도 빨간 항목으로 (어몽어스처럼)
     const line = $('#sab-line'); line.hidden = false;
     line.innerHTML = sab.kind === 'o2' ? `<b>허파실·심장실</b> 산소 공급 버튼 동시에 누르기 (${left}초)`
@@ -393,7 +404,7 @@ function openSabFix(spotId) {
     return;
   }
   // 산소 부족: 누르고 있는 동안만 신호를 보냄
-  const other = s.side === 'lung' ? '심장실' : '허파실';
+  const other = s.other;
   app.panel = openPanel({
     title: '산소 공급 버튼', sub: `손바닥 칸을 누르고 있으세요. ${other}에서도 누군가 동시에 눌러야 해요.`,
     mount: el => {

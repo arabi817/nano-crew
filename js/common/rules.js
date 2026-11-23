@@ -1,5 +1,5 @@
 // 게임 규칙 값 모음 (교사 설정의 기본값 + 거리·시간 상수)
-import { TABLE } from '../map/map.js';
+import { TABLE, MAP_NAME } from '../map/map.js';
 
 export const DEFAULT_SETTINGS = {
   imps: 3,              // 바이러스 수 (1~10, 시작할 때 참가자 절반 미만으로 줄어요)
@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS = {
   unit: 'all',          // 단원 선택
   vision: 'wide',       // 시야: wide 넓게 / normal 보통 / narrow 좁게 (VISION_R)
   chat: 'template',     // 회의 채팅: template(정해진 문장만) / free(자유 입력 + 정해진 문장)
+  map: 'small',         // 맵: small(지금 맵) / big(넓은 맵, 32명용 + 새 미션 3개)
 };
 // 시야 반지름 [크루원, 바이러스]. 32명처럼 인원이 많으면 좁혀야 숨을 곳이 생겨요
 export const VISION_R = { wide: [380, 500], normal: [300, 395], narrow: [280, 370] };
@@ -45,6 +46,7 @@ export function settingsRows(meta) {
     ['진행 바', PROGRESS_NAME[s.progress] || s.progress],
     ['추방 시 역할 공개', s.revealOnEject ? '켜기' : '끄기'],
     ['단원', UNIT_NAME[s.unit] || s.unit],
+    ['맵', MAP_NAME[s.map] || '작은 맵'],
     ['시야', VISION_NAME[s.vision] || '넓게'],
     ['채팅', s.chat === 'free' ? '자유 입력' : '정해진 문장'],
   ];

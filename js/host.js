@@ -68,6 +68,7 @@ function openRoom(c) {
     const order = ['wide', 'normal', 'narrow'], cur = order.indexOf(settingsOf(judge.meta).vision);
     judge.setVision(order[(cur + 1) % order.length]);
   };
+  $('#btn-map').onclick = () => judge.setMap(settingsOf(judge.meta).map === 'big' ? 'small' : 'big');
   $('#btn-chatmode').onclick = () => judge.setChatMode(settingsOf(judge.meta).chat === 'free' ? 'template' : 'free');
   $('#hm-more').onclick = () => judge.extendTalk(30);
   $('#btn-people').onclick = openPeople;
@@ -116,6 +117,9 @@ function drawRoster() {
   drawSteps();
   const vis = settingsOf(judge.meta).vision;
   $('#btn-vision').textContent = `시야: ${VISION_NAME[vis] || '넓게'} (${(VISION_R[vis] || VISION_R.wide)[0]})`;
+  const big = settingsOf(judge.meta).map === 'big';
+  $('#btn-map').textContent = big ? '맵: 넓은 맵 (32명용)' : '맵: 작은 맵';
+  $('#btn-map').classList.toggle('on', big);
   const free = settingsOf(judge.meta).chat === 'free';
   $('#btn-chatmode').textContent = `채팅: ${free ? '자유 입력' : '정해진 문장'}`;
   $('#btn-chatmode').classList.toggle('on', free);

@@ -7,6 +7,7 @@ import * as Ci from './circ.js';
 import * as R from './resp.js';
 import * as E from './excr.js';
 import * as Ce from './cell.js';
+import * as B from './big.js';
 import { shuffle } from '../common/util.js';
 
 const M = CONTENT.missions;
@@ -43,12 +44,16 @@ const DEF = {
   airPath: one('airPath', 'airPath', R.airPath),
   wasteSort: one('wasteSort', 'wasteSort', E.wasteSort),
   ureaFactory: one('ureaFactory', 'ureaFactory', E.ureaFactory),
+  // 넓은 맵에만
+  pancreasSend: one('pancreasSend', 'pancreasSend', B.pancreasSend),
+  bileSend: one('bileSend', 'bileSend', B.bileSend),
+  energyUse: one('energyUse', 'energyUse', B.energyUse),
 };
 
 export const MISSIONS = Object.fromEntries(Object.entries(DEF).map(([id, steps]) => {
   const c = M[id];
   return [id, {
-    id, title: c.title, unit: c.unit, type: c.type, visible: !!c.visible,
+    id, title: c.title, unit: c.unit, type: c.type, visible: !!c.visible, bigOnly: !!c.bigOnly,
     steps: steps.map((s, i) => ({
       spot: s.spot,
       spots: [s.spot, ...(s.alt || [])],
@@ -68,8 +73,8 @@ export const SAB_FIX = { kidney: (el, api) => E.kidneyFix(el, api, M.nephron) };
 
 // 미션 나눠 주기 (어몽어스 규칙): 공통 1 + 긴 1 + 짧은 2 (짧은 2개는 서로 다른 단원)
 // unit: 'all' 또는 한 단원. 특정 단원만 고르면 그 단원에서 뽑고, 모자라면 다른 단원에서 채워요.
-export function assignTasks({ unit = 'all', exclude = [] } = {}) {
-  const ok = id => !exclude.includes(id);
+export function assignTasks({ unit = 'all', exclude = [], map = 'small' } = {}) {
+  const ok = id => !exclude.includes(id) && (!MISSIONS[id].bigOnly || map === 'big');   // 새 미션 3개는 넓은 맵에만 자리가 있어요
   const ids = Object.keys(MISSIONS).filter(ok);
   const of = type => ids.filter(id => MISSIONS[id].type === type);
   const common = of('common');

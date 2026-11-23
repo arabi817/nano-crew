@@ -58,6 +58,7 @@ const DEVICE_OF = {
   bloodScan: 'scanpad', heartbeat: 'monitor', vesselCheck: 'toolbench', rbcCard: 'cardreader',
   nephron1: 'filter', nephron2: 'filter', alveoliFilter: 'filter',
   breathModel: 'belljar', diaphragm: 'lever', airPath: 'airvalve', colon: 'colonlever', ureaFactory: 'factory',
+  pancreasSend: 'juicetank', bileSend: 'bilepump', energyUse: 'energymeter',   // 넓은 맵 새 미션
 };
 
 // 그림 파일 한 장 놓기: (x, y) = 그림 가운데, w×h = 화면 크기. into(컨테이너)를 주면 그 안에 넣어요.
@@ -93,7 +94,11 @@ export function drawMap(scene) {
   });
   ROOMS.forEach(r => {
     base.fillStyle(r.floor, 1); base.fillRect(r.x, r.y, r.w, r.h);
-    useArt(scene, `rooms/${r.id}.jpg`, key => scene.add.image(r.x, r.y, key).setOrigin(0).setDisplaySize(r.w, r.h).setDepth(-999));
+    useArt(scene, `rooms/${r.id}.jpg`, key => {   // 방 크기가 그림과 달라도(넓은 맵) 비율 그대로 꽉 채우고 넘치는 곳은 잘라요
+      const src = scene.textures.get(key).getSourceImage(), k = Math.max(r.w / src.width, r.h / src.height);
+      const cw = r.w / k, ch = r.h / k;
+      scene.add.image(r.x + r.w / 2, r.y + r.h / 2, key).setScale(k).setCrop((src.width - cw) / 2, (src.height - ch) / 2, cw, ch).setDepth(-999);
+    });
     base.lineStyle(2, 0x000000, 0.07);
     for (let x = r.x + 80; x < r.x + r.w; x += 80) base.lineBetween(x, r.y, x, r.y + r.h);
     for (let y = r.y + 80; y < r.y + r.h; y += 80) base.lineBetween(r.x, y, r.x + r.w, y);
@@ -204,6 +209,46 @@ function drawWalls(scene) {
   });
 }
 
+function drawMouth(scene, mx, my) {
+  const g = gfx(scene);
+  if (art(scene, 'props/mouth.png', mx, my, 216, 156)) return;
+  g.fillStyle(INK, 1); g.fillEllipse(mx, my, 210, 150);
+  g.fillStyle(0x9c3b3b, 1); g.fillEllipse(mx, my, 196, 136);
+  g.fillStyle(0xe0607a, 1); g.fillEllipse(mx, my + 30, 120, 50);
+  g.fillStyle(0xffffff, 1); g.lineStyle(3, INK, 1);
+  for (let i = 0; i < 5; i++) {
+    const tx = mx - 70 + i * 30;
+    g.fillRect(tx, my - 64, 22, 22); g.strokeRect(tx, my - 64, 22, 22);
+    g.fillRect(tx, my + 42, 22, 22); g.strokeRect(tx, my + 42, 22, 22);
+  }
+}
+// 위: 그림이 있으면 꿈틀거림, 없으면 코드로 출렁이는 위. 방 위·왼쪽 벽도 위벽처럼 출렁여요
+function drawStomach(scene, r, anims, sx, sy) {
+  const st = gfx(scene, -795), wall = gfx(scene, -790);
+  // 위 그림이 있으면 꿈틀거림(크기 변화)만 주고, 없으면 코드로 출렁이는 위를 그려요
+  const stomachArt = art(scene, 'props/stomach.png', sx, sy, 300, 230, { depth: -795, onImage: im =>
+    scene.tweens.add({ targets: im, scaleX: im.scaleX * 1.05, scaleY: im.scaleY * 0.95, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }) });
+  anims.push({
+    r, fn: t => {
+      st.clear();
+      if (!stomachArt) {
+        inkFill(st, blob(sx, sy, 135, 95, -0.5, 0.06, t * 2), 0xf08a6a);
+        inkFill(st, blob(sx - 8, sy - 4, 92, 56, -0.5, 0.09, t * 2 + 1), 0xf7b08f, 0);
+      }
+      wall.clear();
+      const top = [pt(r.x, r.y)];
+      for (let x = r.x; x <= r.x + r.w; x += 20) top.push(pt(x, r.y + 30 + Math.sin(x * 0.03 + t * 3) * 10));
+      top.push(pt(r.x + r.w, r.y));
+      inkFill(wall, top, 0xf0905e, 5);
+      if (HALLS.some(h => Math.abs(h.x + h.w - r.x) < 2)) return;   // 왼쪽에 복도 입구가 있으면 왼쪽 벽은 안 그려요 (넓은 맵 위실)
+      const left = [pt(r.x, r.y)];
+      for (let y = r.y; y <= r.y + r.h; y += 20) left.push(pt(r.x + 28 + Math.sin(y * 0.03 + t * 3) * 10, y));
+      left.push(pt(r.x, r.y + r.h));
+      inkFill(wall, left, 0xf0905e, 5);
+    },
+  });
+}
+
 // ───── 방마다 소품 ─────
 const PROPS = {
   meeting(scene, r) {
@@ -236,52 +281,35 @@ const PROPS = {
     scene.tweens.add({ targets: core, scale: { from: 0.8, to: 1.08 }, alpha: { from: 0.7, to: 1 }, duration: 700, yoyo: true, repeat: -1 });
   },
   digest(scene, r, anims) {
+    drawMouth(scene, r.x + 190, r.y + r.h / 2 + 40);
+    drawStomach(scene, r, anims, r.x + r.w - 220, r.y + r.h / 2 + 30);
+  },
+  // ── 넓은 맵에만 있는 방 ──
+  mouth(scene, r) { drawMouth(scene, r.x + 260, r.y + r.h / 2 + 90); },
+  stomach(scene, r, anims) { drawStomach(scene, r, anims, r.x + r.w / 2, r.y + r.h / 2 + 90); },
+  liver(scene, r) { art(scene, 'props/liver.png', r.x + r.w / 2, r.y + r.h / 2 + 40, 320, 220); },
+  pancreas(scene, r) { art(scene, 'props/pancreas.png', r.x + r.w / 2, r.y + r.h / 2 + 90, 320, 150); },
+  lungR(scene, r) { PROPS.lung(scene, r); },
+  lungL(scene, r) { PROPS.lung(scene, r); },
+  muscle(scene, r) {
     const g = gfx(scene);
-    const mx = r.x + 190, my = r.y + r.h / 2 + 40;
-    if (!art(scene, 'props/mouth.png', mx, my, 216, 156)) {
-    g.fillStyle(INK, 1); g.fillEllipse(mx, my, 210, 150);
-    g.fillStyle(0x9c3b3b, 1); g.fillEllipse(mx, my, 196, 136);
-    g.fillStyle(0xe0607a, 1); g.fillEllipse(mx, my + 30, 120, 50);
-    g.fillStyle(0xffffff, 1); g.lineStyle(3, INK, 1);
-    for (let i = 0; i < 5; i++) {
-      const tx = mx - 70 + i * 30;
-      g.fillRect(tx, my - 64, 22, 22); g.strokeRect(tx, my - 64, 22, 22);
-      g.fillRect(tx, my + 42, 22, 22); g.strokeRect(tx, my + 42, 22, 22);
-    }
-    }
-    const sx = r.x + r.w - 220, sy = r.y + r.h / 2 + 30, st = gfx(scene, -795), wall = gfx(scene, -790);
-    // 위 그림이 있으면 꿈틀거림(크기 변화)만 주고, 없으면 코드로 출렁이는 위를 그려요
-    const stomachArt = art(scene, 'props/stomach.png', sx, sy, 300, 230, { depth: -795, onImage: im =>
-      scene.tweens.add({ targets: im, scaleX: im.scaleX * 1.05, scaleY: im.scaleY * 0.95, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }) });
-    anims.push({
-      r, fn: t => {
-        st.clear();
-        if (!stomachArt) {
-          inkFill(st, blob(sx, sy, 135, 95, -0.5, 0.06, t * 2), 0xf08a6a);
-          inkFill(st, blob(sx - 8, sy - 4, 92, 56, -0.5, 0.09, t * 2 + 1), 0xf7b08f, 0);
-        }
-        wall.clear();
-        const top = [pt(r.x, r.y)];
-        for (let x = r.x; x <= r.x + r.w; x += 20) top.push(pt(x, r.y + 30 + Math.sin(x * 0.03 + t * 3) * 10));
-        top.push(pt(r.x + r.w, r.y));
-        inkFill(wall, top, 0xf0905e, 5);
-        const left = [pt(r.x, r.y)];
-        for (let y = r.y; y <= r.y + r.h; y += 20) left.push(pt(r.x + 28 + Math.sin(y * 0.03 + t * 3) * 10, y));
-        left.push(pt(r.x, r.y + r.h));
-        inkFill(wall, left, 0xf0905e, 5);
-      },
+    [[r.x + 170, r.y + r.h - 110, 0.3], [r.x + r.w - 170, r.y + r.h - 110, -0.3]].forEach(([x, y, rot]) => {
+      if (art(scene, 'props/mitochondria.png', x, y, 216, 124, { rot })) return;
+      inkFill(g, blob(x, y, 100, 54, rot), 0x5cae4c);
+      inkFill(g, blob(x, y, 82, 38, rot), 0xa6e08f, 0);
     });
   },
   small(scene, r, anims) {
     const g = gfx(scene, -790);
     const bottom = r.y + r.h;
+    const gaps = HALLS.filter(h => h.w < h.h && Math.abs(h.y - bottom) < 2).map(h => [h.x - 20, h.x + h.w + 20]);   // 아래쪽 복도 입구
     anims.push({
       r, fn: t => {
         g.clear();
         for (let x = r.x + 40; x < r.x + r.w - 20; x += 54) {
           const a = Math.sin(t * 2.2 + x * 0.02) * 0.28;
           for (const [y0, dir] of [[r.y, 1], [bottom, -1]]) {
-            if (dir < 0 && x > 1630 && x < 1870) continue; // 복도 입구 비우기
+            if (dir < 0 && gaps.some(([a, b]) => x > a && x < b)) continue; // 복도 입구 비우기
             const tx = x + Math.sin(a) * 60, ty = y0 + dir * Math.cos(a) * 64;
             g.lineStyle(26, INK, 1); g.lineBetween(x, y0, tx, ty); g.fillStyle(INK, 1); g.fillCircle(tx, ty, 13);
             g.lineStyle(17, 0xf7a65e, 1); g.lineBetween(x, y0, tx, ty); g.fillStyle(0xf7a65e, 1); g.fillCircle(tx, ty, 8.5);
@@ -362,7 +390,8 @@ const PROPS = {
   },
   kidney(scene, r) {
     const g = gfx(scene);
-    [[r.x + 140, r.y + 320, 0.25], [r.x + 400, r.y + 320, -0.25]].forEach(([x, y, rot]) => {
+    const [fa, fb, fy] = r.w > 600 ? [0.33, 0.67, 0.6] : [0.25, 0.73, 0.64];   // 넓은 맵 콩팥실은 장치가 네 귀퉁이라 가운데로
+    [[r.x + r.w * fa, r.y + r.h * fy, 0.25], [r.x + r.w * fb, r.y + r.h * fy, -0.25]].forEach(([x, y, rot]) => {
       // 콩팥 그림: 오목한 곳이 오른쪽을 보는 왼쪽 콩팥 1장 → 오른쪽 것은 좌우 뒤집기
       if (art(scene, 'props/kidney.png', x, y, 170, 230, { rot, flip: rot < 0 })) return;
       const pts = blob(x, y, 70, 100, rot).map((p, i, a) => {

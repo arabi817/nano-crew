@@ -1,7 +1,7 @@
 // 미션 실험실: 지금 미션을 하나씩 해 보고(시간·틀린 횟수 기록), 분석과 개선안 시제품을 봐요.
 import { MISSIONS, SAB_FIX } from '../missions/index.js';
 import { CONTENT } from '../../data/content.js';
-import { SPOTS, ROOMS } from '../map/map.js';
+import { SPOTS, ROOMS, spotRoomName } from '../map/map.js';
 import { openPanel } from '../ui/panel.js';
 import { esc } from '../common/util.js';
 import { REVIEW, AU_PRINCIPLES, WHY_RANDOM, PRINCIPLES, MISCONCEPTIONS } from './review.js';
@@ -13,7 +13,7 @@ import { VISION_R } from '../common/rules.js';
 const $ = s => document.querySelector(s);
 const UNIT = CONTENT.units;
 const TYPE = { common: '공통', long: '긴 미션', short: '짧은 미션' };
-const roomName = spot => ROOMS.find(r => r.id === SPOTS[spot]?.room)?.name ?? '';
+const roomName = spot => SPOTS[spot] ? spotRoomName(spot, 'small') : `${spotRoomName(spot, 'big')} (넓은 맵)`;   // 새 미션은 넓은 맵에만 있어요
 const results = {};   // 미션·단계별 마지막 결과
 
 // 미션 창을 열고 시간·틀린 횟수를 재요
