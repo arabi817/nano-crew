@@ -7,20 +7,20 @@ const W = c => (c === 2 ? 900 : 800);               // 가운데 칸만 조금 �
 const room = (id, name, c, r, floor, isNew, note) => ({ id, name, x: COL[c], y: ROW[r], w: W(c), h: H[r], floor, isNew, note, c, r });
 
 export const ROOMS2 = [
-  room('mouth', '입·식도실', 0, 0, '#ffc79a', true, '지금 소화실(입·위)을 둘로 나눔. 소화효소 배선 1단계(입)'),
-  room('stomach', '위실', 1, 0, '#f6b48a', true, '소화효소 배선 2단계(위), 영양소 검출'),
-  room('liver', '간실', 2, 0, '#c98a7a', true, '새 방. 요소 공장(암모니아 → 요소), 쓸개즙 저장 이야기'),
-  room('pancreas', '이자실', 3, 0, '#f2e0a0', true, '새 방. 이자액(소화효소) 미션 자리'),
-  room('small', '작은창자실', 4, 0, '#f5d98a', false, '소화효소 배선 3단계, 융털 흡수, 포도당 캡슐'),
-  room('lungR', '오른쪽 허파실', 0, 1, '#9fd6f0', true, '지금 허파실을 둘로. 산소 부족 사보타주 한쪽 버튼'),
-  room('heart', '심장실', 1, 1, '#f29a9a', false, '심장 박동, 심장 배선'),
+  room('mouth', '입·식도실', 0, 0, '#ffc79a', true, '소화효소 배선(1 입), 영양소 검출'),
+  room('stomach', '위실', 1, 0, '#f6b48a', true, '소화효소 배선(2 위), 소화 기관 이름 붙이기'),
+  room('liver', '간실', 2, 0, '#c98a7a', true, '요소 공장, 노폐물 배출(3 요소 받기), 새: 쓸개즙 보내기'),
+  room('pancreas', '이자실', 3, 0, '#f2e0a0', true, '새: 이자액 보내기'),
+  room('small', '작은창자실', 4, 0, '#f5d98a', false, '소화효소 배선(3 작은창자), 융털 흡수, 세포 발전소(1 포도당)'),
+  room('lungR', '오른쪽 허파실', 0, 1, '#9fd6f0', true, '호흡 모형, 호흡 운동 조절, 세포 발전소(2 산소, 한쪽), 산소 부족 버튼 ①'),
+  room('heart', '심장실', 1, 1, '#f29a9a', false, '심장 배선, 심장 박동'),
   room('meeting', '중앙 회의실', 2, 1, '#8ea2a8', false, '긴급 회의 버튼 (게임 시작 자리)'),
-  room('vessel', '혈관 관제실', 3, 1, '#cf8f9f', false, '혈구 스캔, 혈관 정비, 적혈구 카드'),
-  room('lungL', '왼쪽 허파실', 4, 1, '#9fd6f0', true, '허파꽈리 필터, 호흡 모형, 산소 부족 다른 쪽 버튼'),
-  room('muscle', '근육실 (세포 발전소)', 0, 2, '#9fd38a', true, '세포 발전소를 근육 세포로: 에너지를 쓰는 곳이 보이게'),
+  room('vessel', '혈관 관제실', 3, 1, '#cf8f9f', false, '적혈구 카드, 혈구 스캔, 혈관 정비'),
+  room('lungL', '왼쪽 허파실', 4, 1, '#9fd6f0', true, '허파꽈리 필터, 공기 경로, 세포 발전소(2 산소, 다른 쪽), 노폐물 배출(2 이산화탄소 내보내기), 산소 부족 버튼 ②'),
+  room('muscle', '근육실 (세포 발전소)', 0, 2, '#9fd38a', true, '세포 발전소(3 발전기), 노폐물 배출(1 이산화탄소 받기), 새: 에너지 쓰기'),
   room('large', '큰창자실', 1, 2, '#d9b48a', false, '큰창자 비우기'),
-  room('kidney', '콩팥실', 2, 2, '#d8a48f', false, '콩팥단위 필터, 노폐물 분류'),
-  room('bladder', '방광 처리실', 3, 2, '#f2e38a', false, '노폐물 배출 마지막'),
+  room('kidney', '콩팥실', 2, 2, '#d8a48f', false, '콩팥단위 필터(1 토리, 2 세뇨관), 노폐물 배출(4 요소 넣기), 콩팥 정지 장치'),
+  room('bladder', '방광 처리실', 3, 2, '#f2e38a', false, '노폐물 분류'),
 ];
 export const LOBBY2 = { id: 'lobby', name: '탐사정 격납고', x: 6200, y: 200, w: 1300, h: 850, floor: '#9aa7b8' };
 export const WORLD2 = { w: 7700, h: 3200 };
