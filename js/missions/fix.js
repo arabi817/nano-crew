@@ -1,4 +1,27 @@
-// 몸속 비상사태 고치기 (과학 내용 없는 조작): 시야 차단 = 스위치 모두 켜기, 신경 신호 끊김 = 다이얼 맞추기
+// 몸속 비상사태 고치기: 시야 차단·신경 신호 끊김은 짧은 과학 문제(data/content.js sabotage.fixQuiz) 중 하나가 무작위로 나와요.
+// 아래 스위치(lightsFix)·다이얼(commsFix)은 예전 방식이라 지금은 안 씀 (선생님 결정 2026-11-23, 되돌릴 때 쓰기)
+import { CONTENT } from '../../data/content.js';
+import { esc } from './kit.js';
+
+export function quizFix(el, api) {
+  const list = CONTENT.sabotage.fixQuiz, Q = list[Math.floor(Math.random() * list.length)];
+  const ox = Q.opts.length === 2 && Q.opts.includes('O');
+  el.innerHTML = `<div class="fx"><div class="bl-q">${esc(Q.q)}</div>
+    <div class="${ox ? 'bl-ab' : 'og-btns'}">${Q.opts.map(o => ox
+      ? `<button class="${o === 'O' ? 'bl-o' : 'bl-x'} press" data-v="${o}">${o}</button>`
+      : `<button class="og-btn press" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>
+    <div class="fx-msg"></div></div>`;
+  const msg = el.querySelector('.fx-msg');
+  let t = 0;
+  el.querySelectorAll('[data-v]').forEach(b => b.onclick = () => {
+    if (b.dataset.v !== Q.a) { api.wrong(); msg.textContent = '다시 생각해 보세요.'; return; }
+    el.querySelectorAll('[data-v]').forEach(x => x.disabled = true); b.classList.add('ok'); api.good();
+    msg.className = 'bp-done'; msg.textContent = Q.why;
+    t = setTimeout(() => api.success(), 2200);
+  });
+  return () => clearTimeout(t);
+}
+
 
 // 시야 차단: 스위치 5개 중 몇 개가 꺼져 있어요. 눌러서 모두 켜면 해결
 export function lightsFix(el, api) {

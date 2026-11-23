@@ -70,7 +70,7 @@ export const MISSIONS = Object.fromEntries(Object.entries(DEF).map(([id, steps])
   }];
 }));
 
-export const SAB_FIX = { kidney: (el, api) => E.kidneyFix(el, api, M.nephron), lights: F.lightsFix, comms: F.commsFix };
+export const SAB_FIX = { kidney: (el, api) => E.kidneyFix(el, api, M.nephron), lights: F.quizFix, comms: F.quizFix };
 
 // 미션 나눠 주기 (어몽어스 규칙): 공통 1 + 긴 1 + 짧은 2 (짧은 2개는 서로 다른 단원)
 // unit: 'all' 또는 한 단원. 특정 단원만 고르면 그 단원에서 뽑고, 모자라면 다른 단원에서 채워요.

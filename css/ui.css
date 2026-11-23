@@ -710,3 +710,4 @@ body.sab-comms #task-list { display: none; }
 .fx-t { stroke: #6dfc9c; }
 .fx-c { stroke: #ffcc33; } .fx-c.ok { stroke: #6dfc9c; }
 .fx-dial { width: min(420px, 90%); height: 44px; accent-color: var(--yellow); touch-action: pan-x; }
+.fx .og-btn.ok { background: #48c774; color: var(--ink); }   /* 고른 정답은 초록으로 남기기 */
