@@ -630,8 +630,9 @@ body.sab-big #phaser::after { content: ''; position: absolute; inset: 0; pointer
 .ap-msg { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font-weight: 900; pointer-events: none; }
 /* 운반 (세포 발전소·노폐물) */
 .cy { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 30px; }
-.cy-src, .cy-dst { position: relative; overflow: hidden; width: 230px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #2b3439; border: 4px solid var(--ink); border-radius: 14px; padding: 10px; }
+.cy-src, .cy-dst { position: relative; width: 230px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #2b3439; border: 4px solid var(--ink); border-radius: 14px; padding: 10px; }
 .cy-cap { font-family: var(--title); font-size: 20px; background: var(--cc); color: var(--ink); border: 4px solid var(--ink); border-radius: 30px; padding: 12px 20px; touch-action: none; cursor: grab; box-shadow: 0 4px 0 var(--ink); }
+.cy-cap.dragging { z-index: 20; }   /* 끄는 동안 옆 칸 뒤로 숨지 않게 */
 .cy-slot { width: 160px; height: 90px; border: 4px dashed #9aa7ad; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
 /* 칸 뒤 그림 (폐·콩팥·작은창자·세포·혈관): 글자와 캡슐은 그 위에 */
 .cy-bg { position: absolute; inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px); object-fit: contain; opacity: .55; pointer-events: none; }
@@ -646,7 +647,7 @@ body.sab-big #phaser::after { content: ''; position: absolute; inset: 0; pointer
 .pw { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1.4fr; grid-template-rows: 1fr auto; gap: 10px; padding: 12px; }
 .pw-bag { display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; background: #2b3439; border: 4px solid var(--ink); border-radius: 14px; }
 .pw-machine { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; background: #56656e; border: 4px solid var(--ink); border-radius: 14px; padding: 10px; }
-.pw-hopper { position: relative; overflow: hidden; grid-column: 1 / -1; min-height: 120px; border: 4px dashed #c9d1d8; border-radius: 12px; display: flex; gap: 8px; align-items: center; justify-content: center; font-weight: 900; }
+.pw-hopper { position: relative; grid-column: 1 / -1; min-height: 120px; border: 4px dashed #c9d1d8; border-radius: 12px; display: flex; gap: 8px; align-items: center; justify-content: center; font-weight: 900; }
 .pw-gauge { position: relative; height: 34px; background: #2b3439; border: 4px solid var(--ink); border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .pw-fill { position: absolute; left: 0; bottom: 0; top: 0; width: 0; background: var(--yellow); transition: width 1s; }
 .pw-gauge span { position: relative; font-family: var(--title); }
