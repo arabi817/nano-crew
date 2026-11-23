@@ -711,3 +711,5 @@ body.sab-comms #task-list { display: none; }
 .fx-c { stroke: #ffcc33; } .fx-c.ok { stroke: #6dfc9c; }
 .fx-dial { width: min(420px, 90%); height: 44px; accent-color: var(--yellow); touch-action: pan-x; }
 .fx .og-btn.ok { background: #48c774; color: var(--ink); }   /* 고른 정답은 초록으로 남기기 */
+/* 제작자 표시 (첫 화면 오른쪽 아래, 아주 작게) */
+.credit { position: fixed; right: 10px; bottom: 6px; margin: 0; font-family: var(--body); font-size: 11px; font-weight: 500; color: #fff; opacity: .5; pointer-events: none; }
