@@ -1,6 +1,7 @@
 // 미션 실험실: 지금 미션을 하나씩 해 보고(시간·틀린 횟수 기록), 분석과 개선안 시제품을 봐요.
 import { MISSIONS, SAB_FIX } from '../missions/index.js';
 import { CONTENT } from '../../data/content.js';
+const SAB = CONTENT.sabotage;
 import { SPOTS, ROOMS, spotRoomName } from '../map/map.js';
 import { openPanel } from '../ui/panel.js';
 import { esc } from '../common/util.js';
@@ -41,7 +42,9 @@ function renderNow() {
     ${units.map(u => `<h2 class="lab-unit">${esc(UNIT[u])}</h2><div class="lab-grid">${byUnit(u).map(card).join('')}</div>`).join('')}
     <h2 class="lab-unit">몸속 비상사태</h2><div class="lab-grid">
       <div class="lab-card"><div class="lc-top"><b>콩팥 정지 해결</b><span class="badge sab">몸속 비상사태</span></div>
-        <div class="lc-steps"><button class="lc-step press" data-sab="kidney">해 보기</button>${resultChip('sab:kidney')}</div></div></div>`;
+        <div class="lc-steps"><button class="lc-step press" data-sab="kidney">해 보기</button>${resultChip('sab:kidney')}</div></div>
+      ${['lights', 'comms'].map(k => `<div class="lab-card"><div class="lc-top"><b>${esc(SAB[k].name)} 고치기</b><span class="badge sab">몸속 비상사태</span></div>
+        <div class="lc-steps"><button class="lc-step press" data-sab="${k}">해 보기</button>${resultChip('sab:' + k)}</div></div>`).join('')}</div>`;
   document.querySelectorAll('.lc-step[data-m]').forEach(b => b.onclick = () => {
     const m = MISSIONS[b.dataset.m], i = +b.dataset.i, s = m.steps[i];
     play({ key: `${m.id}:${i}`, title: m.title + (m.steps.length > 1 ? ` (${i + 1}/${m.steps.length})` : ''), sub: s.sub, note: s.note, big: s.big, mount: s.mount });
@@ -56,6 +59,7 @@ function renderNow() {
   });
   document.querySelector('[data-sab="kidney"]').onclick = () =>
     play({ key: 'sab:kidney', title: '콩팥 정지 해결', sub: '여과: 토리의 혈액에서 보먼주머니로 빠져나가는 물질만 끌어 보내 콩팥을 다시 움직이세요.', mount: SAB_FIX.kidney });
+  ['lights', 'comms'].forEach(k => { document.querySelector(`[data-sab="${k}"]`).onclick = () => play({ key: 'sab:' + k, title: `${SAB[k].name} 고치기`, sub: SAB[k].fix, mount: SAB_FIX[k] }); });
   document.querySelectorAll('.lc-more').forEach(b => b.onclick = () => b.closest('.lab-card').classList.toggle('open'));
   document.querySelectorAll('.lc-proto').forEach(b => b.onclick = () => openProto(b.dataset.p));
 }

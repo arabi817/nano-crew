@@ -35,7 +35,8 @@ export function openMinimap(app) {
       ctx.strokeText(name, X(r.x + r.w / 2), Y(r.y + r.h / 2)); ctx.fillText(name, X(r.x + r.w / 2), Y(r.y + r.h / 2));
     });
     const blink = 0.5 + 0.5 * Math.sin(t / 200);
-    app.tasks.filter(k => !k.done).flatMap(k => k.spots || [k.spot]).forEach(id => {
+    if (app.game?.sab?.kind !== 'comms') app.tasks.filter(k => !k.done)   // 신경 신호 끊김이면 미션 위치 안 보임
+      .flatMap(k => k.spots || [k.spot]).forEach(id => {
       const sp = SPOTS[id]; if (!sp) return;
       ctx.fillStyle = `rgba(255,225,77,${0.4 + 0.6 * blink})`; ctx.strokeStyle = '#1a1018'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.rect(X(sp.x) - 9, Y(sp.y) - 9, 18, 18); ctx.fill(); ctx.stroke();

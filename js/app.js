@@ -295,7 +295,8 @@ function refreshTasks() {
 // ───── 사보타주 경보 ─────
 let sabTimer = 0;
 function onSab(sab) {
-  const big = sab && sab.kind !== 'clot';
+  const big = sab && (sab.kind === 'o2' || sab.kind === 'kidney');   // 못 막으면 지는 비상사태만 화면 테두리가 빨갛게
+  document.body.classList.toggle('sab-comms', sab?.kind === 'comms');   // 신경 신호 끊김: 미션 목록 가리기
   setBlockedDoors(sab?.kind === 'clot' ? doorsOf(sab.room) : []);
   const mi = app.scene?.mapInfo;
   if (mi) {
@@ -316,6 +317,13 @@ function onSab(sab) {
   const S = CONTENT.sabotage[sab.kind];
   const tick = () => {
     const left = Math.max(0, Math.ceil((sab.endsAt - app.db.now()) / 1000));
+    const fixRoom = roomName(Object.values(SAB_SPOTS).find(s => s.kind === sab.kind)?.room);
+    if (!sab.endsAt) {   // 시야 차단·신경 신호 끊김: 시간 없음
+      box.innerHTML = `<b>${esc(S.name)}!</b> ${esc(S.guide)}`;
+      const line = $('#sab-line'); line.hidden = false;
+      line.innerHTML = `<b>${esc(fixRoom)}</b> ${esc(S.name)} 고치기` + (sab.kind === 'comms' ? '<br><small>신경 신호가 끊겨 미션 목록이 안 보여요</small>' : '');
+      return;
+    }
     box.innerHTML = sab.kind === 'clot'
       ? `<b>혈관 막힘</b> ${esc(roomName(sab.room))} 문이 막혔어요 · ${left}초`
       : `<b>${esc(S.name)}!</b> ${esc(MAP_ID === 'big' && S.guideBig || S.guide)} <span class="sab-time">${left}초</span>`;
@@ -403,6 +411,14 @@ function openSabFix(spotId) {
     });
     return;
   }
+  if (s.kind === 'lights' || s.kind === 'comms') {   // 시간 제한 없는 비상사태: 조작만 하면 해결
+    const S = CONTENT.sabotage[s.kind];
+    app.panel = openPanel({
+      title: `${S.name} 고치기`, sub: S.fix, mount: SAB_FIX[s.kind],
+      onSuccess: () => request('fix', s.kind), onClose: () => { app.panel = null; },
+    });
+    return;
+  }
   // 산소 부족: 누르고 있는 동안만 신호를 보냄
   const other = s.other;
   app.panel = openPanel({
@@ -447,6 +463,10 @@ app.sabAction = () => {
     html: `<div class="sab-menu">
       <button class="sab-opt press" data-k="o2"><b>${S.o2.name}</b><small>${S.o2.sec}초 안에 못 막으면 승리</small></button>
       <button class="sab-opt press" data-k="kidney"><b>${S.kidney.name}</b><small>${S.kidney.sec}초 안에 못 막으면 승리</small></button>
+      <div class="sab-two">
+        <button class="sab-opt sab-minor press" data-k="lights"><b>${S.lights.name}</b><small>크루원 시야가 좁아져요</small></button>
+        <button class="sab-opt sab-minor press" data-k="comms"><b>${S.comms.name}</b><small>미션 목록이 사라져요</small></button>
+      </div>
       <div class="sab-clot"><b>${S.clot.name}</b> <small>${S.clot.sec}초 동안 고른 방의 문을 막아요</small>
         <div class="opt-list">${PLACES.map(p => `<button class="opt press" data-room="${p.id}">${esc(p.name)}</button>`).join('')}</div></div></div>`,
     onMount: (ov, close) => {

@@ -84,6 +84,8 @@ SMALL.SAB_SPOTS = {
   o2Lung: { room: 'lung', x: 690, y: 1680, kind: 'o2', side: 'lung', other: '심장실' },
   o2Heart: { room: 'heart', x: 2730, y: 1120, kind: 'o2', side: 'heart', other: '허파실' },
   kidneyStop: { room: 'kidney', x: 2970, y: 2420, kind: 'kidney' },
+  lightsPanel: { room: 'vessel', x: 2000, y: 2390, kind: 'lights' },   // 시야 차단 스위치
+  nerveRelay: { room: 'heart', x: 3020, y: 1590, kind: 'comms' },      // 신경 신호 다이얼
 };
 
 // 혈관 통로(벤트): 바이러스만 써요. 서로 먼 방끼리 4쌍
@@ -184,6 +186,8 @@ const BIG = {};
     o2Lung: { room: 'lungR', x: 330, y: 1890, kind: 'o2', side: 'lung', other: '왼쪽 허파실' },
     o2Heart: { room: 'lungL', x: 5030, y: 1890, kind: 'o2', side: 'heart', other: '오른쪽 허파실' },
     kidneyStop: { room: 'kidney', x: 3260, y: 2880, kind: 'kidney' },
+    lightsPanel: { room: 'vessel', x: 4420, y: 1890, kind: 'lights' },
+    nerveRelay: { room: 'heart', x: 1480, y: 1330, kind: 'comms' },
   };
   BIG.VENTS = {
     vMouth: { room: 'mouth', x: 860, y: 770, to: 'vBladder' },

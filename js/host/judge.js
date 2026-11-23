@@ -137,7 +137,7 @@ export class Judge {
     const [kind, room] = String(what || '').split(':');
     const S = CONTENT.sabotage[kind]; if (!S || kind === 'cooldown') return;
     if (kind === 'clot' && !room) return;
-    const sab = { kind, endsAt: now + S.sec * 1000, at: now };
+    const sab = { kind, endsAt: S.sec ? now + S.sec * 1000 : 0, at: now };   // 시야 차단·신경 신호 끊김은 시간 제한 없음(0)
     if (room) sab.room = room;
     this.game.sab = sab;
     this.db.update(this.R, { 'game/sab': sab, sabHold: null });
@@ -148,8 +148,8 @@ export class Judge {
   }
   near(uid, spotId, k = 1.7) { const a = this.posOf(uid), s = SAB_SPOTS[spotId]; return a && s && dist(a, s) < 140 * k; }
   tryFix(uid, kind) {
-    if (this.game.sab?.kind !== kind || kind !== 'kidney') return;
-    if (!this.near(uid, 'kidneyStop')) return;
+    if (this.game.sab?.kind !== kind || !['kidney', 'lights', 'comms'].includes(kind)) return;
+    if (!Object.entries(SAB_SPOTS).some(([id, s]) => s.kind === kind && this.near(uid, id))) return;
     this.endSab();
   }
   // 산소 부족: 허파실·심장실 버튼을 서로 다른 두 사람이 동시에 누르고 있으면 해결
@@ -197,7 +197,7 @@ export class Judge {
   }
   tick() {
     const sab = this.game.sab;
-    if (sab && !this.game.meeting && !this.meta?.paused && this.meta?.state === 'playing' && !this.game.winner && this.db.now() >= sab.endsAt) {
+    if (sab && !this.game.meeting && !this.meta?.paused && this.meta?.state === 'playing' && !this.game.winner && sab.endsAt && this.db.now() >= sab.endsAt) {
       if (sab.kind === 'clot') this.endSab();
       else this.endGame({ team: 'imp', reason: CONTENT.sabotage[sab.kind].fail });
     }
@@ -326,7 +326,7 @@ export class Judge {
     const now = this.db.now();
     if (!this.meta?.paused) { this.pausedAt = now; this.db.update(this.R, { 'meta/paused': true, 'meta/pausedAt': now }); return; }
     const gap = now - (this.meta.pausedAt || now), upd = { 'meta/paused': false };
-    if (this.game.sab) upd['game/sab/endsAt'] = this.game.sab.endsAt + gap;
+    if (this.game.sab?.endsAt) upd['game/sab/endsAt'] = this.game.sab.endsAt + gap;
     if (this.game.meeting?.speaker) upd['game/meeting/speaker/until'] = this.game.meeting.speaker.until + gap;
     if (this.game.meeting) { upd['game/meeting/endsAt'] = this.game.meeting.endsAt + gap; if (this.game.meeting.startAt) upd['game/meeting/startAt'] = this.game.meeting.startAt + gap; }
     for (const id of this.ids()) if (this.roleOf(id) === 'imp' && this.priv[id].killReadyAt) upd[`private/${id}/killReadyAt`] = this.priv[id].killReadyAt + gap;

@@ -39,7 +39,7 @@ export class WorldScene extends Phaser.Scene {
   fitZoom() {
     const dpr = this.app.dpr || 1;
     const w = this.scale.width / dpr, h = this.scale.height / dpr;
-    const z = Math.max(0.45, Math.min(1.5, Math.min(w, h) / (this.visionR() * 2.05)));
+    const z = Math.max(0.45, Math.min(1.5, Math.min(w, h) / (this.visionR(true) * 2.05)));   // 시야 차단 때는 화면을 키우지 않아요 (빛만 좁아짐)
     this.cameras.main.setZoom(z * dpr);
   }
 
@@ -143,7 +143,8 @@ export class WorldScene extends Phaser.Scene {
 
     const playing = a.phase === 'playing', fog = playing && !ghost, dead = a.game?.dead || {};
     const VR = this.visionR();
-    if (VR !== this.lastVR) { this.lastVR = VR; this.fitZoom(); }
+    const VB = this.visionR(true);
+    if (VB !== this.lastVR) { this.lastVR = VB; this.fitZoom(); }
     const mates = a.priv?.mates || [];
     let visible = 0;
     for (const [uid, av] of this.avatars) {
@@ -216,7 +217,7 @@ export class WorldScene extends Phaser.Scene {
     if (playing && !a.isFrozen()) {
       const sab = a.game?.sab;
       if (sab && sab.kind !== 'clot' && !ghost) for (const s of Object.values(SAB_SPOTS)) if (s.kind === sab.kind) targets.push({ x: s.x, y: s.y, red: true });
-      if (a.priv?.role !== 'imp') for (const t of a.tasks) {
+      if (a.priv?.role !== 'imp' && a.game?.sab?.kind !== 'comms') for (const t of a.tasks) {   // 신경 신호 끊김이면 미션 화살표도 없음
         if (t.done || t.step === 0) continue;
         for (const id of t.spots || [t.spot]) { const s = SPOTS[id]; if (s) targets.push({ x: s.x, y: s.y }); }
       }
@@ -273,9 +274,11 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  visionR() {   // 교사 설정(넓게·보통·좁게)에 따라. 바이러스는 크루원보다 조금 넓게
+  visionR(base = false) {   // 교사 설정(넓게·보통·좁게)에 따라. 바이러스는 크루원보다 조금 넓게. base: 시야 차단을 빼고
     const [crew, imp] = VISION_R[settingsOf(this.app.meta).vision] || [VISION, IMP_VISION];
-    return this.app.priv?.role === 'imp' && !this.app.amDead?.() ? imp : crew;
+    if (this.app.priv?.role === 'imp' && !this.app.amDead?.()) return imp;
+    if (!base && this.app.game?.sab?.kind === 'lights' && !this.app.amDead?.()) return Math.round(crew * 0.4);   // 시야 차단 (유령은 그대로)
+    return crew;
   }
 
   // 시야: 내 자리에서 사방으로 시선을 쏴서 벽에 막히는 곳까지만 밝게 (어몽어스처럼).
