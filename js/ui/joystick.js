@@ -27,7 +27,9 @@ export class Joystick {
     const d = Math.hypot(dx, dy), k = d > this.R ? this.R / d : 1;
     dx *= k; dy *= k;
     this.knob.style.transform = `translate(${dx}px, ${dy}px)`;
-    this.vec = d < 8 ? { x: 0, y: 0 } : { x: dx / this.R, y: dy / this.R };
+    // 조금만 밀어도(8px 넘으면) 최고 속도 — 방향만 따라요 (살살 미는 학생이 느려지지 않게, 선생님 결정 2026-11-24)
+    const m = Math.hypot(dx, dy) || 1;
+    this.vec = d < 8 ? { x: 0, y: 0 } : { x: dx / m, y: dy / m };
   }
   reset() { this.vec = { x: 0, y: 0 }; }
 }
