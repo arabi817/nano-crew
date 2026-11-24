@@ -226,6 +226,7 @@ export function useMap(id) {
   relist(BLOCKS, [{ x: TABLE.x, y: TABLE.y, r: TABLE.r }]);
   relist(AREAS, [...ROOMS, ...HALLS]);
   relist(PLACES, ROOMS.filter(r => !r.lobby).map(r => ({ id: r.id, name: r.name.replace(/ \(.*\)/, '') })));
+  buildSeeGrid();
   blockedDoors = [];
   // 구역(방·복도) 이웃, 봇 길 찾기 그래프
   HALLS.forEach((h, i) => { h.zone = 'h' + i; });
@@ -255,7 +256,6 @@ export const roomName = id => roomById(id)?.name.replace(/ \(.*\)/, '') ?? '';
 
 // 혈관 막힘(사보타주): 막힌 방의 문(복도 입구) 사각형
 let blockedDoors = [];
-useMap('small');
 export function doorsOf(roomId) {
   const r = ROOMS.find(q => q.id === roomId); if (!r) return [];
   const out = [], D = 46;
@@ -274,7 +274,23 @@ export function doorsOf(roomId) {
 export function setBlockedDoors(list) { blockedDoors = list || []; }
 const inDoor = (x, y) => blockedDoors.some(d => inRect(d, x, y));
 // 시선이 지나갈 수 있는 곳 (방·복도 안, 막힌 문 제외). 벽과 맵 바깥은 시야를 가려요.
-export const seeThrough = (x, y) => inAreas(x, y) && !inDoor(x, y);
+// 시야 계산용 칸 지도 (8px 칸): 시선을 쏠 때마다 방·복도 30여 개를 다 뒤지지 않고 칸 하나만 봐요
+const CELL = 8;
+let seeGrid = null, gridW = 0, gridH = 0;
+function buildSeeGrid() {
+  gridW = Math.ceil(WORLD.w / CELL) + 1; gridH = Math.ceil(WORLD.h / CELL) + 1;
+  seeGrid = new Uint8Array(gridW * gridH);
+  for (const a of AREAS) {
+    const x0 = Math.max(0, Math.ceil(a.x / CELL)), x1 = Math.min(gridW - 1, Math.floor((a.x + a.w) / CELL));
+    const y0 = Math.max(0, Math.ceil(a.y / CELL)), y1 = Math.min(gridH - 1, Math.floor((a.y + a.h) / CELL));
+    for (let y = y0; y <= y1; y++) seeGrid.fill(1, y * gridW + x0, y * gridW + x1 + 1);
+  }
+}
+const inGrid = (x, y) => {
+  const cx = Math.round(x / CELL), cy = Math.round(y / CELL);
+  return cx >= 0 && cy >= 0 && cx < gridW && cy < gridH && seeGrid[cy * gridW + cx] === 1;
+};
+export const seeThrough = (x, y) => inGrid(x, y) && (!blockedDoors.length || !inDoor(x, y));
 // 두 점 사이가 벽에 막히지 않았나?
 export function lineOfSight(ax, ay, bx, by, step = 18) {
   const d = Math.hypot(bx - ax, by - ay), n = Math.ceil(d / step);
@@ -349,3 +365,5 @@ export function route(fromId, toId) {
   pts.push(randomPointIn(roomById(toId), 110));
   return pts;
 }
+
+useMap('small');   // 처음엔 작은 맵 (맨 끝에서 불러야 위의 칸 지도 등이 준비돼 있어요)

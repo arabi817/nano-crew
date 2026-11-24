@@ -203,7 +203,7 @@ async function enterGame(rejoin) {
     $('#host-gone').hidden = !hp || hp.on !== false;   // 친구들끼리 하기: 방장 패드가 꺼지면 알려 줘요
     renderHostBox();
   });
-  db.onValue(P.done(code), v => { app.allDone = v || {}; app.done = app.allDone[uid] || {}; refreshTasks(); });
+  db.onValue(P.doneOf(code, uid), v => { app.done = v || {}; refreshTasks(); });   // 내 것만 받아요 (예전엔 누가 미션 하나 끝낼 때마다 전원 목록을 32대가 다 받았어요)
   db.onValue(P.privOf(code, uid), v => { app.priv = v; refreshTasks(); maybeReveal(); });
   db.onValue(P.game(code), onGame);
   if (rejoin) app.hud.toast('다시 들어왔어요! 같은 캐릭터로 이어서 해요');

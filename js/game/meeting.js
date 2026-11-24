@@ -139,6 +139,9 @@ export class MeetingUI {
     ids.sort((a, b) => (g.dead?.[a] ? 1 : 0) - (g.dead?.[b] ? 1 : 0) || byNick(players[a], players[b]));
     const counts = m.result?.counts || {}, voting = m.phase === 'vote', showRes = m.phase === 'result';
     const mates = this.app.priv?.mates || [];
+    // 채팅이 올 때마다 32명 그림을 다시 만들지 않게: 보이는 게 바뀔 때만 다시 그려요
+    const key = JSON.stringify([m.phase, m.caller, ids, voting && Object.keys(this.data.vote).sort(), this.my.vote, this.canVote, showRes && counts, ids.map(id => players[id]?.c + '/' + (players[id]?.hat || 0) + (g.dead?.[id] ? 'd' : ''))]);
+    if (this.gridKey === key) return; this.gridKey = key;
     this.$('.meet-grid').innerHTML = ids.map(id => {
       const p = players[id], dead = !!g.dead?.[id], voted = !!this.data.vote[id];
       const mine = this.my.vote === id, n = counts[id] || 0;
