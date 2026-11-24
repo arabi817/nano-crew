@@ -114,7 +114,8 @@ export class WorldScene extends Phaser.Scene {
 
   update(time, dtRaw) {
     if (!this.ready) return;
-    const a = this.app, dt = Math.min(dtRaw, 50), now = performance.now();
+    // 느린 패드도 같은 빠르기로 걷게: 지난 장면부터 흐른 시간만큼 (0.25초까지) 움직이고, 벽 검사는 잘게 나눠서 해요
+    const a = this.app, dt = Math.min(dtRaw, 250), now = performance.now();
     let vx = 0, vy = 0;
     if (!a.isFrozen()) {
       const k = this.keys;
@@ -124,15 +125,17 @@ export class WorldScene extends Phaser.Scene {
     }
     const len = Math.hypot(vx, vy);
     if (len > 1) { vx /= len; vy /= len; }
-    const step = SPEED * dt / 1000;
     let moved = false;
     const ghost = a.amDead();
     if (len > 0.05) {
-      const nx = this.x + vx * step, ny = this.y + vy * step;
-      // 유령은 벽을 통과해요 (맵 바깥으로만 못 나감)
-      const ok = (x, y) => ghost ? (x > 60 && y > 60 && x < 3850 && y < 2600) : walkable(x, y, RADIUS);
-      if (ok(nx, this.y)) { this.x = nx; moved = true; }
-      if (ok(this.x, ny)) { this.y = ny; moved = true; }
+      // 유령은 벽을 통과해요 (지금 맵 바깥으로만 못 나감)
+      const ok = (x, y) => ghost ? (x > 60 && y > 60 && x < WORLD.w - 60 && y < WORLD.h - 60) : walkable(x, y, RADIUS);
+      const n = Math.ceil(dt / 34);   // 한 번에 최대 약 9px씩
+      for (let i = 0; i < n; i++) {
+        const step = SPEED * (dt / n) / 1000, nx = this.x + vx * step, ny = this.y + vy * step;
+        if (ok(nx, this.y)) { this.x = nx; moved = true; }
+        if (ok(this.x, ny)) { this.y = ny; moved = true; }
+      }
       if (vx < -0.1) this.face = -1; else if (vx > 0.1) this.face = 1;
     }
     this.me.setPos(this.x, this.y);
