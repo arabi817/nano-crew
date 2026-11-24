@@ -20,11 +20,25 @@
 <section id="page-join" class="screen-page bg-body" hidden>
   <div class="join-wrap">
     <h1 class="logo">어몸어스<small>몸속 대작전 · 동물과 에너지</small></h1>
-    <form id="code-form" class="metal join-box">
+    <!-- 고르기: 선생님과 / 친구들끼리 -->
+    <div id="join-choose" class="metal join-box">
+      <button id="go-back-room" class="btn btn-green press join-big" hidden></button>
+      <button id="go-teacher" class="btn btn-yellow press join-big">선생님과 함께하기</button>
+      <button id="go-friends" class="btn btn-gray press join-big">친구들끼리 하기</button>
+    </div>
+    <div id="join-friends" class="metal join-box" hidden>
+      <div class="join-label">친구들끼리 하기</div>
+      <button id="btn-make" class="btn btn-yellow press join-big">방 만들기 <small>내가 방장</small></button>
+      <button id="btn-friend-join" class="btn btn-gray press join-big">친구 방 들어가기 <small>방 코드 넣기</small></button>
+      <p id="make-msg" class="msg"></p>
+      <button class="join-back press" type="button">← 처음으로</button>
+    </div>
+    <form id="code-form" class="metal join-box" hidden>
       <label for="code-input" class="join-label">방 코드</label>
       <input id="code-input" class="code-input" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000">
       <button class="btn btn-yellow press" type="submit">들어가기</button>
       <p id="code-msg" class="msg"></p>
+      <button class="join-back press" type="button">← 처음으로</button>
     </form>
   </div>
   <details class="credit"><summary>정보</summary><p>원작 · Among Us<br>제작 · 유락여중 김여진 선생님과 AI 친구들</p></details>
@@ -95,6 +109,10 @@
     <button id="notice-btn" class="btn btn-yellow press"></button>
   </div>
 </div>
+
+<!-- 방장 칸 (친구들끼리 하기에서 방을 만든 학생만, 대기실·판 끝에) -->
+<div id="host-box" class="host-box metal-dark" hidden></div>
+<div id="host-gone" class="host-gone" hidden>방장이 나갔어요 · 방장이 다시 들어오면 이어져요</div>
 
 <script type="module" src="js/app.js"></script>
 </body>

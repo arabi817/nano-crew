@@ -23,11 +23,12 @@ export const P = {
   meet: (c, m) => `rooms/${c}/meet/${m}`, // 회의별 OX 답, 투표권, 채팅, 투표
 };
 
-export async function createRoom(db) {
+// extra: { free: true } = 친구들끼리 하기 (방을 만든 학생 패드가 심판도 해요)
+export async function createRoom(db, extra = {}) {
   for (let i = 0; i < 20; i++) {
     const code = String(Math.floor(1000 + Math.random() * 9000));
     if (await db.get(P.meta(code))) continue;
-    await db.set(P.meta(code), { hostUid: db.uid, createdAt: db.now(), state: 'lobby' });
+    await db.set(P.meta(code), { hostUid: db.uid, createdAt: db.now(), state: 'lobby', ...extra });
     return code;
   }
   throw new Error('방 코드를 만들지 못했어요');

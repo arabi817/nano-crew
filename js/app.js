@@ -1,6 +1,6 @@
 // 학생 패드 화면의 흐름: 방 코드 → 닉네임(색+번호) → 대기실 → 게임
 import { createDB } from './net/db.js';
-import { P, spawnOrder } from './net/room.js';
+import { P, spawnOrder, createRoom } from './net/room.js';
 import { decodePos, findPos } from './net/posSync.js';
 import { COLORS, NAME_MAX, nickOf, nickKey, checkName } from './common/colors.js';
 import { avatarSVG } from './player/avatarSvg.js';
@@ -15,7 +15,8 @@ import { CONTENT } from '../data/content.js';
 import { PLACES } from './game/shared.js';
 import { sfx, unlockAudio } from './common/sfx.js';
 import { $, esc } from './common/util.js';
-import { settingsOf, settingsHTML } from './common/rules.js';
+import { settingsOf, settingsHTML, VISION_NAME } from './common/rules.js';
+import { MAP_NAME } from './map/map.js';
 import { MeetingUI } from './game/meeting.js';
 import { showRoleReveal, showKilled, showEnd, hideEnd, setPaused, fakeTask } from './game/screens.js';
 
@@ -46,8 +47,32 @@ async function boot() {
   const room = q.get('room') || '';
   $('#code-input').value = room;
   $('#code-form').onsubmit = e => { e.preventDefault(); tryCode($('#code-input').value.trim()); };
+  // 첫 화면: 선생님과 함께하기 / 친구들끼리 하기(방 만들기 · 친구 방 들어가기)
+  const step = id => ['join-choose', 'join-friends', 'code-form'].forEach(k => { $('#' + k).hidden = k !== id; });
+  const codeStep = label => { $('#code-form .join-label').textContent = label; say('#code-msg', ''); step('code-form'); setTimeout(() => $('#code-input').focus(), 50); };
+  $('#go-teacher').onclick = () => codeStep('선생님 방 코드');
+  $('#go-friends').onclick = () => step('join-friends');
+  $('#btn-friend-join').onclick = () => codeStep('친구 방 코드');
+  document.querySelectorAll('.join-back').forEach(b => b.onclick = () => step('join-choose'));
+  $('#btn-make').onclick = async () => {
+    $('#btn-make').disabled = true; say('#make-msg', '방을 만드는 중...');
+    try { const code = await createRoom(app.db, { free: true }); say('#make-msg', ''); tryCode(code); }
+    catch (e) { say('#make-msg', '방을 만들지 못했어요. 다시 눌러 주세요'); $('#btn-make').disabled = false; }
+  };
   show('page-join');
-  if (room) tryCode(room);
+  if (room) { codeStep('방 코드'); tryCode(room); return; }   // 선생님 QR로 들어오면 바로
+  // 새로고침·화면 꺼짐으로 나왔다면: 내가 있던 방으로 돌아가기 (방장이면 꼭 돌아가야 게임이 이어져요)
+  try {
+    const last = localStorage.getItem('nc_last_room');
+    if (last && await app.db.get(P.player(last, app.uid))) {
+      const m = await app.db.get(P.meta(last)), b = $('#go-back-room');
+      if (m) {
+        b.hidden = false;
+        b.innerHTML = `방 ${esc(last)}로 돌아가기<small>${m.free && m.hostUid === app.uid ? '내가 방장인 방' : '아까 있던 방'}</small>`;
+        b.onclick = () => { codeStep('방 코드'); tryCode(last); };
+      }
+    }
+  } catch { }
 }
 
 async function tryCode(code) {
@@ -138,7 +163,7 @@ async function enterGame(rejoin) {
   const [pos, meta, players, done] = await Promise.all([
     findPos(db, P.pos(code), uid), db.get(P.meta(code)), db.get(P.players(code)), db.get(P.doneOf(code, uid)),
   ]);
-  if (!meta) return notice('방이 없어요', '선생님이 판을 끝냈어요.');
+  if (!meta) return notice('방이 없어요', '판이 끝난 방이에요.');
   app.phase = meta.state; app.players = players || {}; app.done = done || {};
   app.myPlayer = app.players[uid] || app.myPlayer;
   app.myColor = COLORS[app.myPlayer.c].hex;
@@ -147,6 +172,7 @@ async function enterGame(rejoin) {
 
   app.meta = meta;
   useMap(settingsOf(meta).map);
+  if (meta.free && meta.hostUid === uid) await startHostJudge();   // 친구들끼리 하기: 내가 방장이면 이 패드가 심판
   [app.game, app.priv] = await Promise.all([db.get(P.game(code)), db.get(P.privOf(code, uid))]);
   app.game = app.game || {};
 
@@ -173,6 +199,9 @@ async function enterGame(rejoin) {
     app.myPlayer = app.players[uid]; app.myColor = COLORS[app.myPlayer.c].hex;
     app.scene?.syncPlayers(app.players);
     app.hud.setLobby(Object.values(app.players).filter(p => p.on !== false).length);
+    const hp = app.meta?.free && !app.judge && app.players[app.meta.hostUid];
+    $('#host-gone').hidden = !hp || hp.on !== false;   // 친구들끼리 하기: 방장 패드가 꺼지면 알려 줘요
+    renderHostBox();
   });
   db.onValue(P.done(code), v => { app.allDone = v || {}; app.done = app.allDone[uid] || {}; refreshTasks(); });
   db.onValue(P.privOf(code, uid), v => { app.priv = v; refreshTasks(); maybeReveal(); });
@@ -194,6 +223,43 @@ function startPhaser() {
   app.game_.scene.add('world', WorldScene, true, { app }); // 장면이 켜지면 app.scene이 채워져요
   if (!app.onResize) addEventListener('resize', app.onResize = () => app.game_?.scale.resize(el.clientWidth * app.dpr, el.clientHeight * app.dpr));
 }
+// ───── 친구들끼리 하기: 방장 패드 ─────
+// 심판(js/host/judge.js)은 방장 패드에서만 불러와요 → 다른 학생 패드에는 OX 정답이 가지 않아요
+async function startHostJudge() {
+  if (app.judge) return;
+  const { Judge } = await import('./host/judge.js');
+  app.judge = new Judge(app.db, app.code, () => renderHostBox());
+  app.judge.start();
+}
+function renderHostBox() {
+  const box = $('#host-box'), J = app.judge;
+  const st = app.meta?.state;
+  if (!J || !app.meta || st === 'playing') { box.hidden = true; return; }
+  box.hidden = false;
+  if (st === 'ended') {
+    box.innerHTML = `<button class="btn btn-yellow press hb-go" data-a="again">다시 하기 (대기실로)</button>`;
+  } else {
+    const s = settingsOf(app.meta), n = Object.values(app.players).filter(p => p.on !== false).length;
+    box.innerHTML = `<div class="hb-code">방 코드<b>${esc(app.code)}</b></div>
+      <div class="hb-n">${n}명 들어옴</div>
+      <div class="hb-set">바이러스 <button data-a="imp-">−</button><span>${s.imps}</span><button data-a="imp+">+</button></div>
+      <button class="hb-tog" data-a="map">${esc(MAP_NAME[s.map] || '작은 맵')}</button>
+      <button class="hb-tog" data-a="vision">시야 ${esc(VISION_NAME[s.vision] || '넓게')}</button>
+      <button class="btn btn-yellow press hb-go" data-a="start">게임 시작</button>
+      <div class="hb-note">나는 방장이에요 · 이 화면을 끄면 게임이 멈춰요 · 3명부터 시작할 수 있어요</div>`;
+  }
+  box.onclick = async e => {
+    const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
+    sfx('click');
+    const s = settingsOf(app.meta);
+    if (a === 'imp-' || a === 'imp+') J.setSetting('imps', Math.max(1, Math.min(10, s.imps + (a === 'imp+' ? 1 : -1))));
+    else if (a === 'map') J.setMap(s.map === 'big' ? 'small' : 'big');
+    else if (a === 'vision') { const o = ['wide', 'normal', 'narrow']; J.setVision(o[(o.indexOf(s.vision) + 1) % 3]); }
+    else if (a === 'again') J.resetToLobby();
+    else if (a === 'start') { try { await J.startGame(); } catch (err) { app.hud.toast(err.message); } }
+  };
+}
+
 // 느린 패드: 일반 화질 + 안개 가볍게 (한 번 느렸던 패드는 다음에도 처음부터 가볍게)
 app.setLite = () => {
   if (app.lite || !app.game_) return;
@@ -226,6 +292,7 @@ function onMeta(m) {
   if (!m) return ended();
   app.meta = m;
   if (useMap(settingsOf(m).map)) restartWorld();
+  renderHostBox();
   $('#lobby-settings').innerHTML = settingsHTML(m);
   setPaused(!!m.paused && m.state === 'playing');
   const prev = app.phase; app.phase = m.state;
@@ -272,7 +339,7 @@ function onGame(g) {
     const myWin = (g.winner.team === 'imp') === (app.priv?.role === 'imp');
     sfx(myWin ? 'win' : 'lose');
   }
-  if (g.winner && g.reveal) showEnd({ winner: g.winner, reveal: g.reveal, players: app.players, myId: uid, myTasks: app.priv?.tasks, done: app.done });
+  if (g.winner && g.reveal) showEnd({ winner: g.winner, reveal: g.reveal, players: app.players, myId: uid, myTasks: app.priv?.tasks, done: app.done, free: !!app.meta?.free });
   refreshTasks();
 }
 
@@ -294,7 +361,7 @@ function maybeReveal() {
 function closeOverlays() { app.panel?.close(); app.minimap?.close(); app.sheet?.close(); app.joy?.reset(); }
 let leftShown = false;
 function kicked() { if (leftShown) return; leftShown = true; closeOverlays(); app.meeting?.close(); app.game_?.destroy(true); notice('방에서 나왔어요', '선생님이 방에서 내보냈어요. 다시 들어가려면 방 코드를 넣어 주세요.'); }
-function ended() { if (leftShown) return; leftShown = true; closeOverlays(); app.meeting?.close(); hideEnd(); app.game_?.destroy(true); notice('판이 끝났어요', '선생님이 판을 끝냈어요. 수고했어요!'); }
+function ended() { if (leftShown) return; leftShown = true; closeOverlays(); app.meeting?.close(); hideEnd(); app.game_?.destroy(true); notice('판이 끝났어요', `${app.meta?.free ? '방장이' : '선생님이'} 판을 끝냈어요. 수고했어요!`); }
 
 function refreshTasks() {
   const list = app.priv?.tasks || [];

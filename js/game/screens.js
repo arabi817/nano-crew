@@ -37,7 +37,7 @@ export function showKilled(myAvatar = '') {
   setTimeout(() => { ov.classList.add('out'); setTimeout(() => ov.remove(), 400); }, 4600);
 }
 
-export function showEnd({ winner, reveal, players, myId, myTasks, done }) {
+export function showEnd({ winner, reveal, players, myId, myTasks, done, free = false }) {
   document.querySelector('.fx-ov.end')?.remove();
   const myRole = reveal?.[myId], won = myRole && ((winner.team === 'imp') === (myRole === 'imp'));
   const imps = Object.entries(reveal || {}).filter(([, r]) => r === 'imp').map(([id]) => id);
@@ -51,7 +51,7 @@ export function showEnd({ winner, reveal, players, myId, myTasks, done }) {
     <div class="end-imps">바이러스는 ${imps.map(id => `<b>${esc(nickOf(players[id]) || '?')}</b>`).join(', ') || '없었어요'}</div>
     <div class="end-grid">${list.map(id => `<div class="end-p ${reveal[id]}">${avatarOf(players[id], 52)}<span>${esc(nickOf(players[id]) || '?')}</span><small>${reveal[id] === 'imp' ? '바이러스' : '크루원'}</small></div>`).join('')}</div>
     ${myRole === 'crew' && mine ? `<div class="end-mine"><b>내가 한 미션</b><ul>${mine}</ul></div>` : ''}
-    <div class="end-wait">선생님이 새 판을 준비하면 대기실로 돌아가요</div>`);
+    <div class="end-wait">${free ? '방장이' : '선생님이'} 새 판을 준비하면 대기실로 돌아가요</div>`);
 }
 export function hideEnd() { document.querySelector('.fx-ov.end')?.remove(); }
 

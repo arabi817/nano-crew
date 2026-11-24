@@ -55,7 +55,7 @@ export class Hud {
     const on = !!target && cd <= 0;
     b.disabled = !on; b.classList.toggle('ready', on);
   }
-  setLobby(n) { $('#lobby-banner').textContent = `선생님이 시작하기를 기다리는 중 · ${n}명 접속`; }
+  setLobby(n) { $('#lobby-banner').textContent = `${this.app?.meta?.free ? '방장이' : '선생님이'} 시작하기를 기다리는 중 · ${n}명 접속`; }
   setConn(ok) { $('#conn-banner').hidden = ok; }
   toast(text) {
     const t = document.createElement('div'); t.className = 'toast'; t.textContent = text;
