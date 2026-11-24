@@ -67,7 +67,9 @@ function openPicker() {
   const { db, code, uid } = app;
   let c = Math.floor(Math.random() * COLORS.length), taken = {};
   const input = $('#name-input');
-  input.maxLength = NAME_MAX;
+  // 글자 수 제한(maxLength)은 일부 패드에서 한글 입력이 아예 안 되게 해서 쓰지 않아요. 8글자 넘으면 아래 안내 글로 알려요
+  input.removeAttribute('maxlength');
+  let composing = false, lastC = -1;
   try { input.value = localStorage.getItem('nc_last_name') || ''; } catch { }
   $('#color-grid').innerHTML = COLORS.map((col, i) =>
     `<button class="swatch press" data-c="${i}" style="--sw:${col.hex}"><span>${col.name}</span></button>`).join('');
@@ -79,16 +81,22 @@ function openPicker() {
     return null;
   };
   function render() {
-    document.querySelectorAll('.swatch').forEach(b => b.classList.toggle('sel', +b.dataset.c === c));
-    $('#pick-preview').innerHTML = avatarSVG(COLORS[c].hex, 0, 150);
+    if (c !== lastC) {   // 색을 바꿀 때만 그림을 다시 그려요 (친구가 들어올 때마다 다시 그리지 않게)
+      lastC = c;
+      document.querySelectorAll('.swatch').forEach(b => b.classList.toggle('sel', +b.dataset.c === c));
+      $('#pick-preview').innerHTML = avatarSVG(COLORS[c].hex, 0, 150);
+    }
     const name = input.value.trim();
     $('#pick-name').textContent = name || '이름을 지어 주세요';
     const p = name ? problem() : null;
     say('#pick-msg', p || '');
     $('#pick-go').disabled = !name || !!p;
   }
-  const unsub = db.onValue(P.nicks(code), v => { taken = v || {}; render(); });
-  input.oninput = render;
+  // 한글 조합 중(ㄱ→가→각)에는 화면을 건드리지 않아요. 친구 32명이 한꺼번에 들어오면 이름 목록이 계속 바뀌거든요
+  const unsub = db.onValue(P.nicks(code), v => { taken = v || {}; if (!composing) render(); });
+  input.addEventListener('compositionstart', () => { composing = true; });
+  input.addEventListener('compositionend', () => { composing = false; render(); });
+  input.oninput = () => { if (!composing) render(); else $('#pick-name').textContent = input.value.trim(); };
   input.onkeydown = e => { if (e.key === 'Enter' && !$('#pick-go').disabled) $('#pick-go').click(); };
   $('#color-grid').onclick = e => { const b = e.target.closest('.swatch'); if (!b) return; sfx('click'); c = +b.dataset.c; render(); };
   $('#pick-go').onclick = async () => {
@@ -175,7 +183,8 @@ async function enterGame(rejoin) {
 
 function startPhaser() {
   const el = $('#phaser');
-  const dpr = app.dpr = Math.min(window.devicePixelRatio || 1, 2);
+  try { app.lite = localStorage.getItem('nc_lite') === '1'; } catch { }
+  const dpr = app.dpr = app.lite ? 1 : Math.min(window.devicePixelRatio || 1, 2);   // 느린 패드는 일반 화질
   const W = el.clientWidth, H = el.clientHeight;
   app.game_ = new Phaser.Game({
     type: Phaser.AUTO, parent: el, width: W * dpr, height: H * dpr, backgroundColor: '#140c12',
@@ -185,6 +194,16 @@ function startPhaser() {
   app.game_.scene.add('world', WorldScene, true, { app }); // 장면이 켜지면 app.scene이 채워져요
   if (!app.onResize) addEventListener('resize', app.onResize = () => app.game_?.scale.resize(el.clientWidth * app.dpr, el.clientHeight * app.dpr));
 }
+// 느린 패드: 일반 화질 + 안개 가볍게 (한 번 느렸던 패드는 다음에도 처음부터 가볍게)
+app.setLite = () => {
+  if (app.lite || !app.game_) return;
+  if (app.isFrozen() || !app.scene?.ready) return;   // 미션 창 등이 열려 있으면 다음에
+  app.lite = true; try { localStorage.setItem('nc_lite', '1'); } catch { }
+  // 화질은 게임 화면을 새로 만들 때만 바뀌어서, 지금 자리 그대로 조용히 다시 만들어요
+  app.startPos = { x: app.scene.x, y: app.scene.y };
+  app.scene = null; app.game_.destroy(true); app.game_ = null;
+  startPhaser();
+};
 // 선생님이 대기실에서 맵을 바꾸면: 게임 화면을 새 맵으로 다시 만들어요 (새 대기실에서 시작)
 function restartWorld() {
   if (!app.game_) return;

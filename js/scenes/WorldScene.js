@@ -12,7 +12,7 @@ import { NET } from '../../config.js';
 const SPEED = 270, RADIUS = 20, USE_RANGE = 115;
 export const VISION = 380; // 크루원 시야 반지름
 export const IMP_VISION = 500; // 바이러스는 시야가 더 넓어요 (명세)
-const FOG_STEPS = 32;   // 시야 가장자리 부드럽게 지우는 겹 수
+const FOG_STEPS = 32, FOG_STEPS_LITE = 10;   // 시야 가장자리 부드럽게 지우는 겹 수 (느린 패드는 10겹)
 const FOG_A = 0.93; // 시야 밖 어둡기 (밝은 바닥 그림이 들어와서 0.8 → 0.93, 맵 모양만 아주 희미하게)
 
 export class WorldScene extends Phaser.Scene {
@@ -138,7 +138,9 @@ export class WorldScene extends Phaser.Scene {
     this.me.setPos(this.x, this.y);
     this.me.update(dt, moved, this.face);
     this.me.root.setAlpha(ghost ? 0.55 : 1);
+    this.sender.iv = a.phase === 'lobby' ? 333 : 1000 / NET.sendHz;   // 대기실은 32명이 한곳에 모여서 1초에 3번만 (게임 중은 그대로)
     this.sender.tick(now, this.x, this.y, this.face, moved);
+    this.watchSpeed(dtRaw);
     this.zl.setZone(zoneAt(this.x, this.y));
 
     const playing = a.phase === 'playing', fog = playing && !ghost, dead = a.game?.dead || {};
@@ -285,8 +287,18 @@ export class WorldScene extends Phaser.Scene {
   // 시야 밖은 맵 모양이 희미하게 보일 정도로만 어둡게 해요.
   makeFog() {
     this.fogPoly = this.make.graphics({ add: false });
-    this.rays = 140;
+    this.rays = this.app.lite ? 72 : 140;
   }
+  // 느린 패드 알아채기: 4초 동안 평균 1초에 28장보다 적게 그리면 가볍게 (app.setLite)
+  watchSpeed(dt) {
+    if (this.app.lite) return;
+    const w = this.speedWin ||= { t: 0, n: 0 };
+    w.t += dt; w.n++;
+    if (w.t < 4000) return;
+    const fps = w.n * 1000 / w.t; w.t = 0; w.n = 0;
+    if (fps < 28) this.app.setLite?.();
+  }
+  setLite() { this.rays = 72; this.fogKey = ''; }
   // 방향마다 시선이 닿는 거리 (벽에 막히면 벽 앞면이 살짝 보이는 곳까지)
   visDists(x, y, R) {
     const out = [], n = this.rays, step = 14;
@@ -308,14 +320,18 @@ export class WorldScene extends Phaser.Scene {
     const cam = this.cameras.main, v = cam.worldView, pad = 60;
     const W = Math.ceil(v.width + pad * 2), H = Math.ceil(v.height + pad * 2);
     if (!this.fogRT || this.fogRT.width < W || this.fogRT.height < H) {
-      this.fogRT?.destroy();
+      this.fogRT?.destroy(); this.fogKey = '';
       this.fogRT = this.add.renderTexture(0, 0, W + 100, H + 100).setOrigin(0, 0).setDepth(9000);
     }
     const rt = this.fogRT, ox = v.x - pad, oy = v.y - pad, R = this.visionR();
     rt.setVisible(true).setPosition(ox, oy);
+    // 나도 화면도 그대로면 지난번 안개를 그대로 둬요 (가만히 있을 때 계산 0)
+    const sab = this.app.game?.sab, key = `${Math.round(this.x)},${Math.round(this.y)},${Math.round(ox)},${Math.round(oy)},${R},${sab?.kind}${sab?.room},${Math.floor(performance.now() / 500)}`;   // 가만히 있어도 0.5초마다는 다시 그려요 (화면을 새로 만든 직후 첫 그림이 잘못 남는 것 막기)
+    if (key === this.fogKey) return;
+    this.fogKey = key;
     rt.clear(); rt.fill(0x08040a, FOG_A);
     // 시야 모양을 바깥(R)부터 안쪽으로 여러 겹 조금씩 지워요 → 가장자리가 부드럽게 어두워지고, 따로 겹치는 그림이 없어서 원 테두리 선이 안 생겨요
-    const rays = this.visDists(this.x, this.y, R), N = FOG_STEPS, inner = 0.3;
+    const rays = this.visDists(this.x, this.y, R), N = this.app.lite ? FOG_STEPS_LITE : FOG_STEPS, inner = 0.3;
     const poly = r => rays.map(q => { const d = Math.min(q.d, r); return { x: this.x + q.c * d - ox, y: this.y + q.s * d - oy }; });
     const shade = t => FOG_A * t * t * (3 - 2 * t);   // t: 0(안쪽) → 1(R), 부드러운 곡선
     let cur = FOG_A;
