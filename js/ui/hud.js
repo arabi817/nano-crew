@@ -42,7 +42,7 @@ export class Hud {
   showProgress(on) { document.querySelector('.pbar').style.visibility = on ? '' : 'hidden'; }
   setProgress(r) { $('#pbar-fill').style.width = Math.round(Math.max(0, Math.min(1, r)) * 100) + '%'; }
   setUse(on) { const b = $('#btn-use'); if (b.disabled === !on) return; b.disabled = !on; b.classList.toggle('ready', on); }
-  setReport(on) { const b = $('#btn-report'); b.disabled = !on; b.classList.toggle('ready', on); }
+  setReport(on) { const b = $('#btn-report'); if (b.disabled === !on) return; b.disabled = !on; b.classList.toggle('ready', on); }
   setVent(on) { const b = $('#btn-vent'); if (b.disabled === !on) return; b.disabled = !on; b.classList.toggle('ready', on); }
   setSab(cdMs) { // cdMs < 0 이면 진행 중
     const b = $('#btn-sab'), cd = Math.ceil(cdMs / 1000), t = cdMs < 0 ? '' : cd > 0 ? cd : '';
@@ -50,10 +50,10 @@ export class Hud {
     b.classList.toggle('dim', cdMs < 0 || cd > 0);
   }
   setKill(target, cdMs) {
-    const b = $('#btn-kill'), cd = Math.ceil(cdMs / 1000);
-    b.querySelector('.cd').textContent = cd > 0 ? cd : '';
+    const b = $('#btn-kill'), cd = Math.ceil(cdMs / 1000), t = cd > 0 ? String(cd) : '';
+    const el = b.querySelector('.cd'); if (el.textContent !== t) el.textContent = t;   // 바뀔 때만 (매 장면마다 고치면 화면 전체 다시 계산)
     const on = !!target && cd <= 0;
-    b.disabled = !on; b.classList.toggle('ready', on);
+    if (b.disabled !== !on) { b.disabled = !on; b.classList.toggle('ready', on); }
   }
   setLobby(n) { $('#lobby-banner').textContent = `${this.app?.meta?.free ? '방장이' : '선생님이'} 시작하기를 기다리는 중 · ${n}명 접속`; }
   setConn(ok) { $('#conn-banner').hidden = ok; }

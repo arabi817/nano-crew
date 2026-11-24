@@ -161,7 +161,8 @@ export class WorldScene extends Phaser.Scene {
       if (playing && dead[uid]) al = ghost ? al * 0.5 : 0; // 유령은 유령끼리만 보여요
       if (playing && a.game?.members && !a.game.members[uid]) al = 0; // 늦게 들어온 구경꾼은 아무에게도 안 보여요
       av.setAlpha(al); if (al > 0) visible++;
-      av.label.setColor(mates.includes(uid) ? '#ff6b6b' : '#ffffff');
+      const col = mates.includes(uid) ? '#ff6b6b' : '#ffffff';   // 글자 색은 바뀔 때만 (setColor는 이름표를 통째로 다시 그려서, 매번 하면 28명×60장/초로 패드가 버벅였어요)
+      if (av.labelCol !== col) { av.labelCol = col; av.label.setColor(col); }
       av.dist = d;
       av.setFx(playing && !dead[uid] ? this.vis[uid] : null);
     }
