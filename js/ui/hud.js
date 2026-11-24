@@ -31,7 +31,7 @@ export class Hud {
   setTasks(tasks, { fake = false, dead = false } = {}) {
     $('.tasks-head').innerHTML = fake
       ? `<span class="imp-head">바이러스</span><div class="imp-goal">들키지 말고 크루원을 쓰러뜨리세요.<br>인체를 고장 내서 몸속 비상사태를 일으키세요.</div><div class="imp-fake">가짜 미션 (하는 척만)</div>`
-      : dead ? '미션 <small>유령도 할 수 있어요</small>' : '미션';
+      : dead ? '미션 <small>유령도 할 수 있어요</small>' : '미션 <small>나는 크루원</small>';
     $('#task-list').innerHTML = tasks.map(t =>
       `<li class="${t.done ? 'done' : ''}"><b>${esc(t.room)}</b> ${esc(t.title)}${t.n > 1 && !fake ? ` <small>${t.step}/${t.n}</small>` : ''}</li>`).join('');
   }

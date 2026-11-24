@@ -227,6 +227,7 @@ function onGame(g) {
   app.game = g = g || {};
   const uid = app.uid;
   app.scene?.setBodies?.(g.bodies);
+  maybeReveal();   // 역할 화면: 게임 정보가 늦게 와도 뜨게
   if (JSON.stringify(g.sab || null) !== JSON.stringify(prev.sab || null)) onSab(g.sab);
   // 내가 쓰러짐
   if (g.dead?.[uid] && !app.wasDead) {
@@ -261,11 +262,13 @@ function maybeReveal() {
   if (!m || m.state !== 'playing' || !pv?.role || !app.scene?.ready || app.revealing) return;
   const key = `nc_rv_${app.code}_${m.startedAt}`;
   if (sessionStorage.getItem(key)) return;
-  const left = (app.game.revealUntil || 0) - app.db.now();
-  if (left < 800) { sessionStorage.setItem(key, 1); return; }
+  // 게임 정보(revealUntil)가 역할보다 늦게 도착할 수 있어요 → 올 때까지 기다림 (예전엔 여기서 '이미 봄'으로 처리돼 역할 화면이 안 떴어요)
+  if (!app.game?.revealUntil || app.game.revealUntil < m.startedAt) return;
+  const now = app.db.now(), left = app.game.revealUntil - now;
+  if (now - m.startedAt > 20000) { sessionStorage.setItem(key, 1); return; }   // 한참 뒤에 다시 들어온 경우만 건너뜀 (역할은 미션 목록 머리에도 나와요)
   sessionStorage.setItem(key, 1);
   app.revealing = true;
-  showRoleReveal({ role: pv.role, mates: pv.mates || [], players: app.players, me: app.myPlayer, impCount: app.game.impCount, ms: left })
+  showRoleReveal({ role: pv.role, mates: pv.mates || [], players: app.players, me: app.myPlayer, impCount: app.game.impCount, ms: Math.max(left, 3000) })
     .then(() => { app.revealing = false; });
 }
 
