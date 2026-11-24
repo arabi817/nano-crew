@@ -54,7 +54,7 @@ body[data-hv="ended"] :is(.hv-lobby, .hv-play, .hv-meet):not(.hv-ended) { displa
 .hm-card .tag { position: absolute; top: -10px; right: -6px; font-style: normal; font-size: 15px; padding: 0 7px; border: 3px solid var(--ink); border-radius: 8px; background: #59646b; color: #fff; }
 .hm-card .tag.ok { background: var(--green); } .hm-card .tag.cnt { background: var(--red); font-size: 20px; }
 .hm-chat { overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 20px; font-weight: 700; }
-.hm-eject { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #070409; overflow: hidden; z-index: 5; }
+.hm-eject { position: fixed; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #070409; overflow: hidden; z-index: 50; }   /* TV 화면 가운데 (회의 칸이 길어져도) */
 .hm-eject.on { display: flex; }
 .hm-eject .ej-text { font-size: 72px; } .hm-eject .ej-sub { font-size: 46px; } .hm-eject .ej-left { font-size: 30px; }
 
