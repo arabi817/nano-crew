@@ -10,7 +10,7 @@ import { Hud } from './ui/hud.js';
 import { Joystick } from './ui/joystick.js';
 import { openPanel, openSheet } from './ui/panel.js';
 import { MISSIONS, SAB_FIX } from './missions/index.js';
-import { SPOTS, SAB_SPOTS, VENTS, useMap, MAP_ID, spawnPoint, lobbySpawn, roomAt, roomName, doorsOf, setBlockedDoors } from './map/map.js';
+import { SPOTS, SAB_SPOTS, VENTS, useMap, MAP_ID, walkable, spawnPoint, lobbySpawn, roomAt, roomName, doorsOf, setBlockedDoors } from './map/map.js';
 import { CONTENT } from '../data/content.js';
 import { PLACES } from './game/shared.js';
 import { sfx, unlockAudio } from './common/sfx.js';
@@ -537,7 +537,9 @@ app.reportAction = () => {
 app.ventAction = () => {
   if (blocked() || app.priv?.role !== 'imp' || app.amDead() || !app.near?.vent) return;
   const to = VENTS[VENTS[app.near.vent].to];
-  sfx('vent'); app.scene.ventTo(to.x, to.y + 50);
+  // 통로 바로 아래에 나오되, 그 자리가 벽이면 위·옆으로 (작은 맵 방광실·세포 발전소 통로는 아래가 벽이었어요)
+  const land = [[0, 50], [0, -50], [60, 0], [-60, 0], [0, 0]].map(([dx, dy]) => ({ x: to.x + dx, y: to.y + dy })).find(p => walkable(p.x, p.y, 20)) || { x: to.x, y: to.y };
+  sfx('vent'); app.scene.ventTo(land.x, land.y);
 };
 // 사보타주 메뉴 (바이러스, 유령이어도 가능)
 app.sabAction = () => {
