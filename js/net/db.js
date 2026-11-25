@@ -1,6 +1,6 @@
 // 통신 층: '혼자 시험 모드'(LocalDB)와 Firebase(FirebaseDB)를 같은 사용법으로 감쌉니다.
 // 게임 코드는 이 파일의 함수만 쓰고, 어느 쪽에 연결됐는지 몰라도 됩니다.
-import { firebaseConfig } from '../../config.js';
+import { pickServer } from './server.js';
 
 const FB = 'https://www.gstatic.com/firebasejs/10.12.2';
 const OVERHEAD = 90; // Firebase 메시지 하나에 붙는 포장(경로 등) 추정 바이트
@@ -34,16 +34,49 @@ function setIn(obj, s, v) {
 
 export function newStats() { return { inMsgs: 0, inBytes: 0, outMsgs: 0, outBytes: 0 }; }
 
-export async function createDB({ forceLocal = false } = {}) {
+// role: 'host'(교사 화면) / 'student' — 어느 서버에 붙을지는 js/net/server.js가 정해요
+export async function createDB({ forceLocal = false, role = 'student' } = {}) {
   const q = new URLSearchParams(location.search);
+  const server = pickServer(role), firebaseConfig = server.cfg;
   const local = forceLocal || q.has('local') || !firebaseConfig.apiKey;
   if (!local) {
     const miss = ['apiKey', 'databaseURL', 'projectId', 'appId'].filter(k => !firebaseConfig[k]);
-    if (miss.length) throw new Error(`config.js에 ${miss.join(', ')} 값이 비어 있어요. SETUP.md 1부 5번을 확인해 주세요.`);
+    if (miss.length) throw new Error(`서버 설정에 ${miss.join(', ')} 값이 비어 있어요.`);
   }
-  const db = local ? new LocalDB() : new FirebaseDB();
+  const db = local ? new LocalDB() : new FirebaseDB(firebaseConfig);
+  db.server = server;   // custom: 내 서버(다른 학교)인지, srv: 학생 링크에 붙일 글자
   await db.init();
   return db;
+}
+
+// '내 서버 연결하기' 창: 붙여 넣은 설정으로 실제 접속·쓰기를 시험해요. 문제가 있으면 이유를 한국어로 알려 줘요
+export async function testServer(cfg) {
+  const [appM, A, D] = await Promise.all([
+    import(`${FB}/firebase-app.js`), import(`${FB}/firebase-auth.js`), import(`${FB}/firebase-database.js`),
+  ]);
+  let app;
+  try { app = appM.initializeApp(cfg, 'test-' + Date.now()); } catch (e) { return '설정값 모양이 이상해요. 다시 복사해 붙여 넣어 주세요.'; }
+  try {
+    let user;
+    try { user = (await A.signInAnonymously(A.getAuth(app))).user; }
+    catch (e) {
+      const c = e.code || '';
+      if (c.includes('operation-not-allowed') || c.includes('admin-restricted')) return '익명 로그인이 꺼져 있어요. 안내 2단계(Authentication → 익명 사용 설정)를 해 주세요.';
+      if (c.includes('api-key') || c.includes('invalid')) return 'apiKey가 맞지 않아요. 안내 5단계의 값을 다시 복사해 주세요.';
+      return '로그인하지 못했어요: ' + (e.message || c);
+    }
+    const d = D.getDatabase(app, cfg.databaseURL), path = `rooms/t${Math.floor(Math.random() * 1e6)}/meta`;
+    try {
+      await Promise.race([D.set(D.ref(d, path), { hostUid: user.uid, createdAt: Date.now(), state: 'lobby' }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))]);
+      await D.remove(D.ref(d, path.replace('/meta', '')));
+    } catch (e) {
+      if ((e.message || '').includes('timeout')) return '데이터베이스에 닿지 않아요. databaseURL(…firebasedatabase.app 주소)을 확인해 주세요.';
+      if ((e.code || e.message || '').toLowerCase().includes('permission')) return '보안 규칙이 아직 게시되지 않았어요. 안내 4단계(규칙 붙여 넣고 게시)를 해 주세요.';
+      return '데이터베이스에 쓰지 못했어요: ' + (e.message || e.code);
+    }
+    return null;   // 성공
+  } finally { try { await appM.deleteApp(app); } catch { } }
 }
 
 // ───────── 혼자 시험 모드: 같은 컴퓨터의 창끼리 BroadcastChannel로 주고받기 ─────────
@@ -142,13 +175,13 @@ class LocalDB {
 
 // ───────── Firebase Realtime Database + 익명 로그인 ─────────
 class FirebaseDB {
-  constructor() { this.mode = 'firebase'; this.stats = newStats(); this.offset = 0; }
+  constructor(cfg) { this.mode = 'firebase'; this.cfg = cfg; this.stats = newStats(); this.offset = 0; }
   async init() {
     const [appM, A, D] = await Promise.all([
       import(`${FB}/firebase-app.js`), import(`${FB}/firebase-auth.js`), import(`${FB}/firebase-database.js`),
     ]);
     this.A = A; this.D = D;
-    this.app = appM.initializeApp(firebaseConfig);
+    this.app = appM.initializeApp(this.cfg);
     const auth = A.getAuth(this.app);
     // 이 기기에 저장된 익명 계정이 있으면 그대로 씀 → 다시 들어와도 같은 캐릭터
     const user = await new Promise((res, rej) => {

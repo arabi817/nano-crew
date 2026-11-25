@@ -1,6 +1,7 @@
 // 교사 TV 화면. 판정은 Judge(js/host/judge.js)가 하고, 여기서는 보여 주기와 교사 버튼만 맡아요.
 // ※ 게임 중 학생 위치는 절대 보여 주지 않아요. (판정용으로만 받아요)
-import { createDB } from './net/db.js';
+import { createDB, testServer } from './net/db.js';
+import { parsePasted, missingKeys, saveMyServer, myServer } from './net/server.js';
 import { P, createRoom, isBot } from './net/room.js';
 import { COLORS, nickOf, nickKeyOf, byNick } from './common/colors.js';
 import { avatarSVG } from './player/avatarSvg.js';
@@ -17,7 +18,8 @@ let db, code = null, judge = null, lastMeetPhase = '', lastState = '', hostFeed 
 
 boot();
 async function boot() {
-  try { db = await createDB(); } catch (e) { $('#start-msg').textContent = '서버 연결 실패: ' + e.message; return; }
+  drawServerBox();
+  try { db = await createDB({ role: 'host' }); } catch (e) { $('#start-msg').textContent = '서버 연결 실패: ' + e.message; return; }
   const badge = $('#mode-badge'); badge.hidden = false;
   if (db.mode === 'firebase') { badge.textContent = '온라인 서버 연결됨'; badge.classList.add('online'); }
   const last = localStorage.getItem('nc_host_room');
@@ -27,7 +29,13 @@ async function boot() {
   }
   $('#btn-new').onclick = async () => {
     $('#btn-new').disabled = true;
-    try { openRoom(await createRoom(db)); } catch (e) { $('#start-msg').textContent = e.message; $('#btn-new').disabled = false; }
+    try { openRoom(await createRoom(db)); }
+    catch (e) {
+      $('#btn-new').disabled = false;
+      // 기본 서버는 암호를 아는 컴퓨터만 교사 방을 만들 수 있어요 (규칙: hosts/{uid} = 암호)
+      if (String(e.code || e.message).toLowerCase().includes('permission')) return askHostPassword();
+      $('#start-msg').textContent = e.message;
+    }
   };
   document.addEventListener('pointerdown', () => sfx('none'), { once: true });
 }
@@ -36,6 +44,7 @@ function studentURL() {
   const u = new URL('index.html', location.href);
   u.search = ''; u.searchParams.set('room', code);
   if (db.mode === 'local') u.searchParams.set('local', '1');
+  if (db.server?.custom) u.searchParams.set('srv', db.server.srv);   // 내 서버를 쓰는 선생님: 학생도 같은 서버로
   return u.toString();
 }
 
@@ -50,6 +59,7 @@ function openRoom(c) {
   $('#btn-bots').onclick = () => {
     const u = new URL('bots.html', location.href); u.searchParams.set('room', code);
     if (db.mode === 'local') u.searchParams.set('local', '1');
+    if (db.server?.custom) u.searchParams.set('srv', db.server.srv);
     window.open(u.toString(), '_blank', 'noopener');
   };
   judge = new Judge(db, code, render);
@@ -276,6 +286,61 @@ function leave(msg) {
   localStorage.removeItem('nc_host_room');
   document.body.dataset.view = 'start'; $('#btn-resume').hidden = true; $('#btn-new').disabled = false;
   $('#start-msg').textContent = msg;
+}
+
+// ───── 서버: 기본 서버 / 내 서버 ─────
+function drawServerBox() {
+  const m = myServer(), box = $('#srv-box');
+  box.innerHTML = m
+    ? `<div class="srv-now">지금 서버: <b>내 서버 (${esc(m.projectId)})</b></div>
+       <button class="btn btn-gray press srv-btn" data-a="change">다른 서버로 바꾸기</button>
+       <button class="srv-link press" data-a="default">기본 서버로 돌아가기</button>`
+    : `<div class="srv-now">지금 서버: <b>기본 서버</b> <small>(유락여중 김여진 선생님 서버)</small></div>
+       <div class="srv-note">다른 학교 선생님은 <a href="setup.html" target="_blank" rel="noopener">무료 내 서버 만들기 안내</a>를 따라 연결해 주세요.</div>
+       <button class="btn btn-gray press srv-btn" data-a="change">내 서버 연결하기</button>`;
+  box.onclick = e => {
+    const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
+    if (a === 'default') { saveMyServer(null); location.reload(); }
+    else openServerSheet();
+  };
+}
+function openServerSheet() {
+  openSheet({
+    title: '내 서버 연결하기',
+    html: `<p class="sheet-p">Firebase 콘솔 → 프로젝트 설정 → 내 앱에 있는 <b>firebaseConfig</b> 부분을 통째로 복사해 붙여 넣으세요. (<a href="setup.html" target="_blank" rel="noopener">안내 보기</a>)</p>
+      <textarea class="srv-paste" rows="8" placeholder="const firebaseConfig = {\n  apiKey: &quot;AIza...&quot;,\n  ...\n};"></textarea>
+      <p class="sheet-p srv-msg"></p>
+      <button class="btn btn-yellow press srv-go">연결 시험하고 저장</button>`,
+    onMount: (ov, close) => {
+      const msg = ov.querySelector('.srv-msg'), go = ov.querySelector('.srv-go');
+      go.onclick = async () => {
+        const cfg = parsePasted(ov.querySelector('.srv-paste').value), miss = missingKeys(cfg);
+        if (miss.length) { msg.textContent = `${miss.join(', ')} 값을 찾지 못했어요. ${miss.includes('databaseURL') ? 'databaseURL은 Realtime Database 화면 맨 위 주소(https://…firebasedatabase.app)를 붙여 넣어 주세요. ' : ''}다시 복사해 주세요.`; return; }
+        go.disabled = true; msg.textContent = '연결해 보는 중... (10초쯤 걸려요)';
+        const err = await testServer(cfg);
+        if (err) { msg.textContent = err; go.disabled = false; return; }
+        saveMyServer(cfg); msg.textContent = '연결 성공! 이 컴퓨터에 저장했어요. 새로 고칠게요...';
+        setTimeout(() => { close(); location.reload(); }, 1200);
+      };
+    },
+  });
+}
+// 기본 서버 암호: 맞으면 이 컴퓨터의 익명 계정을 교사로 등록해요 (암호 자체는 학생·다른 사람이 읽을 수 없어요)
+function askHostPassword() {
+  openSheet({
+    title: '교사 암호',
+    html: `<p class="sheet-p">기본 서버는 암호를 아는 선생님만 방을 만들 수 있어요. 다른 학교 선생님은 <a href="setup.html" target="_blank" rel="noopener">내 서버</a>를 연결해 주세요.</p>
+      <input class="srv-pw" type="password" autocomplete="off" placeholder="암호">
+      <p class="sheet-p srv-msg"></p><button class="btn btn-yellow press srv-go">확인</button>`,
+    onMount: (ov, close) => {
+      const msg = ov.querySelector('.srv-msg');
+      ov.querySelector('.srv-go').onclick = async () => {
+        const pw = ov.querySelector('.srv-pw').value.trim(); if (!pw) return;
+        try { await db.set(`hosts/${db.uid}`, pw); close(); $('#btn-new').click(); }
+        catch { msg.textContent = '암호가 맞지 않아요.'; }
+      };
+    },
+  });
 }
 
 function alertSheet(text) { openSheet({ title: '알림', html: `<p class="sheet-p">${esc(text)}</p>` }); }

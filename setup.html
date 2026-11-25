@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내 서버 만들기 · 어몸어스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1a1018; --bg: #1c1219; --card: #2b2230; --text: #f3eef2; --yellow: #ffcc33; --sky: #9fdcf5; --soft: #cfc6cd; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 500 16px/1.65 'Noto Sans KR', sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 28px 16px 60px; }
+  h1 { font-family: Jua, sans-serif; font-weight: 400; font-size: 34px; margin: 0 0 6px; color: var(--yellow); }
+  .lead { color: var(--soft); margin: 0 0 22px; }
+  .why { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 26px; }
+  .why div { background: var(--card); border: 3px solid var(--ink); border-radius: 12px; padding: 10px 14px; font-size: 15px; }
+  .why b { display: block; color: var(--sky); }
+  .step { background: var(--card); border: 4px solid var(--ink); border-radius: 16px; padding: 16px 18px; margin: 0 0 14px; }
+  .step h2 { font-family: Jua, sans-serif; font-weight: 400; font-size: 23px; margin: 0 0 8px; display: flex; gap: 10px; align-items: center; }
+  .step h2 span { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--yellow); color: var(--ink); font-size: 20px; flex: none; }
+  ol { margin: 0; padding-left: 22px; } li { margin: 3px 0; }
+  code { background: #120c11; padding: 1px 6px; border-radius: 6px; font-size: 14px; }
+  .tip { margin-top: 8px; font-size: 14px; color: var(--soft); }
+  .copy { margin-top: 10px; font: 900 16px 'Noto Sans KR', sans-serif; background: var(--yellow); color: var(--ink); border: 3px solid var(--ink); border-radius: 10px; padding: 8px 16px; cursor: pointer; }
+  .ok { color: #8be8a6; font-weight: 900; margin-left: 8px; }
+  a { color: var(--sky); }
+  @media (max-width: 480px) { h1 { font-size: 28px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>내 서버 만들기</h1>
+  <p class="lead">다른 학교 선생님이 어몸어스를 쓰실 때, 학생들이 접속할 <b>무료 서버(Firebase)</b>를 선생님 구글 계정으로 하나 만들어요. 처음 한 번만, 10~15분이면 돼요.</p>
+  <div class="why">
+    <div><b>왜 필요해요?</b>무료 서버 하나는 동시 접속 100명까지예요. 학교마다 자기 서버를 쓰면 서로 막히지 않아요.</div>
+    <div><b>돈이 드나요?</b>아니요. 무료(Spark) 요금제로 충분하고 카드 등록도 필요 없어요.</div>
+    <div><b>학생 정보는요?</b>이름·이메일을 받지 않아요. 닉네임과 게임 진행만 잠깐 저장돼요.</div>
+  </div>
+
+  <section class="step"><h2><span>1</span>프로젝트 만들기</h2>
+    <ol>
+      <li><a href="https://console.firebase.google.com" target="_blank" rel="noopener">Firebase 콘솔</a>에 구글 계정으로 들어가요.</li>
+      <li><b>프로젝트 만들기</b>(또는 '프로젝트 추가')를 눌러요. 이름은 예) <code>amomus-우리학교</code></li>
+      <li><b>Google 애널리틱스는 꺼요</b> → 프로젝트 만들기</li>
+    </ol>
+    <p class="tip">버튼 이름은 구글이 가끔 바꿔요. 비슷한 이름을 찾으면 돼요.</p>
+  </section>
+
+  <section class="step"><h2><span>2</span>익명 로그인 켜기</h2>
+    <ol>
+      <li>왼쪽 메뉴 <b>빌드(Build) → Authentication</b> → <b>시작하기</b></li>
+      <li><b>로그인 방법(Sign-in method)</b> 탭 → <b>익명(Anonymous)</b> → <b>사용 설정</b> 켜고 저장</li>
+    </ol>
+    <p class="tip">학생이 이름·이메일 없이 들어오게 해 주는 기능이에요.</p>
+  </section>
+
+  <section class="step"><h2><span>3</span>실시간 데이터베이스 만들기</h2>
+    <ol>
+      <li>왼쪽 메뉴 <b>빌드 → Realtime Database</b> → <b>데이터베이스 만들기</b></li>
+      <li>위치: <b>싱가포르 (asia-southeast1)</b> (한국에서 가장 가까워요)</li>
+      <li>보안 규칙: <b>잠금 모드로 시작</b> → 사용 설정</li>
+    </ol>
+  </section>
+
+  <section class="step"><h2><span>4</span>보안 규칙 붙여 넣기</h2>
+    <ol>
+      <li>Realtime Database 화면 위쪽 <b>규칙(Rules)</b> 탭</li>
+      <li>안의 글을 <b>모두 지우고</b>, 아래 버튼으로 복사한 규칙을 붙여 넣어요.</li>
+      <li><b>게시(Publish)</b></li>
+    </ol>
+    <button class="copy" id="copy-rules">규칙 복사하기</button><span class="ok" id="copied" hidden>복사했어요!</span>
+    <p class="tip">학생이 개발자 도구로 들여다봐도 누가 바이러스인지 알 수 없게 막아 주는 규칙이에요.</p>
+  </section>
+
+  <section class="step"><h2><span>5</span>웹 앱 등록하고 설정값 복사</h2>
+    <ol>
+      <li>왼쪽 위 <b>톱니바퀴 → 프로젝트 설정</b></li>
+      <li>아래쪽 '내 앱'에서 <b>웹 아이콘 <code>&lt;/&gt;</code></b> → 앱 닉네임 아무거나 → <b>Firebase Hosting은 체크하지 않기</b> → 앱 등록</li>
+      <li>화면에 나온 <code>const firebaseConfig = { apiKey: "...", ... };</code> 부분을 <b>통째로 복사</b>해요.</li>
+    </ol>
+    <p class="tip">이 값은 비밀번호가 아니라 '서버 주소' 같은 거라 학생 링크에 들어가도 괜찮아요. 보안은 4단계 규칙이 지켜요.<br>
+      <code>databaseURL</code>이 안 보이면 Realtime Database 화면 맨 위의 <code>https://…firebasedatabase.app</code> 주소도 함께 복사해 두세요.</p>
+  </section>
+
+  <section class="step"><h2><span>6</span>교사 화면에 붙여 넣기</h2>
+    <ol>
+      <li><a href="host.html">교사 화면</a>을 열고 첫 화면 아래 <b>[내 서버 연결하기]</b></li>
+      <li>5단계에서 복사한 글을 붙여 넣고 <b>[연결 시험하고 저장]</b></li>
+      <li>"연결 성공!"이 나오면 끝이에요. 이 컴퓨터는 다음부터 자동으로 내 서버를 써요.</li>
+    </ol>
+    <p class="tip">문제가 있으면 무엇이 빠졌는지 알려 줘요 (예: "익명 로그인이 꺼져 있어요"). 다른 컴퓨터에서 방을 만들 때는 6단계만 다시 하면 돼요.<br>
+      학생은 따로 할 일이 없어요. 선생님 방의 QR·링크에 선생님 서버 정보가 함께 들어가요.</p>
+  </section>
+</main>
+<script>
+  document.getElementById('copy-rules').onclick = async () => {
+    const t = await (await fetch('database.rules.json', { cache: 'no-store' })).text();
+    try { await navigator.clipboard.writeText(t); }
+    catch { const a = document.createElement('textarea'); a.value = t; document.body.append(a); a.select(); document.execCommand('copy'); a.remove(); }
+    document.getElementById('copied').hidden = false;
+  };
+</script>
+</body>
+</html>

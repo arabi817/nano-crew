@@ -120,3 +120,11 @@ body[data-hv="ended"] :is(.hv-lobby, .hv-play, .hv-meet):not(.hv-ended) { displa
 .h-foot { display: flex; gap: 16px; padding: 16px 26px 22px; flex-wrap: wrap; background: rgba(20, 14, 20, .88); border-top: 5px solid var(--ink); }
 .h-foot #btn-end { margin-left: auto; }
 .h-foot .btn { font-size: 24px; }
+/* 서버 칸 (첫 화면) */
+.srv-box { margin-top: 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 16px; text-align: center; }
+.srv-now b { color: var(--yellow); }
+.srv-now small, .srv-note { font-size: 13px; opacity: .8; }
+.srv-note a, .sheet-p a { color: #9fdcf5; }
+.srv-btn { font-size: 18px; padding: 8px 16px; }
+.srv-link { background: none; border: 0; color: #cfd6da; text-decoration: underline; font-size: 14px; cursor: pointer; }
+.srv-paste, .srv-pw { width: 100%; box-sizing: border-box; font: 14px/1.4 ui-monospace, monospace; padding: 10px; border: 3px solid var(--ink); border-radius: 10px; }

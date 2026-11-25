@@ -32,7 +32,10 @@ function say(sel, text) { $(sel).textContent = text; }
 function notice(title, text, btn = '처음으로') {
   $('#notice-title').textContent = title; $('#notice-text').textContent = text;
   $('#notice-btn').textContent = btn; $('#notice').hidden = false;
-  $('#notice-btn').onclick = () => { location.href = location.pathname + (app.db?.mode === 'local' ? '?local=1' : ''); };
+  $('#notice-btn').onclick = () => {   // 처음으로 (다른 학교 선생님 서버(srv)였다면 그대로 유지)
+    const u = new URLSearchParams(); if (app.db?.mode === 'local') u.set('local', '1'); if (app.db?.server?.srv) u.set('srv', app.db.server.srv);
+    location.href = location.pathname + (u.toString() ? '?' + u : '');
+  };
 }
 
 boot();
@@ -64,8 +67,12 @@ async function boot() {
   if (room) { codeStep('방 코드'); tryCode(room); return; }   // 선생님 QR로 들어오면 바로
   // 새로고침·화면 꺼짐으로 나왔다면: 내가 있던 방으로 돌아가기 (방장이면 꼭 돌아가야 게임이 이어져요)
   try {
-    const last = localStorage.getItem('nc_last_room');
-    if (last && await app.db.get(P.player(last, app.uid))) {
+    const last = localStorage.getItem('nc_last_room'), lastSrv = localStorage.getItem('nc_last_srv') || '';
+    if (last && lastSrv !== (app.db.server?.srv || '')) {   // 다른 서버의 방이었으면: 그 서버로 다시 열어서 돌아가기
+      const b = $('#go-back-room'); b.hidden = false;
+      b.innerHTML = `방 ${esc(last)}로 돌아가기<small>아까 있던 방</small>`;
+      b.onclick = () => { const u = new URLSearchParams({ room: last }); if (lastSrv) u.set('srv', lastSrv); if (app.db.mode === 'local') u.set('local', '1'); location.href = location.pathname + '?' + u; };
+    } else if (last && await app.db.get(P.player(last, app.uid))) {
       const m = await app.db.get(P.meta(last)), b = $('#go-back-room');
       if (m) {
         b.hidden = false;
@@ -170,6 +177,7 @@ async function enterGame(rejoin) {
   app.myColor = COLORS[app.myPlayer.c].hex;
   app.startPos = decodePos(pos?.enc);
   localStorage.setItem('nc_last_room', code);
+  try { localStorage.setItem('nc_last_srv', app.db.server?.srv || ''); } catch { }   // 어느 서버의 방이었는지
 
   app.meta = meta;
   useMap(settingsOf(meta).map);
