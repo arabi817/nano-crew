@@ -1,5 +1,5 @@
 // 맵 그림. assets/list.js에 그림 파일이 있으면 그 그림을, 없으면 코드로 그린 그림을 써요. (칸 설명은 assets/ASSETS.md)
-import { ROOMS, HALLS, TABLE, TASK_SPOTS, SAB_SPOTS, VENTS, doorsOf } from './map.js';
+import { ROOMS, HALLS, TABLE, TASK_SPOTS, SAB_SPOTS, VENTS, CCTV, doorsOf } from './map.js';
 import { hasArt, useArt } from '../common/assets.js';
 
 const INK = 0x1a1018;
@@ -168,6 +168,23 @@ export function drawMap(scene) {
   let clotRoom = null;
   const setClotRoom = roomId => { clotRoom = roomId; setClot(roomId); };
 
+  // CCTV: 혈관 관제실 모니터 책상 + 복도 카메라 (누가 보고 있으면 빨간 불이 깜빡여요)
+  const d = CCTV.desk;
+  if (d && !art(scene, 'devices/monitor.png', d.x, d.y, 110, 86, { depth: -600 })) {
+    const g = gfx(scene, -600);
+    g.fillStyle(INK, 1); g.fillRoundedRect(d.x - 50, d.y - 38, 100, 76, 12);
+    g.fillStyle(0x1f2a30, 1); g.fillRoundedRect(d.x - 42, d.y - 30, 84, 50, 8);
+  }
+  const camLights = (CCTV.cams || []).map(c => {
+    const g = gfx(scene, -560);
+    g.fillStyle(INK, 1); g.fillRoundedRect(c.px - 22, c.py - 14, 44, 28, 7);
+    g.fillStyle(0x8a99a3, 1); g.fillRoundedRect(c.px - 17, c.py - 9, 34, 18, 5);
+    g.fillStyle(INK, 1); g.fillCircle(c.px + 13, c.py, 9); g.fillStyle(0x3b5560, 1); g.fillCircle(c.px + 13, c.py, 5);
+    return scene.add.circle(c.px - 10, c.py - 12, 6, 0xff3b3b).setStrokeStyle(3, INK).setDepth(-555).setVisible(false);
+  });
+  const lightTw = camLights.length ? scene.tweens.add({ targets: camLights, alpha: { from: 1, to: 0.15 }, duration: 380, yoyo: true, repeat: -1, paused: true }) : null;
+  const setCamLight = on => { camLights.forEach(l => l.setVisible(on)); if (lightTw) lightTw[on ? 'resume' : 'pause'](); };
+
   const cam = scene.cameras.main;
   scene.events.on('update', time => {
     const v = cam.worldView, t = time / 1000;
@@ -177,7 +194,7 @@ export function drawMap(scene) {
       a.fn(t);
     }
   });
-  return { spots, sabSpots, setClot: setClotRoom };
+  return { spots, sabSpots, setClot: setClotRoom, setCamLight };
 }
 
 // ───── 방 뒷벽 ─────

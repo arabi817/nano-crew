@@ -10,11 +10,12 @@ import { Hud } from './ui/hud.js';
 import { Joystick } from './ui/joystick.js';
 import { openPanel, openSheet } from './ui/panel.js';
 import { MISSIONS, SAB_FIX } from './missions/index.js';
-import { SPOTS, SAB_SPOTS, VENTS, useMap, MAP_ID, walkable, spawnPoint, lobbySpawn, roomAt, roomName, doorsOf, setBlockedDoors } from './map/map.js';
+import { SPOTS, SAB_SPOTS, VENTS, CCTV, useMap, MAP_ID, walkable, spawnPoint, lobbySpawn, roomAt, roomName, doorsOf, setBlockedDoors } from './map/map.js';
 import { CONTENT } from '../data/content.js';
 import { PLACES } from './game/shared.js';
 import { sfx, unlockAudio } from './common/sfx.js';
 import { $, esc } from './common/util.js';
+import { ICON } from './ui/icons.js';
 import { settingsOf, settingsHTML, VISION_NAME } from './common/rules.js';
 import { MAP_NAME } from './map/map.js';
 import { MeetingUI } from './game/meeting.js';
@@ -223,6 +224,43 @@ function startPhaser() {
   app.game_.scene.add('world', WorldScene, true, { app }); // 장면이 켜지면 app.scene이 채워져요
   if (!app.onResize) addEventListener('resize', app.onResize = () => app.game_?.scale.resize(el.clientWidth * app.dpr, el.clientHeight * app.dpr));
 }
+// ───── CCTV: 혈관 관제실 모니터 (한 번 최대 10초, 한 판에 3번) ─────
+const CAM_SEC = 10, CAM_MAX = 3;
+function openCams() {
+  if (app.cams || !app.scene?.ready) return;
+  if (app.game?.sab?.kind === 'comms') return app.hud.toast('신경 신호가 끊겨 모니터 화면이 안 나와요');
+  const key = `nc_cam_${app.code}_${app.meta?.startedAt}`;
+  let used = 0; try { used = +sessionStorage.getItem(key) || 0; } catch { }
+  if (used >= CAM_MAX) return app.hud.toast(`이번 판에는 모니터를 ${CAM_MAX}번 다 봤어요`);
+  try { sessionStorage.setItem(key, used + 1); } catch { }
+  const left = CAM_MAX - used - 1, alive = !app.amDead();
+  const cams = CCTV.cams || [];
+  const ov = document.createElement('div'); ov.className = 'cam-ov';
+  ov.innerHTML = `<div class="cam-top"><b>혈관 관제실 모니터</b><span class="cam-time">${CAM_SEC}초</span><span class="cam-left">이번 판 남은 횟수 ${left}번</span>
+      <button class="mpanel-x press" aria-label="닫기">${ICON.close}</button></div>
+    <div class="cam-tiles">${cams.map(c => `<div class="cam-tile"><span>${esc(c.name)}</span><i class="cam-rec">REC</i></div>`).join('')}</div>`;
+  document.body.appendChild(ov);
+  document.body.classList.add('watching-cams');
+  app.joy?.reset();
+  app.scene.startCams(ov.querySelector('.cam-top').offsetHeight);
+  if (alive) app.db.set(visPath(), 'cams');   // 다른 사람 눈에 카메라 빨간 불 (유령이 볼 땐 안 켜져요)
+  const end = app.db.now() + CAM_SEC * 1000;
+  const t = setInterval(() => {
+    const s = Math.max(0, Math.ceil((end - app.db.now()) / 1000));
+    ov.querySelector('.cam-time').textContent = `${s}초`;
+    if (s <= 0 || app.game?.sab?.kind === 'comms') close();
+  }, 250);
+  let closed = false;
+  function close() {
+    if (closed) return; closed = true;
+    clearInterval(t); ov.remove(); document.body.classList.remove('watching-cams');
+    app.scene?.stopCams(); if (alive) app.db.remove(visPath());
+    app.cams = null;
+  }
+  ov.querySelector('.mpanel-x').onclick = () => { sfx('click'); close(); };
+  app.cams = { close };
+}
+
 // ───── 친구들끼리 하기: 방장 패드 ─────
 // 심판(js/host/judge.js)은 방장 패드에서만 불러와요 → 다른 학생 패드에는 OX 정답이 가지 않아요
 async function startHostJudge() {
@@ -358,7 +396,7 @@ function maybeReveal() {
     .then(() => { app.revealing = false; });
 }
 
-function closeOverlays() { app.panel?.close(); app.minimap?.close(); app.sheet?.close(); app.joy?.reset(); }
+function closeOverlays() { app.panel?.close(); app.minimap?.close(); app.sheet?.close(); app.cams?.close(); app.joy?.reset(); }
 let leftShown = false;
 function kicked() { if (leftShown) return; leftShown = true; closeOverlays(); app.meeting?.close(); app.game_?.destroy(true); notice('방에서 나왔어요', '선생님이 방에서 내보냈어요. 다시 들어가려면 방 코드를 넣어 주세요.'); }
 function ended() { if (leftShown) return; leftShown = true; closeOverlays(); app.meeting?.close(); hideEnd(); app.game_?.destroy(true); notice('판이 끝났어요', `${app.meta?.free ? '방장이' : '선생님이'} 판을 끝냈어요. 수고했어요!`); }
@@ -430,12 +468,12 @@ function onSab(sab) {
 app.isSpectator = () => app.phase === 'playing' && !!app.game?.members && !app.game.members[app.uid];
 app.amDead = () => !!app.game?.dead?.[app.uid] || app.isSpectator();   // 구경꾼은 유령처럼 다녀요
 app.privIds = () => app.game?.members || app.players;
-app.isFrozen = () => !!app.panel || !!app.sheet || !$('#notice').hidden || !!app.meeting
+app.isFrozen = () => !!app.panel || !!app.cams || !!app.sheet || !$('#notice').hidden || !!app.meeting
   || !!app.revealing || !!app.meta?.paused || app.phase === 'ended' || !!app.faking;
 app.setNear = n => {
   app.near = n;
   const big = app.game?.sab && app.game.sab.kind !== 'clot';
-  const canUse = !!n.sab || !!n.task || (n.table && !app.game?.emerg?.[app.uid] && !big);
+  const canUse = !!n.sab || !!n.task || !!n.cam || (n.table && !app.game?.emerg?.[app.uid] && !big);
   app.hud?.setUse(canUse);
   app.hud?.setReport(!!n.body);
   app.hud?.setKill(n.kill, app.priv?.killReadyAt ? app.priv.killReadyAt - app.db.now() : 0);
@@ -460,6 +498,7 @@ app.useAction = () => {
   if (blocked() || !app.near) return;
   app.joy.reset();
   if (app.near.sab) return openSabFix(app.near.sab);
+  if (app.near.cam && !app.near.task) return openCams();
   const id = app.near.task;
   if (id) {
     const M = MISSIONS[id], t = app.tasks.find(x => x.id === id), step = t.step, S = M.steps[step];

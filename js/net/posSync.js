@@ -43,12 +43,14 @@ export class PosSender {
 // 내 위치(구역)가 바뀔 때마다 '가까운 구역'만 골라서 듣기
 export class ZoneListener {
   constructor(db, root, { onPos, onGone }) {
-    Object.assign(this, { db, root, onPos, onGone, subs: new Map(), where: new Map(), zone: null });
+    Object.assign(this, { db, root, onPos, onGone, subs: new Map(), where: new Map(), zone: null, extra: [] });
   }
+  // CCTV를 보는 동안만: 카메라가 비추는 구역도 받아요
+  setExtra(zones) { this.extra = zones || []; const z = this.zone; this.zone = null; this.setZone(z); }
   setZone(zone) {
     if (zone === this.zone) return;
     this.zone = zone;
-    const want = nearZones(zone);
+    const want = new Set(nearZones(zone)); for (const z of this.extra) want.add(z);
     for (const [z, off] of this.subs) if (!want.has(z)) {
       off(); this.subs.delete(z);
       for (const [uid, wz] of this.where) if (wz === z) { this.where.delete(uid); this.onGone(uid); }

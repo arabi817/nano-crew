@@ -1,5 +1,5 @@
 // 게임 세계 화면: 맵 그리기, 내 캐릭터 이동, 다른 친구 위치 받기, 시야(안개)
-import { WORLD, walkable, SPOTS, SAB_SPOTS, VENTS, TABLE, roomAt, zoneAt, seeThrough, lineOfSight } from '../map/map.js';
+import { WORLD, walkable, SPOTS, SAB_SPOTS, VENTS, CCTV, TABLE, roomAt, zoneAt, nearZones, seeThrough, lineOfSight } from '../map/map.js';
 import { KILL_RANGE, REPORT_RANGE, EMERGENCY_RANGE, VISION_R, settingsOf } from '../common/rules.js';
 import { drawMap } from '../map/drawMap.js';
 import { Avatar, loadAvatarTextures, fitScale, avKey } from '../player/avatar.js';
@@ -160,6 +160,7 @@ export class WorldScene extends Phaser.Scene {
       const d = Math.hypot(m.x - this.x, m.y - this.y);
       let al = fog ? (d < VR * 0.82 ? 1 : d < VR ? (VR - d) / (VR * 0.18) : 0) : 1;
       if (fog && al > 0 && !lineOfSight(this.x, this.y, m.x, m.y)) al = 0; // 벽 너머는 안 보여요
+      if (this.camViews && this.inCamView(m.x, m.y)) al = 1;   // CCTV 화면 안이면 보여요
       if (!av.online) al *= 0.35;
       if (playing && dead[uid]) al = ghost ? al * 0.5 : 0; // 유령은 유령끼리만 보여요
       if (playing && a.game?.members && !a.game.members[uid]) al = 0; // 늦게 들어온 구경꾼은 아무에게도 안 보여요
@@ -173,12 +174,15 @@ export class WorldScene extends Phaser.Scene {
     this.updateFog(fog);
     for (const b of this.bodies.values()) {
       const d = Math.hypot(b.x - this.x, b.y - this.y);
-      b.root.setVisible(!fog || (d < VR && lineOfSight(this.x, this.y, b.x, b.y)));
+      b.root.setVisible(!fog || (d < VR && lineOfSight(this.x, this.y, b.x, b.y)) || (!!this.camViews && this.inCamView(b.x, b.y)));
     }
 
     // 가까운 미션·킬 대상·시체·긴급 버튼 찾기
     this.me.setFx(playing && !ghost ? this.vis[a.uid] : null);
-    const near = { task: null, kill: null, body: null, table: false, sab: null, vent: null };
+    const near = { task: null, kill: null, body: null, table: false, sab: null, vent: null, cam: false };
+    // CCTV 빨간 불: 살아 있는 누군가가 모니터를 보는 중이면 (유령이 볼 땐 안 켜져요)
+    const watching = Object.values(this.vis).includes('cams');
+    if (watching !== this.camLightOn) { this.camLightOn = watching; this.mapInfo.setCamLight?.(watching); }
     if (playing && !a.isFrozen()) {
       let best = USE_RANGE;
       for (const t of a.tasks) {
@@ -189,6 +193,7 @@ export class WorldScene extends Phaser.Scene {
           if (d < best) { best = d; near.task = t.id; }
         }
       }
+      if (CCTV.desk && Math.hypot(CCTV.desk.x - this.x, CCTV.desk.y - this.y) < USE_RANGE) near.cam = true;
       const sab = a.game?.sab;
       if (sab && !ghost) for (const [id, s] of Object.entries(SAB_SPOTS)) {
         if (s.kind === sab.kind && Math.hypot(s.x - this.x, s.y - this.y) < USE_RANGE + 20) near.sab = id;
@@ -280,6 +285,29 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
+  // ── CCTV: 화면을 카메라 수만큼 나눠 복도를 비춰요 (위쪽 띠 top px는 안내 글) ──
+  startCams(top) {
+    if (this.camViews) return;
+    const main = this.cameras.main, dpr = this.app.dpr || 1, W = this.scale.width, H = this.scale.height;
+    const cams = CCTV.cams || [], n = cams.length, y0 = Math.round(top * dpr), tw = W / n, th = H - y0;
+    const RW = 560, RH = 420;   // 카메라 한 대가 비추는 넓이 (게임 세계 px)
+    main.setVisible(false);
+    this.camViews = cams.map((c, i) => {
+      const v = this.cameras.add(Math.round(i * tw), y0, Math.round(tw) - 4, th);
+      v.setZoom(Math.min((tw - 4) / RW, th / RH)).centerOn(c.x, c.y).setBackgroundColor('#140c12');
+      if (this.fogRT) v.ignore(this.fogRT);
+      return { v, rect: { x: c.x - RW / 2, y: c.y - RH / 2, w: RW, h: RH } };
+    });
+    this.zl?.setExtra([...new Set(cams.flatMap(c => [...nearZones(zoneAt(c.x, c.y))]))]);
+  }
+  stopCams() {
+    if (!this.camViews) return;
+    this.camViews.forEach(c => this.cameras.remove(c.v)); this.camViews = null;
+    this.cameras.main.setVisible(true);
+    this.zl?.setExtra([]);
+  }
+  inCamView(x, y) { return this.camViews.some(({ rect: r }) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h); }
+
   visionR(base = false) {   // 교사 설정(넓게·보통·좁게)에 따라. 바이러스는 크루원보다 조금 넓게. base: 시야 차단을 빼고
     const [crew, imp] = VISION_R[settingsOf(this.app.meta).vision] || [VISION, IMP_VISION];
     if (this.app.priv?.role === 'imp' && !this.app.amDead?.()) return imp;
@@ -326,6 +354,7 @@ export class WorldScene extends Phaser.Scene {
     if (!this.fogRT || this.fogRT.width < W || this.fogRT.height < H) {
       this.fogRT?.destroy(); this.fogKey = '';
       this.fogRT = this.add.renderTexture(0, 0, W + 100, H + 100).setOrigin(0, 0).setDepth(9000);
+      this.camViews?.forEach(c => c.v.ignore(this.fogRT));
     }
     const rt = this.fogRT, ox = v.x - pad, oy = v.y - pad, R = this.visionR();
     rt.setVisible(true).setPosition(ox, oy);

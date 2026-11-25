@@ -80,6 +80,13 @@ SMALL.SPOTS = {
 };
 
 // 사보타주 해결 장치
+SMALL.CCTV = {
+  desk: { room: 'vessel', x: 1515, y: 2085 },
+  cams: [
+    { name: '작은창자실 앞 복도', x: 1750, y: 880, px: 1845, py: 770 },
+    { name: '심장실 앞 복도', x: 2425, y: 1350, px: 2335, py: 1255 },
+  ],
+};
 SMALL.SAB_SPOTS = {
   o2Lung: { room: 'lung', x: 690, y: 1680, kind: 'o2', side: 'lung', other: '심장실' },
   o2Heart: { room: 'heart', x: 2730, y: 1120, kind: 'o2', side: 'heart', other: '허파실' },
@@ -182,6 +189,15 @@ const BIG = {};
     wasteSort: { room: 'bladder', x: 4430, y: 2470 },
   };
   // 산소 부족은 양쪽 허파에서 동시에 눌러요 (id·side는 작은 맵과 같은 이름을 그대로 써요)
+  // CCTV (혈관 관제실 모니터): desk = 보는 곳, cams = 카메라 (x,y 비추는 가운데, px,py 카메라가 달린 자리)
+  BIG.CCTV = {
+    desk: { room: 'vessel', x: 3865, y: 1290 },
+    cams: [
+      { name: '간실 앞 복도', x: 2950, y: 1030, px: 3045, py: 900 },
+      { name: '심장실 앞 복도', x: 2325, y: 1600, px: 2235, py: 1505 },
+      { name: '혈관 관제실 앞 복도', x: 3575, y: 1600, px: 3665, py: 1505 },
+    ],
+  };
   BIG.SAB_SPOTS = {
     o2Lung: { room: 'lungR', x: 330, y: 1890, kind: 'o2', side: 'lung', other: '왼쪽 허파실' },
     o2Heart: { room: 'lungL', x: 5030, y: 1890, kind: 'o2', side: 'heart', other: '오른쪽 허파실' },
@@ -204,7 +220,7 @@ export const MAPS = { small: SMALL, big: BIG };
 export const MAP_NAME = { small: '작은 맵', big: '넓은 맵' };
 
 // ── 지금 쓰는 맵 (그릇) ──
-export const WORLD = {}, TABLE = {}, LOBBY = {}, SPOTS = {}, SAB_SPOTS = {}, VENTS = {};
+export const WORLD = {}, TABLE = {}, LOBBY = {}, SPOTS = {}, SAB_SPOTS = {}, VENTS = {}, CCTV = {};
 export const ROOMS = [], HALLS = [], BLOCKS = [];
 export const PLACES = [];   // 대기실 뺀 방 {id, name} (회의 채팅 [장소], 혈관 막힘 고르기)
 export const TASK_SPOTS = SPOTS; // 예전 이름
@@ -219,7 +235,7 @@ export function useMap(id) {
   if (id === MAP_ID) return false;
   MAP_ID = id;
   const M = MAPS[id];
-  refill(WORLD, M.WORLD); refill(TABLE, M.TABLE); refill(SPOTS, M.SPOTS); refill(SAB_SPOTS, M.SAB_SPOTS); refill(VENTS, M.VENTS);
+  refill(WORLD, M.WORLD); refill(TABLE, M.TABLE); refill(CCTV, M.CCTV); refill(SPOTS, M.SPOTS); refill(SAB_SPOTS, M.SAB_SPOTS); refill(VENTS, M.VENTS);
   const rooms = structuredClone(M.ROOMS), lob = rooms.findIndex(r => r.lobby);
   refill(LOBBY, rooms[lob]); rooms[lob] = LOBBY;         // LOBBY는 ROOMS 안의 그 방 자체
   relist(ROOMS, rooms); relist(HALLS, structuredClone(M.HALLS));
