@@ -195,6 +195,7 @@ async function enterGame(rejoin) {
 
   db.onConnection(ok => {
     app.hud.setConn(ok);
+    app.connected = ok;
     if (ok) { db.onDisconnectSet(P.player(code, uid) + '/on', false); db.update(P.player(code, uid), { on: true }).catch(() => { }); }
   });
   db.onValue(P.meta(code), onMeta);
@@ -206,6 +207,9 @@ async function enterGame(rejoin) {
       return;
     }
     app.myPlayer = app.players[uid]; app.myColor = COLORS[app.myPlayer.c].hex;
+    // 와이파이가 잠깐 끊겼다 붙으면, 서버가 늦게 '나감(on:false)'으로 바꿔 놓을 때가 있어요 → 다른 친구 화면에 내가 투명하게 보임.
+    // 연결돼 있는데 내가 '나감'으로 되어 있으면 바로 되돌려요
+    if (app.myPlayer.on === false && app.connected !== false) app.db.update(P.player(code, uid), { on: true }).catch(() => { });
     app.scene?.syncPlayers(app.players);
     app.hud.setLobby(Object.values(app.players).filter(p => p.on !== false).length);
     const hp = app.meta?.free && !app.judge && app.players[app.meta.hostUid];
@@ -246,11 +250,13 @@ function openCams() {
   const ov = document.createElement('div'); ov.className = 'cam-ov';
   ov.innerHTML = `<div class="cam-top"><b>혈관 관제실 모니터</b><span class="cam-time">${CAM_SEC}초</span><span class="cam-left">이번 판 남은 횟수 ${left}번</span>
       <button class="mpanel-x press" aria-label="닫기">${ICON.close}</button></div>
+    <div class="cam-help">복도 카메라 화면이에요. <b>누가 어디로 가는지</b> 지켜보고, 회의 때 "○○실 앞 복도에서 △△를 봤어요"처럼 증거로 말해요.
+      보는 동안 복도 카메라에 <b class="red">빨간 불</b>이 켜져서 다른 친구들도 누가 보고 있는지 알아요.</div>
     <div class="cam-tiles">${cams.map(c => `<div class="cam-tile"><span>${esc(c.name)}</span><i class="cam-rec">REC</i></div>`).join('')}</div>`;
   document.body.appendChild(ov);
   document.body.classList.add('watching-cams');
   app.joy?.reset();
-  app.scene.startCams(ov.querySelector('.cam-top').offsetHeight);
+  app.scene.startCams(ov.querySelector('.cam-top').offsetHeight + ov.querySelector('.cam-help').offsetHeight);   // 카메라 칸은 안내 글 아래부터
   if (alive) app.db.set(visPath(), 'cams');   // 다른 사람 눈에 카메라 빨간 불 (유령이 볼 땐 안 켜져요)
   const end = app.db.now() + CAM_SEC * 1000;
   const t = setInterval(() => {
@@ -357,6 +363,21 @@ function onMeta(m) {
 function onGame(g) {
   const prev = app.game || {};
   app.game = g = g || {};
+  // 회의 창 열고 닫기를 가장 먼저 (아래 다른 일에서 오류가 나도 투표 화면에 갇히지 않게)
+  try { syncMeeting(g); } catch (e) { console.error(e); }
+  try { onGameRest(g, prev); } catch (e) { console.error(e); }
+}
+function syncMeeting(g) {
+  if (g.meeting) {
+    if (!app.meeting) { closeOverlays(); document.querySelectorAll('.meet').forEach(el => el.remove()); app.meeting = new MeetingUI(app); }
+    app.meeting.update(g.meeting);
+  } else if (app.meeting || document.querySelector('.meet')) {
+    app.meeting?.close(); app.meeting = null;
+    document.querySelectorAll('.meet').forEach(el => el.remove());   // 혹시 남은 회의 창도 정리
+    if (app.phase === 'playing') { spawnTeleport(); app.hud.toast(app.amDead() ? '유령으로 미션을 계속하세요' : '회의가 끝났어요. 다시 탐사 시작!'); }
+  }
+}
+function onGameRest(g, prev) {
   const uid = app.uid;
   app.scene?.setBodies?.(g.bodies);
   maybeReveal();   // 역할 화면: 게임 정보가 늦게 와도 뜨게
@@ -367,14 +388,6 @@ function onGame(g) {
     if (!g.ejected?.[uid] && app.phase === 'playing') { closeOverlays(); sfx('kill'); showKilled(avatarSVG(COLORS[app.myPlayer?.c]?.hex || '#999', app.myPlayer?.hat || 0, 150)); }
   }
   if (!g.dead?.[uid]) app.wasDead = false;
-  // 회의
-  if (g.meeting) {
-    if (!app.meeting) { closeOverlays(); app.meeting = new MeetingUI(app); }
-    app.meeting.update(g.meeting);
-  } else if (app.meeting) {
-    app.meeting.close(); app.meeting = null;
-    if (app.phase === 'playing') { spawnTeleport(); app.hud.toast(app.amDead() ? '유령으로 미션을 계속하세요' : '회의가 끝났어요. 다시 탐사 시작!'); }
-  }
   // 진행 바
   const st = settingsOf(app.meta);
   app.hud.showProgress(st.progress !== 'hidden');
@@ -388,6 +401,9 @@ function onGame(g) {
   if (g.winner && g.reveal) showEnd({ winner: g.winner, reveal: g.reveal, players: app.players, myId: uid, myTasks: app.priv?.tasks, done: app.done, free: !!app.meta?.free });
   refreshTasks();
 }
+
+// 1초마다 확인: 게임에는 회의가 없는데 회의 창이 남아 있으면 닫기 (투표 화면에 갇힘 방지)
+setInterval(() => { if (app.game && !app.game.meeting && (app.meeting || document.querySelector('.meet'))) { try { syncMeeting(app.game); } catch (e) { console.error(e); } } }, 1000);
 
 function maybeReveal() {
   const m = app.meta, pv = app.priv;

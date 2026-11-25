@@ -751,3 +751,5 @@ body.watching-cams #hud, body.watching-cams .rotate-hint { visibility: hidden; }
 .cam-tile:last-child { border-right: 0; }
 .cam-tile span { position: absolute; left: 8px; bottom: 8px; background: rgba(16, 24, 28, .85); color: #fff; font-weight: 900; font-size: 15px; padding: 3px 8px; border-radius: 6px; }
 .cam-rec { position: absolute; right: 10px; top: 8px; font-style: normal; font-size: 13px; font-weight: 900; color: #ff4d4d; animation: arrowblink 1s steps(2) infinite; }
+.cam-help { padding: 6px 14px; background: rgba(16, 24, 28, .92); border-bottom: 3px solid var(--ink); font-size: 15px; font-weight: 700; line-height: 1.45; pointer-events: none; }
+.cam-help b { color: var(--yellow); } .cam-help b.red { color: #ff6b6b; }

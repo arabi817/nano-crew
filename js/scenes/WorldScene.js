@@ -87,7 +87,8 @@ export class WorldScene extends Phaser.Scene {
       if (uid === this.app.uid) continue;
       let av = this.avatars.get(uid);
       if (!av) { av = new Avatar(this, { c: p.c, hat: p.hat || 0, label: nickOf(p) }); av.setAlpha(0); this.avatars.set(uid, av); }
-      av.setLook(p.c, p.hat || 0); av.setLabel(nickOf(p)); av.online = p.on !== false;
+      av.setLook(p.c, p.hat || 0); av.online = p.on !== false;
+      av.setLabel(nickOf(p) + (av.online ? '' : ' · 연결 중'));   // 와이파이가 끊긴 친구 (유령과 헷갈리지 않게 투명하게 하지 않아요)
     }
     for (const [uid, av] of this.avatars) if (!players[uid]) { av.destroy(); this.avatars.delete(uid); }
   }
@@ -161,7 +162,7 @@ export class WorldScene extends Phaser.Scene {
       let al = fog ? (d < VR * 0.82 ? 1 : d < VR ? (VR - d) / (VR * 0.18) : 0) : 1;
       if (fog && al > 0 && !lineOfSight(this.x, this.y, m.x, m.y)) al = 0; // 벽 너머는 안 보여요
       if (this.camViews && this.inCamView(m.x, m.y)) al = 1;   // CCTV 화면 안이면 보여요
-      if (!av.online) al *= 0.35;
+      if (!av.online) al *= 0.8;
       if (playing && dead[uid]) al = ghost ? al * 0.5 : 0; // 유령은 유령끼리만 보여요
       if (playing && a.game?.members && !a.game.members[uid]) al = 0; // 늦게 들어온 구경꾼은 아무에게도 안 보여요
       av.setAlpha(al); if (al > 0) visible++;

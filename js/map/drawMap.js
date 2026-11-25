@@ -175,6 +175,9 @@ export function drawMap(scene) {
     g.fillStyle(INK, 1); g.fillRoundedRect(d.x - 50, d.y - 38, 100, 76, 12);
     g.fillStyle(0x1f2a30, 1); g.fillRoundedRect(d.x - 42, d.y - 30, 84, 50, 8);
   }
+  if (d) scene.add.text(d.x, d.y + 50, 'CCTV 모니터', {   // 무엇인지 바로 알게 이름표
+    fontFamily: 'Jua', fontSize: '22px', color: '#6dfc9c', stroke: '#1a1018', strokeThickness: 6,
+  }).setOrigin(0.5, 0).setDepth(-590).setResolution(2);
   const camLights = (CCTV.cams || []).map(c => {
     const g = gfx(scene, -560);
     g.fillStyle(INK, 1); g.fillRoundedRect(c.px - 22, c.py - 14, 44, 28, 7);
