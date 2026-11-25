@@ -430,7 +430,7 @@ function onSab(sab) {
 app.isSpectator = () => app.phase === 'playing' && !!app.game?.members && !app.game.members[app.uid];
 app.amDead = () => !!app.game?.dead?.[app.uid] || app.isSpectator();   // 구경꾼은 유령처럼 다녀요
 app.privIds = () => app.game?.members || app.players;
-app.isFrozen = () => !!app.panel || !!app.minimap || !!app.sheet || !$('#notice').hidden || !!app.meeting
+app.isFrozen = () => !!app.panel || !!app.sheet || !$('#notice').hidden || !!app.meeting
   || !!app.revealing || !!app.meta?.paused || app.phase === 'ended' || !!app.faking;
 app.setNear = n => {
   app.near = n;

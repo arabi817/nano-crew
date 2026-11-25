@@ -23,7 +23,7 @@ export class Hud {
     $('#btn-sab').innerHTML = ICON.sab + '<span>고장내기</span><b class="cd"></b>'   // '인체 고장 내기'는 84px 버튼에 안 들어가서 줄임;
     $('#btn-vent').onclick = () => app.ventAction();
     $('#btn-sab').onclick = () => app.sabAction();
-    $('#btn-map').onclick = () => { sfx('click'); openMinimap(app); };
+    $('#btn-map').onclick = () => { sfx('click'); app.minimap ? app.minimap.close() : openMinimap(app); };   // 한 번 더 누르면 닫기
     $('#btn-hat').onclick = () => { sfx('click'); this.openHats(); };
     this.setPhase(app.phase);
   }

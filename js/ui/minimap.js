@@ -10,14 +10,17 @@ function bounds() {
 
 export function openMinimap(app) {
   const ov = document.createElement('div');
-  ov.className = 'mpanel-ov';
+  ov.className = 'mpanel-ov map-ov';   // 지도를 연 채로 걸을 수 있게: 손가락은 지도를 지나 조이스틱·버튼에 닿아요 (어몽어스처럼)
   ov.innerHTML = `<div class="minimap metal"><div class="mpanel-head"><div class="mpanel-title">몸속 지도</div>
     <button class="mpanel-x press" aria-label="닫기">${ICON.close}</button></div><canvas></canvas></div>`;
   document.body.appendChild(ov);
   const cv = ov.querySelector('canvas'), ctx = cv.getContext('2d');
   let raf = 0, closed = false;
   const hex = n => '#' + n.toString(16).padStart(6, '0');
+  let lastDraw = 0;
   function draw(t) {
+    if (t - lastDraw < 66) { if (!closed) raf = requestAnimationFrame(draw); return; }   // 1초에 15번만 다시 그려요 (패드 부담 줄이기)
+    lastDraw = t;
     const dpr = Math.min(2, devicePixelRatio || 1), W = cv.clientWidth, H = cv.clientHeight;
     if (cv.width !== W * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
@@ -60,6 +63,5 @@ export function openMinimap(app) {
   raf = requestAnimationFrame(draw);
   const close = () => { closed = true; cancelAnimationFrame(raf); ov.remove(); app.minimap = null; };
   ov.querySelector('.mpanel-x').onclick = close;
-  ov.addEventListener('pointerdown', e => { if (e.target === ov) close(); });
   app.minimap = { close };
 }
