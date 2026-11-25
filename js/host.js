@@ -149,10 +149,11 @@ function drawPlay() {
   const s = settingsOf(judge.meta), g = judge.game;
   const show = s.progress !== 'hidden';
   $('#bp-box').style.visibility = show ? '' : 'hidden';
-  const p = s.progress === 'always' ? judge.progress() : (g.progress || { d: 0, t: 0 });
-  const r = p.t ? p.d / p.t : 0;
-  $('#bp-fill').style.width = Math.round(r * 100) + '%'; $('#bp-num').textContent = Math.round(r * 100) + '%';
-  $('#bp-note').textContent = s.progress === 'meeting' ? '진행 바는 회의 때만 바뀌어요' : '';
+  // 교사 TV는 언제나 실시간 (학생 패드의 진행 바는 설정대로: 회의 때만 바뀔 수 있음)
+  const p = judge.progress(), r = p.t ? p.d / p.t : 0;
+  $('#bp-fill').style.width = Math.round(r * 100) + '%';
+  $('#bp-num').textContent = `${Math.round(r * 100)}%`;
+  $('#bp-note').textContent = `미션 ${p.d} / ${p.t}개 완료 · 실시간` + (s.progress === 'meeting' ? ' (학생 패드의 진행 바는 회의 때 바뀌어요)' : '');
   $('#st-imp').textContent = judge.impLeft();
   $('#st-alive').textContent = judge.ids().filter(id => judge.alive(id)).length;
 }
