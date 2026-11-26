@@ -128,3 +128,7 @@ body[data-hv="ended"] :is(.hv-lobby, .hv-play, .hv-meet):not(.hv-ended) { displa
 .srv-btn { font-size: 18px; padding: 8px 16px; }
 .srv-link { background: none; border: 0; color: #cfd6da; text-decoration: underline; font-size: 14px; cursor: pointer; }
 .srv-paste, .srv-pw { width: 100%; box-sizing: border-box; font: 14px/1.4 ui-monospace, monospace; padding: 10px; border: 3px solid var(--ink); border-radius: 10px; }
+/* 회의 중: TV 화면 높이를 고정하고 채팅·투표 칸 안에서만 스크롤 (채팅이 늘어도 화면이 아래로 길어지지 않게) */
+body.host[data-hv="meet"] { overflow: hidden; }
+body[data-hv="meet"] .view-room { height: 100vh; overflow: hidden; }
+body[data-hv="meet"] .hm-body > * { min-height: 0; }
