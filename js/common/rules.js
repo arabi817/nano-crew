@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS = {
   vision: 'wide',       // 시야: wide 넓게 / normal 보통 / narrow 좁게 (VISION_R)
   chat: 'template',     // 회의 채팅: template(정해진 문장만) / free(자유 입력 + 정해진 문장)
   map: 'small',         // 맵: small(지금 맵) / big(넓은 맵, 32명용 + 새 미션 3개)
+  meetMap: false,       // 회의(투표) 화면에서 지도 보기 (어몽어스는 안 보임, 선생님이 켤 수 있음)
 };
 // 시야 반지름 [크루원, 바이러스]. 32명처럼 인원이 많으면 좁혀야 숨을 곳이 생겨요
 export const VISION_R = { wide: [380, 500], normal: [300, 395], narrow: [280, 370] };
@@ -49,6 +50,7 @@ export function settingsRows(meta) {
     ['맵', MAP_NAME[s.map] || '작은 맵'],
     ['시야', VISION_NAME[s.vision] || '넓게'],
     ['채팅', s.chat === 'free' ? '자유 입력' : '정해진 문장'],
+    ['회의 때 지도', s.meetMap ? '보임' : '숨김'],
   ];
 }
 export const settingsHTML = meta => `<div class="set-h">방 설정</div><table class="set-tb">${settingsRows(meta).map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</table>`;

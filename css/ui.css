@@ -753,3 +753,6 @@ body.watching-cams #hud, body.watching-cams .rotate-hint { visibility: hidden; }
 .cam-rec { position: absolute; right: 10px; top: 8px; font-style: normal; font-size: 13px; font-weight: 900; color: #ff4d4d; animation: arrowblink 1s steps(2) infinite; }
 .cam-help { padding: 6px 14px; background: rgba(16, 24, 28, .92); border-bottom: 3px solid var(--ink); font-size: 15px; font-weight: 700; line-height: 1.45; pointer-events: none; }
 .cam-help b { color: var(--yellow); } .cam-help b.red { color: #ff6b6b; }
+/* 회의 때 지도 (선생님 설정) */
+.mt-map { font-family: var(--title); font-size: 18px; padding: 6px 14px; background: #9fdcf5; color: var(--ink); border: 3px solid var(--ink); border-radius: 10px; cursor: pointer; margin-left: auto; }
+.meet-map-ov { z-index: 70; }

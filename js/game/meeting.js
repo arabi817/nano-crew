@@ -8,6 +8,7 @@ import { sfx } from '../common/sfx.js';
 import { esc } from '../common/util.js';
 import { ALARM_MS, settingsOf } from '../common/rules.js';
 import { BANNED } from '../../data/names.js';
+import { openMinimap } from '../ui/minimap.js';
 
 const CHAT_MAX = 8;   // 한 회의에서 보낼 수 있는 말 수
 const FREE_MAX = 40;  // 자유 입력 글자 수
@@ -21,7 +22,7 @@ export class MeetingUI {
     this.el.innerHTML = `
       <div class="meet-alarm"><div class="ma-big"></div><div class="ma-who"></div></div>
       <div class="meet-main">
-        <div class="meet-top"><div class="mt-title"></div><div class="mt-phase"></div><div class="mt-time"></div></div>
+        <div class="meet-top"><div class="mt-title"></div><div class="mt-phase"></div><button class="mt-map press" hidden>지도</button><div class="mt-time"></div></div>
         <div class="meet-ox"></div>
         <div class="meet-speak"></div>
         <div class="meet-body">
@@ -36,6 +37,7 @@ export class MeetingUI {
       <div class="meet-eject"></div>`;
     this.$ = s => this.el.querySelector(s);
     this.timer = setInterval(() => this.tickTime(), 200);
+    this.$('.mt-map').onclick = () => { sfx('click'); openMinimap(this.app, { meeting: true }); };   // 선생님이 '회의 때 지도'를 켰을 때만 보여요
     sfx('alarm');
   }
   get alive() { return !this.app.game?.dead?.[this.app.uid] && !this.app.isSpectator?.(); }   // 구경꾼은 말·투표 없이 지켜보기만
@@ -52,6 +54,7 @@ export class MeetingUI {
     this.$('.ma-big').textContent = m.body ? '쓰러진 대원 발견!' : '긴급 회의!';
     this.$('.ma-who').textContent = callerText(m, this.app.players);
     this.$('.mt-phase').textContent = PHASE_NAME[m.phase] || '';
+    this.$('.mt-map').hidden = !settingsOf(this.app.meta).meetMap;
     if (phaseChanged && m.phase === 'vote') sfx('click');
     this.render();
   }
@@ -70,6 +73,7 @@ export class MeetingUI {
     const left = Math.max(0, Math.ceil((this.m.endsAt - now) / 1000));
     this.$('.mt-time').textContent = this.m.phase === 'result' ? '' : `${left}초`;
     this.$('.mt-time').classList.toggle('hurry', left <= 5);
+    const mm = !settingsOf(this.app.meta).meetMap, mb = this.$('.mt-map'); if (mb.hidden !== mm) mb.hidden = mm;   // 회의 중에 선생님이 켜고 꺼도 바로
     this.renderSpeak();
   }
 
@@ -294,5 +298,6 @@ export class MeetingUI {
 
   close() {
     clearInterval(this.timer); this.unsubs.forEach(u => u()); this.el.remove();
+    if (this.app.minimap?.meeting) this.app.minimap.close();
   }
 }

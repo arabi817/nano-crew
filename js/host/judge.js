@@ -309,6 +309,7 @@ export class Judge {
   // 회의 채팅 방식 (대기실에서 고름. 게임 중에 바꿔도 다음 화면부터 적용)
   // 맵은 대기실에서만 바꿀 수 있어요 (게임 중에 바꾸면 모두의 위치가 어긋나요)
   setMap(id) { if (this.meta?.state === 'lobby' && ['small', 'big'].includes(id)) this.db.set(`${this.R}/meta/settings/map`, id); }
+  setMeetMap(on) { this.db.set(`${this.R}/meta/settings/meetMap`, !!on); }   // 회의 때 지도 (언제든 바꿀 수 있어요)
   setChatMode(mode) { this.db.set(`${this.R}/meta/settings/chat`, mode === 'free' ? 'free' : 'template'); }
   giveFloor(uid) {
     const m = this.game.meeting; if (!m || (m.phase !== 'discuss' && m.phase !== 'vote')) return;

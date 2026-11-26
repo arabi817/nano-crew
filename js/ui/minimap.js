@@ -8,9 +8,9 @@ function bounds() {
   return { x, y, w: Math.max(...rs.map(r => r.x + r.w)) + 100 - x, h: Math.max(...rs.map(r => r.y + r.h)) + 100 - y };
 }
 
-export function openMinimap(app) {
+export function openMinimap(app, { meeting = false } = {}) {
   const ov = document.createElement('div');
-  ov.className = 'mpanel-ov map-ov';   // 지도를 연 채로 걸을 수 있게: 손가락은 지도를 지나 조이스틱·버튼에 닿아요 (어몽어스처럼)
+  ov.className = meeting ? 'mpanel-ov meet-map-ov' : 'mpanel-ov map-ov';   // 회의 중엔 회의 화면 위에 띄우고, 바깥을 누르면 닫혀요   // 지도를 연 채로 걸을 수 있게: 손가락은 지도를 지나 조이스틱·버튼에 닿아요 (어몽어스처럼)
   ov.innerHTML = `<div class="minimap metal"><div class="mpanel-head"><div class="mpanel-title">몸속 지도</div>
     <button class="mpanel-x press" aria-label="닫기">${ICON.close}</button></div><canvas></canvas></div>`;
   document.body.appendChild(ov);
@@ -63,5 +63,6 @@ export function openMinimap(app) {
   raf = requestAnimationFrame(draw);
   const close = () => { closed = true; cancelAnimationFrame(raf); ov.remove(); app.minimap = null; };
   ov.querySelector('.mpanel-x').onclick = close;
-  app.minimap = { close };
+  if (meeting) ov.addEventListener('pointerdown', e => { if (e.target === ov) close(); });
+  app.minimap = { close, meeting };
 }
