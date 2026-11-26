@@ -66,7 +66,8 @@ const CELL_SVG = {
 };
 export function bloodScan(el, api, C) {
   const names = Object.keys(C.cells);
-  const feats = names.flatMap(n => C.cells[n].map(f => ({ label: f, ok: [n] })));
+  // 같은 특징이 여러 혈구에 있으면(예: 핵 없음 → 적혈구·혈소판) 카드는 한 장, 둘 중 어디에 넣어도 정답
+  const feats = [...new Set(names.flatMap(n => C.cells[n]))].map(f => ({ label: f, ok: names.filter(n => C.cells[n].includes(f)) }));
   const items = [...names.map(n => ({ label: n, ok: [n] })), ...pick(feats, C.cards - names.length + 1)];
   const r = sortGame(el, api, {
     items, tray: '이름표와 특징 카드', cls: 'scan',
