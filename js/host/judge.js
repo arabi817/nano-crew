@@ -206,7 +206,9 @@ export class Judge {
     const now = this.db.now();
     if (m.phase === 'vote' && now < m.endsAt) {
       const voters = this.aliveVoters().filter(id => this.cur.right[id]);
-      if (voters.every(id => this.cur.vote[id])) return this.step(m, 'vote');
+      // 모두 투표해도 3초는 기다려요 (그 사이 투표를 바꿀 수 있게)
+      if (voters.every(id => this.cur.vote[id])) { this.allVotedAt ||= now; if (now - this.allVotedAt >= 3000) return this.step(m, 'vote'); }
+      else this.allVotedAt = 0;
       return;
     }
     if (now >= m.endsAt) this.step(m, m.phase);
@@ -215,6 +217,7 @@ export class Judge {
     const key = `${m.id}:${phase}`;
     if (this.stepKey === key) return; this.stepKey = key;
     const now = this.db.now(), s = this.s, base = `meet/${m.id}`;
+    this.allVotedAt = 0;
     if (phase === 'ox') {
       const ans = OX[m.q.i]?.a, right = {};
       for (const id of this.aliveVoters()) right[id] = this.cur.ans[id] === ans;

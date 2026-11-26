@@ -41,7 +41,10 @@ export function openPanel({ title, sub = '', note = '', big = false, mount, onSu
     ov.remove(); onClose?.();
   }
   ov.querySelector('.mpanel-x').onclick = () => { sfx('click'); close(); };
-  return { close };
+  // 회의 때: 창을 닫지 않고 잠깐 떼어 두었다가(hide) 다시 붙이면(show) 하던 그대로 이어져요
+  const hide = () => { if (!closed) ov.remove(); };
+  const show = () => { if (!closed) document.body.appendChild(ov); };
+  return { close, hide, show };
 }
 
 // 간단한 선택 창 (모자 고르기 등)

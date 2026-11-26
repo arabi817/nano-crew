@@ -122,10 +122,10 @@ export class MeetingUI {
       const me = this.my.ans;
       box.innerHTML = `<div class="ox-q metal">${esc(m.q.text)}</div>
         ${this.alive ? `<div class="ox-btns"><button class="ox-b o press ${me === 'O' ? 'sel' : ''}" data-a="O">O</button><button class="ox-b x press ${me === 'X' ? 'sel' : ''}" data-a="X">X</button></div>
-          <div class="ox-tip">${me ? '답을 골랐어요. 시간이 끝나면 정답이 나와요' : `${settingsOf(this.app.meta).oxSec}초 안에 맞히면 이번 회의에서 투표할 수 있어요`}</div>`
+          <div class="ox-tip">${me ? '답을 골랐어요. 시간 안에는 바꿀 수 있어요' : `${settingsOf(this.app.meta).oxSec}초 안에 맞히면 이번 회의에서 투표할 수 있어요`}</div>`
           : `<div class="ox-tip">${this.who} 이번 회의를 지켜만 봐요</div>`}`;
-      box.querySelectorAll('.ox-b').forEach(b => b.onclick = () => {
-        if (this.my.ans) return;
+      box.querySelectorAll('.ox-b').forEach(b => b.onclick = () => {   // 시간이 끝나기 전까지 다시 골라 바꿀 수 있어요
+        if (this.my.ans === b.dataset.a) return;
         this.my.ans = b.dataset.a; sfx('click');
         this.app.db.set(`${P.meet(this.app.code, m.id)}/ans/${this.app.uid}`, this.my.ans);
         this.renderOX();
@@ -149,7 +149,7 @@ export class MeetingUI {
     this.$('.meet-grid').innerHTML = ids.map(id => {
       const p = players[id], dead = !!g.dead?.[id], voted = !!this.data.vote[id];
       const mine = this.my.vote === id, n = counts[id] || 0;
-      return `<button class="mg-card ${dead ? 'dead' : ''} ${mine ? 'mine' : ''} ${id === this.app.uid ? 'me' : ''}" data-id="${esc(id)}" ${voting && this.canVote && !this.my.vote && !dead ? '' : 'disabled'}>
+      return `<button class="mg-card ${dead ? 'dead' : ''} ${mine ? 'mine' : ''} ${id === this.app.uid ? 'me' : ''}" data-id="${esc(id)}" ${voting && this.canVote && !dead ? '' : 'disabled'}>
         ${avatarOf(p, 46)}<span class="mg-name ${mates.includes(id) ? 'mate' : ''}">${esc(nickOf(p))}</span>${id === m.caller ? MEGAPHONE : ''}
         ${dead ? '<span class="mg-tag">유령</span>' : ''}${voting && voted ? '<span class="mg-voted">투표함</span>' : ''}
         ${showRes && n ? `<span class="mg-count">${n}표</span>` : ''}</button>`;
@@ -161,7 +161,7 @@ export class MeetingUI {
     const m = this.m, box = this.$('.meet-bottom');
     if (m.phase === 'vote') {
       box.innerHTML = this.canVote
-        ? (this.my.vote ? `<div class="mb-msg">투표했어요: ${this.my.vote === 'skip' ? '건너뛰기' : esc(nickOf(this.app.players[this.my.vote]))}</div>`
+        ? (this.my.vote ? `<div class="mb-msg">투표했어요: ${this.my.vote === 'skip' ? '건너뛰기' : esc(nickOf(this.app.players[this.my.vote]))} · 다른 칸을 누르면 바꿀 수 있어요</div>${this.my.vote !== 'skip' ? '<button class="btn btn-gray press mb-skip">건너뛰기로 바꾸기</button>' : ''}`
           : `<div class="mb-msg">의심되는 대원을 누르거나</div><button class="btn btn-gray press mb-skip">건너뛰기</button>`)
         : `<div class="mb-msg no">${this.alive ? '이번 회의 투표권 없음' : `${this.who} 투표할 수 없어요`}</div>`;
       box.querySelector('.mb-skip')?.addEventListener('click', () => this.vote('skip'));
@@ -173,7 +173,7 @@ export class MeetingUI {
   }
 
   vote(target) {
-    if (!this.canVote || this.my.vote || this.m.phase !== 'vote') return;
+    if (!this.canVote || this.my.vote === target || this.m.phase !== 'vote') return;   // 투표 시간 안에는 바꿀 수 있어요
     if (target !== 'skip' && this.app.game?.dead?.[target]) return;
     this.my.vote = target; sfx('vote');
     this.app.db.set(`${P.meet(this.app.code, this.m.id)}/vote/${this.app.uid}`, target);

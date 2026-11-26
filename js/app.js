@@ -369,7 +369,7 @@ function onGame(g) {
 }
 function syncMeeting(g) {
   if (g.meeting) {
-    if (!app.meeting) { closeOverlays(); document.querySelectorAll('.meet').forEach(el => el.remove()); app.meeting = new MeetingUI(app); }
+    if (!app.meeting) { closeOverlays(true); document.querySelectorAll('.meet').forEach(el => el.remove()); app.meeting = new MeetingUI(app); }
     app.meeting.update(g.meeting);
   } else if (app.meeting || document.querySelector('.meet')) {
     app.meeting?.close(); app.meeting = null;
@@ -385,7 +385,7 @@ function onGameRest(g, prev) {
   // 내가 쓰러짐
   if (g.dead?.[uid] && !app.wasDead) {
     app.wasDead = true;
-    if (!g.ejected?.[uid] && app.phase === 'playing') { closeOverlays(); sfx('kill'); showKilled(avatarSVG(COLORS[app.myPlayer?.c]?.hex || '#999', app.myPlayer?.hat || 0, 150)); }
+    if (!g.ejected?.[uid] && app.phase === 'playing') { closeOverlays(true); sfx('kill'); showKilled(avatarSVG(COLORS[app.myPlayer?.c]?.hex || '#999', app.myPlayer?.hat || 0, 150)); }
   }
   if (!g.dead?.[uid]) app.wasDead = false;
   // 진행 바
@@ -420,7 +420,17 @@ function maybeReveal() {
     .then(() => { app.revealing = false; });
 }
 
-function closeOverlays() { app.panel?.close(); app.minimap?.close(); app.sheet?.close(); app.cams?.close(); app.joy?.reset(); }
+// park=true(회의 시작·쓰러짐): 하던 미션 창은 닫지 않고 맡겨 둬요 → 같은 장치에서 [사용]을 누르면 이어서
+function closeOverlays(park = false) {
+  if (park && app.panel && app.panelInfo) parkMission(); else { app.panel?.close(); dropParked(); }
+  app.minimap?.close(); app.sheet?.close(); app.cams?.close(); app.joy?.reset();
+}
+function parkMission() {
+  dropParked();
+  app.panel.hide(); app.parked = { ...app.panelInfo, panel: app.panel };
+  app.panel = null; app.panelInfo = null; app.db.remove(visPath());
+}
+function dropParked() { const p = app.parked; app.parked = null; p?.panel.close(); }
 let leftShown = false;
 function kicked() { if (leftShown) return; leftShown = true; closeOverlays(); app.meeting?.close(); app.game_?.destroy(true); notice('방에서 나왔어요', '선생님이 방에서 내보냈어요. 다시 들어가려면 방 코드를 넣어 주세요.'); }
 function ended() { if (leftShown) return; leftShown = true; closeOverlays(); app.meeting?.close(); hideEnd(); app.game_?.destroy(true); notice('판이 끝났어요', `${app.meta?.free ? '방장이' : '선생님이'} 판을 끝냈어요. 수고했어요!`); }
@@ -529,13 +539,20 @@ app.useAction = () => {
     if (app.priv?.role === 'imp' && !app.amDead()) { app.faking = true; fakeTask(M.title).then(() => { app.faking = false; }); return; }
     const visible = M.visible && !app.amDead();
     if (visible) { app.db.set(visPath(), id); app.db.onDisconnectRemove(visPath()); }
+    // 회의 전에 하던 바로 그 미션 단계면: 맡겨 둔 창을 그대로 다시 보여 줘요
+    if (app.parked?.id === id && app.parked.step === step) {
+      app.panel = app.parked.panel; app.panelInfo = { id, step }; app.parked = null;
+      app.panel.show(); app.hud.toast('하던 미션을 이어서 해요'); return;
+    }
+    dropParked();
+    app.panelInfo = { id, step };
     app.panel = openPanel({
       title: M.title + (t.n > 1 ? ` (${step + 1}/${t.n})` : ''), sub: S.sub, note: S.note, big: S.big, mount: S.mount,
       onSuccess: () => {
         app.db.set(P.doneOf(app.code, app.uid) + '/' + id, step + 1);
         app.hud.toast(step + 1 >= t.n ? `${M.title} 완료!` : `${M.title} ${step + 1}/${t.n} · 다음은 ${roomName(SPOTS[M.steps[step + 1].spot].room)}`);
       },
-      onClose: () => { app.panel = null; if (visible) app.db.remove(visPath()); },
+      onClose: () => { if (app.panelInfo?.id === id) { app.panel = null; app.panelInfo = null; } if (visible) app.db.remove(visPath()); },
     });
     return;
   }
